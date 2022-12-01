@@ -1,0 +1,24 @@
+include:
+  - project: cs/gitlabci-templates
+    file: /build-image-using-kaniko.yml
+
+variables:
+  FF_USE_FASTZIP: 'true'
+  ARTIFACT_COMPRESSION_LEVEL: 'fast'
+  CACHE_COMPRESSION_LEVEL: 'fast'
+  KUBERNETES_MEMORY_REQUEST: 1Gi
+  KUBERNETES_MEMORY_LIMIT: 4Gi
+  KUBERNETES_CPU_REQUEST: 1
+  KUBERNETES_CPU_LIMIT: 2
+
+
+deploy-prod:
+  stage: deploy
+  extends: .build-image-using-kaniko
+  before_script: []
+  variables:
+    CI_PROJECT_DIR: /builds/project/sbo/sonata-cell-positin
+    CI_REGISTRY_IMAGE: $CI_REGISTRY/project/sbo/sonata-cell-position
+    CI_COMMIT_SHORT_SHA: $CI_COMMIT_SHORT_SHA
+    REGISTRY_IMAGE_TAG: $CI_COMMIT_SHORT_SHA-$(date +%s)
+        
