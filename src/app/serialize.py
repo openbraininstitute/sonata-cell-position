@@ -6,6 +6,9 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional
 import pandas as pd
 import randomaccessbuffer as rab  # pylint: disable=import-error
 
+import pyarrow as pa
+from pyarrow import fs
+
 from app.constants import MODALITIES
 from app.logger import L
 from app.utils import modality_names_to_columns
@@ -83,6 +86,17 @@ def to_json(
     df[columns].to_json(output_path, orient=orient)
 
 
+def to_arrow(
+    df: pd.DataFrame, modality_names: List[str], output_path: Path, attrs: Optional[str]
+) -> None:
+    """Write a DataFrame to file in arrow format."""
+    columns = modality_names_to_columns(modality_names)
+    table = pa.Table.from_pandas(df[columns])
+    with fs.LocalFileSystem().open_output_stream(output_path) as file:
+       with pa.RecordBatchFileWriter(file, table.schema) as writer:
+          writer.write_table(table)
+
+
 def write(
     df: pd.DataFrame, modality_names: Optional[List[str]], output_path: Path, how: str
 ) -> None:
@@ -94,9 +108,10 @@ def write(
 
 
 SERIALIZERS = {
-    "rab": to_rab,
-    "parquet": to_parquet,
+    "arrow": to_arrow,
     "json": to_json,
+    "parquet": to_parquet,
+    "rab": to_rab,
 }
 SERIALIZERS_REGEX = f"^({'|'.join(SERIALIZERS)})(:.*)?$"
 DEFAULT_SERIALIZER = "rab:parquet"
