@@ -3,15 +3,15 @@ import json
 import shutil
 import tempfile
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 
 from app import serialize, service, utils
-from app.constants import ALLOWED_EXTENSIONS, DEBUG, ORIGINS
+from app.constants import ALLOWED_EXTENSIONS, COMMIT_SHA, DEBUG, ORIGINS, PROJECT_PATH
 from app.logger import L
 from app.serialize import DEFAULT_SERIALIZER, SERIALIZERS_REGEX
 
@@ -25,15 +25,37 @@ app.add_middleware(
 )
 
 
+def _validate_path(input_path: Path = Query(...)) -> Path:
+    if input_path.suffix not in ALLOWED_EXTENSIONS:
+        L.warning("Path forbidden: %s", input_path)
+        raise HTTPException(status_code=403, detail="Path forbidden")
+    if not input_path.exists():
+        L.warning("Path not found: %s", input_path)
+        raise HTTPException(status_code=404, detail="Path not found")
+    return input_path
+
+
 @app.get("/")
 async def root():
-    """Dummy root."""
-    return "sonata-cell-position"
+    """Root endpoint."""
+    return {
+        "project": PROJECT_PATH,
+        "status": "OK",
+    }
 
 
-@app.get("/circuits/", response_class=FileResponse)
+@app.get("/version")
+async def version() -> Dict:
+    """Version endpoint."""
+    return {
+        "project": PROJECT_PATH,
+        "commit_sha": COMMIT_SHA,
+    }
+
+
+@app.get("/circuit", response_class=FileResponse)
 async def read_circuit(
-    input_path: Path,
+    input_path: Path = Depends(_validate_path),
     region: Optional[List[str]] = Query(default=None),
     mtype: Optional[List[str]] = Query(default=None),
     modality: Optional[List[str]] = Query(default=None),
@@ -48,7 +70,6 @@ async def read_circuit(
         L.info("Removing temporary directory %s in background task", tmp_dir)
         shutil.rmtree(tmp_dir)
 
-    _validate_path(input_path)
     tmp_dir = Path(tempfile.mkdtemp(prefix="output_"))
     output_path = tmp_dir / "output.bin"
     await utils.run_process_executor(
@@ -72,13 +93,14 @@ async def read_circuit(
     )
 
 
-def _validate_path(path: Path) -> None:
-    if path.suffix not in ALLOWED_EXTENSIONS:
-        L.warning("Path forbidden: %s", path)
-        raise HTTPException(status_code=403, detail="Path forbidden")
-    if not path.exists():
-        L.warning("Path not found: %s", path)
-        raise HTTPException(status_code=404, detail="Path not found")
+@app.get("/circuit/count")
+def count(
+    input_path: Path = Depends(_validate_path),
+    population_name: Optional[List[str]] = Query(default=None),
+) -> Dict:
+    """Return the number of nodes in a circuit."""
+    # not cpu intensive, it can run in the current thread
+    return service.count(input_path=input_path, population_names=population_name)
 
 
 def read_circuit_job(

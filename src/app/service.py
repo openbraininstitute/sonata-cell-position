@@ -30,7 +30,7 @@ def _ensure_population_name(name: Optional[str], names: Iterable[str]) -> str:
 
 def _get_node_population(
     path: Path, population_name: Optional[str] = None
-) -> Optional[libsonata.NodePopulation]:
+) -> libsonata.NodePopulation:
     """Load and return a libsonata node population.
 
     Args:
@@ -168,3 +168,21 @@ def export(
         columns=columns,
         seed=seed,
     )
+
+
+def count(input_path: Path, population_names: Optional[List[str]] = None) -> Dict:
+    """Return the number of nodes per population in the given circuit.
+
+    Args:
+        input_path: path to the circuit config file, or nodes file.
+        population_names: names of the node populations.
+
+    Returns:
+        A dict containing the number of nodes per population.
+
+    """
+    populations = {}
+    for name in population_names or [None]:  # type: ignore[list-item]
+        node_population = _get_node_population(input_path, population_name=name)
+        populations[node_population.name] = {"size": node_population.size}
+    return {"nodes": {"populations": populations}}

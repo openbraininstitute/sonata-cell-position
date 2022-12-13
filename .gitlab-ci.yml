@@ -21,4 +21,6 @@ deploy-prod:
     CI_REGISTRY_IMAGE: $CI_REGISTRY/project/sbo/sonata-cell-position
     CI_COMMIT_SHORT_SHA: $CI_COMMIT_SHORT_SHA
     REGISTRY_IMAGE_TAG: $CI_COMMIT_SHORT_SHA-$(date +%s)
-        
+    KANIKO_EXTRA_ARGS:
+        --build-arg PROJECT_PATH=${CI_PROJECT_PATH}
+        --build-arg COMMIT_SHA=${CI_COMMIT_SHA}

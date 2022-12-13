@@ -10,7 +10,7 @@ from app.constants import MODALITIES
 
 def ensure_list(x: Any) -> List[Any]:
     """Return x if x is already a list, [x] otherwise."""
-    return x if isinstance(x, list) else [x]
+    return list(x) if isinstance(x, (list, tuple)) else [x]
 
 
 def modality_names_to_columns(modality_names: List[str]) -> List[str]:

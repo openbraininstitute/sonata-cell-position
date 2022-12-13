@@ -15,4 +15,9 @@ RUN \
 COPY ./src/app /code/app
 COPY ./logging.yaml /code/logging.yaml
 
+ARG PROJECT_PATH
+ARG COMMIT_SHA
+ENV PROJECT_PATH=${PROJECT_PATH}
+ENV COMMIT_SHA=${COMMIT_SHA}
+
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--log-config", "/code/logging.yaml"]
