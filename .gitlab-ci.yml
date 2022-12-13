@@ -1,6 +1,11 @@
 include:
   - project: cs/gitlabci-templates
     file: /build-image-using-kaniko.yml
+  - project: nse/ci
+    file:
+      - /ci/lib/tox-docker.yml
+      - /ci/jobs/lint.yml
+
 
 variables:
   FF_USE_FASTZIP: 'true'
@@ -13,7 +18,7 @@ variables:
 
 
 deploy-prod:
-  stage: deploy
+  stage: publish
   extends: .build-image-using-kaniko
   before_script: []
   variables:
@@ -24,3 +29,5 @@ deploy-prod:
     KANIKO_EXTRA_ARGS:
         --build-arg PROJECT_PATH=${CI_PROJECT_PATH}
         --build-arg COMMIT_SHA=${CI_COMMIT_SHA}
+#  rules:
+#    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule"'

@@ -1,4 +1,5 @@
 """CLI entry point."""
+import logging
 import re
 from pathlib import Path
 from typing import List, Optional
@@ -30,7 +31,12 @@ class RegexParamType(click.ParamType):
         return value
 
 
-@click.command()
+@click.group()
+def cli():
+    """CLI tools."""
+
+
+@cli.command()
 @click.option("--input-path", type=click.Path(exists=True), required=True)
 @click.option("--output-path", type=click.Path(), required=True)
 @click.option("--population-name")
@@ -42,7 +48,7 @@ class RegexParamType(click.ParamType):
 @click.option(
     "--how", type=RegexParamType(SERIALIZERS_REGEX), default=DEFAULT_SERIALIZER, show_default=True
 )
-def main(
+def export(
     input_path: str,
     output_path: str,
     population_name: Optional[str],
@@ -69,5 +75,31 @@ def main(
     L.info("Done")
 
 
+@cli.command()
+@click.option("--input-path", type=click.Path(exists=True), required=True)
+@click.option("--output-path", type=click.Path(), required=True)
+@click.option("--population-name")
+@click.option("--sampling-ratio", type=float, default=0.01, show_default=True)
+@click.option("--seed", type=int, default=0, show_default=True)
+def downsample(
+    input_path: str,
+    output_path: str,
+    population_name: Optional[str],
+    sampling_ratio: float,
+    seed: int,
+) -> None:
+    """Downsample a node file."""
+    L.info("Starting downsample")
+    app.main.downsample_job(
+        input_path=Path(input_path),
+        output_path=Path(output_path),
+        population_name=population_name,
+        sampling_ratio=sampling_ratio,
+        seed=seed,
+    )
+    L.info("Done")
+
+
 if __name__ == "__main__":
-    main()  # pylint: disable=no-value-for-parameter
+    logging.basicConfig(level=logging.INFO)
+    cli()  # pylint: disable=no-value-for-parameter

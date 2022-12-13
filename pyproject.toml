@@ -18,6 +18,7 @@ dependencies = [
     "libsonata",
     "pyarrow",
     "pyyaml",
+    "h5py",
     #"randomaccessbuffer @ git+ssh://git@bbpgitlab.epfl.ch/dke/randomaccessbufferpy.git",
 ]
 

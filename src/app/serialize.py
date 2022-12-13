@@ -4,9 +4,8 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
 import pandas as pd
-import randomaccessbuffer as rab  # pylint: disable=import-error
-
 import pyarrow as pa
+import randomaccessbuffer as rab  # pylint: disable=import-error
 from pyarrow import fs
 
 from app.constants import MODALITIES
@@ -90,11 +89,12 @@ def to_arrow(
     df: pd.DataFrame, modality_names: List[str], output_path: Path, attrs: Optional[str]
 ) -> None:
     """Write a DataFrame to file in arrow format."""
+    # pylint: disable=unused-argument
     columns = modality_names_to_columns(modality_names)
     table = pa.Table.from_pandas(df[columns])
-    with fs.LocalFileSystem().open_output_stream(output_path) as file:
-       with pa.RecordBatchFileWriter(file, table.schema) as writer:
-          writer.write_table(table)
+    with fs.LocalFileSystem().open_output_stream(str(output_path)) as file:
+        with pa.RecordBatchFileWriter(file, table.schema) as writer:
+            writer.write_table(table)
 
 
 def write(

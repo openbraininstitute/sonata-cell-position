@@ -93,6 +93,38 @@ async def read_circuit(
     )
 
 
+@app.get("/circuit/downsample")
+async def downsample(
+    input_path: Path = Depends(_validate_path),
+    population_name: Optional[str] = None,
+    sampling_ratio: float = 0.01,
+    seed: int = 0,
+) -> FileResponse:
+    """Downsample a node file."""
+
+    def cleanup() -> None:
+        L.info("Removing temporary directory %s", tmp_dir)
+        shutil.rmtree(tmp_dir)
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="output_"))
+    output_path = tmp_dir / f"downsampled.{int(1 / sampling_ratio)}.h5"
+    await utils.run_process_executor(
+        func=downsample_job,
+        input_path=input_path,
+        output_path=output_path,
+        population_name=population_name,
+        sampling_ratio=sampling_ratio,
+        seed=seed,
+    )
+    return FileResponse(
+        output_path,
+        headers={"request-query": json.dumps({"input_path": str(input_path)})},  # not really needed
+        media_type="application/octet-stream",
+        filename=output_path.name,
+        background=BackgroundTask(cleanup),
+    )
+
+
 @app.get("/circuit/count")
 def count(
     input_path: Path = Depends(_validate_path),
@@ -125,3 +157,20 @@ def read_circuit_job(
         seed=seed,
     )
     serialize.write(df=df, modality_names=modality_names, output_path=output_path, how=how)
+
+
+def downsample_job(
+    input_path: Path,
+    output_path: Path,
+    population_name: Optional[str],
+    sampling_ratio: float,
+    seed: int,
+) -> None:
+    """Function that can be pickled and executed in a subprocess."""
+    service.downsample(
+        input_path=input_path,
+        output_path=output_path,
+        population_name=population_name,
+        sampling_ratio=sampling_ratio,
+        seed=seed,
+    )
