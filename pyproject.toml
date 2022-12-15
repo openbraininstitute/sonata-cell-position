@@ -11,14 +11,15 @@ requires-python = ">=3.9"
 
 dependencies = [
     "fastapi",
-    "pydantic",
-    "uvicorn[standard]",
+    "h5py",
+    "libsonata",
     "numpy",
     "pandas",
-    "libsonata",
     "pyarrow",
+    "pydantic",
     "pyyaml",
-    "h5py",
+    "uvicorn[standard]",
+    "voxcell",
     #"randomaccessbuffer @ git+ssh://git@bbpgitlab.epfl.ch/dke/randomaccessbufferpy.git",
 ]
 

@@ -10,6 +10,10 @@ anyio==3.6.2
     # via
     #   starlette
     #   watchfiles
+certifi==2022.12.7
+    # via requests
+charset-normalizer==2.1.1
+    # via requests
 click==8.1.3
     # via uvicorn
 fastapi==0.88.0
@@ -17,28 +21,42 @@ fastapi==0.88.0
 h11==0.14.0
     # via uvicorn
 h5py==3.7.0
-    # via sonata-cell-position (pyproject.toml)
+    # via
+    #   sonata-cell-position (pyproject.toml)
+    #   voxcell
 httptools==0.5.0
     # via uvicorn
 idna==3.4
-    # via anyio
+    # via
+    #   anyio
+    #   requests
 libsonata==0.1.16
     # via sonata-cell-position (pyproject.toml)
+nptyping==2.4.1
+    # via pynrrd
 numpy==1.23.5
     # via
     #   h5py
     #   libsonata
+    #   nptyping
     #   pandas
     #   pyarrow
+    #   pynrrd
+    #   scipy
     #   sonata-cell-position (pyproject.toml)
+    #   voxcell
 pandas==1.5.2
-    # via sonata-cell-position (pyproject.toml)
+    # via
+    #   sonata-cell-position (pyproject.toml)
+    #   voxcell
 pyarrow==10.0.1
     # via sonata-cell-position (pyproject.toml)
 pydantic==1.10.2
     # via
     #   fastapi
     #   sonata-cell-position (pyproject.toml)
+pynrrd==1.0.0
+    # via voxcell
 python-dateutil==2.8.2
     # via pandas
 python-dotenv==0.21.0
@@ -49,6 +67,10 @@ pyyaml==6.0
     # via
     #   sonata-cell-position (pyproject.toml)
     #   uvicorn
+requests==2.28.1
+    # via voxcell
+scipy==1.9.3
+    # via voxcell
 six==1.16.0
     # via python-dateutil
 sniffio==1.3.0
@@ -57,12 +79,18 @@ starlette==0.22.0
     # via fastapi
 typing-extensions==4.4.0
     # via
+    #   nptyping
     #   pydantic
+    #   pynrrd
     #   starlette
+urllib3==1.26.13
+    # via requests
 uvicorn[standard]==0.20.0
     # via sonata-cell-position (pyproject.toml)
 uvloop==0.17.0
     # via uvicorn
+voxcell==3.1.3
+    # via sonata-cell-position (pyproject.toml)
 watchfiles==0.18.1
     # via uvicorn
 websockets==10.4

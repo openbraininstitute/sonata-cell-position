@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from numpy.random import default_rng
 
-from app.constants import DTYPES, MODALITIES, SAMPLING_RATIO
+from app.constants import DTYPES, MODALITIES, SAMPLING_RATIO, REGION_MAP
 from app.logger import L
 from app.utils import ensure_list, modality_names_to_columns
 
@@ -134,6 +134,20 @@ def _export_dataframe(
     return df
 
 
+def _region_acronyms(regions: Optional[List[str]]) -> Optional[List[str]]:
+    """Return acronyms of regions in `regions`"""
+    if regions is None:
+        return regions
+    ret = set()
+    for region in regions:
+        try:
+            ids = REGION_MAP.find(int(region), 'id', with_descendants=True)
+            ret.update(REGION_MAP.get(id_, 'acronym') for id_ in ids)
+        except ValueError:
+            ret.add(region)
+    return list(ret)
+
+
 def export(
     input_path: Path,
     population_name: Optional[str] = None,
@@ -161,7 +175,7 @@ def export(
     node_population = _get_node_population(input_path, population_name)
     modality_names = modality_names or list(MODALITIES)
     columns = modality_names_to_columns(modality_names)
-    query = {"region": regions, "mtype": mtypes}
+    query = {"region": _region_acronyms(regions), "mtype": mtypes}
     return _export_dataframe(
         node_population=node_population,
         sampling_ratio=sampling_ratio,
