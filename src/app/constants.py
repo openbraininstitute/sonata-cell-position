@@ -3,7 +3,6 @@ import importlib.resources
 import os
 
 import numpy as np
-
 import voxcell.region_map
 
 ORIGINS = [
@@ -33,5 +32,5 @@ DTYPES = {
 }
 
 
-with importlib.resources.path("app.data", 'hierarchy.json') as path:
+with importlib.resources.path("app.data", "hierarchy.json") as path:
     REGION_MAP = voxcell.region_map.RegionMap.load_json(path.absolute())

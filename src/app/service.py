@@ -1,7 +1,7 @@
 """Service functions."""
 import json
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 import h5py
 import libsonata
@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from numpy.random import default_rng
 
-from app.constants import DTYPES, MODALITIES, SAMPLING_RATIO, REGION_MAP
+from app.constants import DTYPES, MODALITIES, REGION_MAP, SAMPLING_RATIO
 from app.logger import L
 from app.utils import ensure_list, modality_names_to_columns
 
@@ -135,17 +135,17 @@ def _export_dataframe(
 
 
 def _region_acronyms(regions: Optional[List[str]]) -> Optional[List[str]]:
-    """Return acronyms of regions in `regions`"""
+    """Return acronyms of regions in `regions`."""
     if regions is None:
-        return regions
-    ret = set()
+        return None
+    result: Set[str] = set()
     for region in regions:
         try:
-            ids = REGION_MAP.find(int(region), 'id', with_descendants=True)
-            ret.update(REGION_MAP.get(id_, 'acronym') for id_ in ids)
+            ids = REGION_MAP.find(int(region), "id", with_descendants=True)
         except ValueError:
-            ret.add(region)
-    return list(ret)
+            ids = REGION_MAP.find(region, "acronym", with_descendants=True)
+        result.update(REGION_MAP.get(id_, "acronym") for id_ in ids)
+    return list(result)
 
 
 def export(
