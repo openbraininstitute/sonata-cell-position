@@ -83,7 +83,7 @@ def _filter_by_key(
     attribute = node_population.get_attribute(key, selection)
     if values := ensure_list(values) if values else []:
         masks = [attribute == value for value in values]
-        mask = masks[0] if len(masks) == 1 else np.all(masks, axis=0)
+        mask = masks[0] if len(masks) == 1 else np.any(masks, axis=0)
         ids = ids[mask]
         attribute = attribute[mask]
         df = df.loc[ids]
