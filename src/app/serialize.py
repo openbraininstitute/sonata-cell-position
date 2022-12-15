@@ -1,7 +1,7 @@
 """Serialization functions."""
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, List, Optional
+from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, TypedDict
 
 import pandas as pd
 import pyarrow as pa
@@ -102,16 +102,54 @@ def write(
 ) -> None:
     """Write a DataFrame to file."""
     how, _, attrs = how.partition(":")
-    serializer = SERIALIZERS[how]
+    serializer = SERIALIZERS[how]["function"]
     modality_names = modality_names or list(MODALITIES)
     return serializer(df, modality_names, output_path, attrs)
 
 
-SERIALIZERS = {
-    "arrow": to_arrow,
-    "json": to_json,
-    "parquet": to_parquet,
-    "rab": to_rab,
+def get_content_type(how: str) -> str:
+    """Return the content-type corresponding to the given type."""
+    how = how.partition(":")[0]
+    return SERIALIZERS[how]["content_type"]
+
+
+def get_extension(how: str) -> str:
+    """Return the extension corresponding to the given type."""
+    how = how.partition(":")[0]
+    return SERIALIZERS[how]["extension"]
+
+
+class Serializer(TypedDict):
+    """Serializer type."""
+
+    function: Callable[[pd.DataFrame, List[str], Path, Optional[str]], None]
+    content_type: str
+    extension: str
+
+
+SERIALIZERS: Dict[str, Serializer] = {
+    "arrow": {
+        "function": to_arrow,
+        "content_type": "application/vnd.apache.arrow.file",
+        "extension": "arrow",
+    },
+    "json": {
+        "function": to_json,
+        "content_type": "application/json",
+        "extension": "json",
+    },
+    "parquet": {
+        "function": to_parquet,
+        # not registered yet, see https://issues.apache.org/jira/browse/PARQUET-1889
+        "content_type": "application/vnd.apache.parquet",
+        "extension": "parquet",
+    },
+    "rab": {
+        "function": to_rab,
+        # prs: non publicly available products or experimental media types
+        "content_type": "application/prs.rab",
+        "extension": "rab",
+    },
 }
 SERIALIZERS_REGEX = f"^({'|'.join(SERIALIZERS)})(:.*)?$"
 DEFAULT_SERIALIZER = "rab:parquet"

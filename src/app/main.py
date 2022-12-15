@@ -1,5 +1,4 @@
 """API entry points."""
-import json
 import shutil
 import tempfile
 from pathlib import Path
@@ -13,7 +12,7 @@ from starlette.background import BackgroundTask
 from app import serialize, service, utils
 from app.constants import ALLOWED_EXTENSIONS, COMMIT_SHA, DEBUG, ORIGINS, PROJECT_PATH
 from app.logger import L
-from app.serialize import DEFAULT_SERIALIZER, SERIALIZERS_REGEX
+from app.serialize import DEFAULT_SERIALIZER, SERIALIZERS_REGEX, get_content_type, get_extension
 
 app = FastAPI(debug=DEBUG)
 app.add_middleware(
@@ -70,8 +69,10 @@ async def read_circuit(
         L.info("Removing temporary directory %s in background task", tmp_dir)
         shutil.rmtree(tmp_dir)
 
+    content_type = get_content_type(how)
+    extension = get_extension(how)
     tmp_dir = Path(tempfile.mkdtemp(prefix="output_"))
-    output_path = tmp_dir / "output.bin"
+    output_path = tmp_dir / f"output.{extension}"
     await utils.run_process_executor(
         func=read_circuit_job,
         input_path=input_path,
@@ -86,8 +87,7 @@ async def read_circuit(
     )
     return FileResponse(
         output_path,
-        headers={"request-query": json.dumps({"input_path": str(input_path)})},  # not really needed
-        media_type="application/octet-stream",
+        media_type=content_type,
         filename=output_path.name,
         background=BackgroundTask(cleanup),
     )
@@ -118,7 +118,6 @@ async def downsample(
     )
     return FileResponse(
         output_path,
-        headers={"request-query": json.dumps({"input_path": str(input_path)})},  # not really needed
         media_type="application/octet-stream",
         filename=output_path.name,
         background=BackgroundTask(cleanup),
