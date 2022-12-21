@@ -9,6 +9,8 @@ ORIGINS = [
     "http://localhost:3000",
     "https://bbp.epfl.ch",
     "https://sonata.sbo.kcp.bbp.epfl.ch",
+    "https://core-web-app-dev.sbo.kcp.bbp.epfl.ch",
+    "https://bbpteam.epfl.ch",
 ]
 
 PROJECT_PATH = os.environ.get("PROJECT_PATH")
