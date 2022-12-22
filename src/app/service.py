@@ -80,10 +80,9 @@ def _filter_by_key(
     """
     ids = df.index.to_numpy()
     selection = libsonata.Selection(ids)
-    attribute = node_population.get_attribute(key, selection)
-    if values := ensure_list(values) if values else []:
-        masks = [attribute == value for value in values]
-        mask = masks[0] if len(masks) == 1 else np.any(masks, axis=0)
+    attribute: np.ndarray = node_population.get_attribute(key, selection)
+    if values:
+        mask = np.isin(attribute, values)
         ids = ids[mask]
         attribute = attribute[mask]
         df = df.loc[ids]
