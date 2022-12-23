@@ -208,9 +208,15 @@ def downsample(
     population_name: Optional[str],
     sampling_ratio: float = 0.01,
     seed: int = 0,
+    attributes: Optional[Iterable[str]] = None,
 ):
     """Downsample a node file."""
     # pylint: disable=too-many-locals
+    def _filter_attributes(names: Set[str]):
+        if attributes:
+            names = names.intersection(attributes)
+        yield from sorted(names)
+
     rng = default_rng(seed)
     str_dt = h5py.special_dtype(vlen=str)
     ns = libsonata.NodeStorage(input_path)
@@ -226,17 +232,19 @@ def downsample(
             population_group = h5f.create_group(f"/nodes/{pop_name}")
             population_group.create_dataset("node_type_id", data=np.full(len(ids), -1))
             group = population_group.create_group("0")
-            for name in sorted(node_population.enumeration_names):
+            for name in _filter_attributes(node_population.enumeration_names):
                 L.info("Writing enumeration: %s", name)
                 data = node_population.enumeration_values(name)
                 group.create_dataset(f"@library/{name}", data=data, dtype=str_dt)
                 data = node_population.get_enumeration(name, selection)
                 group.create_dataset(name, data=data, dtype=data.dtype)
-            for name in sorted(node_population.dynamics_attribute_names):
+            for name in _filter_attributes(node_population.dynamics_attribute_names):
                 L.info("Writing dynamics_attribute: %s", name)
                 data = node_population.get_dynamics_attribute(name, selection)
                 group.create_dataset(f"dynamics_params/{name}", data=data, dtype=data.dtype)
-            for name in sorted(node_population.attribute_names - node_population.enumeration_names):
+            for name in _filter_attributes(
+                node_population.attribute_names - node_population.enumeration_names
+            ):
                 L.info("Writing attribute: %s", name)
                 data = node_population.get_attribute(name, selection)
                 dtype = str_dt if data.dtype == object else data.dtype

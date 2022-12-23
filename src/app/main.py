@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 
-from app import serialize, service, utils
+from app import cache, serialize, service, utils
 from app.constants import ALLOWED_EXTENSIONS, COMMIT_SHA, DEBUG, ORIGINS, PROJECT_PATH
 from app.logger import L
 from app.serialize import DEFAULT_SERIALIZER, SERIALIZERS_REGEX, get_content_type, get_extension
@@ -62,6 +62,7 @@ async def read_circuit(
     sampling_ratio: float = 0.01,
     seed: int = 0,
     how: str = Query(default=DEFAULT_SERIALIZER, regex=SERIALIZERS_REGEX),
+    use_cache: bool = True,
 ) -> FileResponse:
     """Return information about a circuit."""
 
@@ -83,6 +84,7 @@ async def read_circuit(
         mtypes=mtype,
         seed=seed,
         how=how,
+        use_cache=use_cache,
         output_path=output_path,
     )
     return FileResponse(
@@ -143,17 +145,24 @@ def read_circuit_job(
     mtypes: Optional[List[str]],
     seed: int,
     how: str,
+    use_cache: bool,
     output_path: Path,
 ) -> None:
     """Function that can be pickled and executed in a subprocess."""
+    # pylint: disable=too-many-arguments
+    cache_params: cache.CacheParams = {
+        "input_path": input_path,
+        "population_name": population_name,
+        "sampling_ratio": sampling_ratio,
+        "seed": seed,
+    }
+    if use_cache:
+        cache_params.update(cache.check_cache(**cache_params))
     df = service.export(
-        input_path=input_path,
-        population_name=population_name,
-        sampling_ratio=sampling_ratio,
         modality_names=modality_names,
         regions=regions,
         mtypes=mtypes,
-        seed=seed,
+        **cache_params,
     )
     serialize.write(df=df, modality_names=modality_names, output_path=output_path, how=how)
 

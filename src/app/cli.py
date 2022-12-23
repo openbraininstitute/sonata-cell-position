@@ -70,6 +70,7 @@ def export(
         mtypes=mtype,
         seed=seed,
         how=how,
+        use_cache=False,
         output_path=Path(output_path),
     )
     L.info("Done")

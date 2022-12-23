@@ -20,6 +20,8 @@ LOGGING_CONFIG = os.environ.get("LOGGING_CONFIG", "logging.yaml")
 LOGGING_LEVEL = os.environ.get("LOGGING_LEVEL")
 ALLOWED_EXTENSIONS = {".json", ".h5"}
 SAMPLING_RATIO = 0.01
+CACHE_CHECK_TIMEOUT = 300
+CACHE_CHECK_INTERVAL = 1
 MODALITIES = {
     "position": ["x", "y", "z"],
     "region": ["region"],
