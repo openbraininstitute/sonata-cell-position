@@ -1,5 +1,5 @@
 """Service functions."""
-import json
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set
 
@@ -12,21 +12,6 @@ from numpy.random import default_rng
 from app.constants import DTYPES, MODALITIES, REGION_MAP, SAMPLING_RATIO
 from app.logger import L
 from app.utils import ensure_list, modality_names_to_columns
-
-
-def _ensure_population_name(name: Optional[str], names: Iterable[str]) -> str:
-    """Return the population name if specified, or if there is only one population.
-
-    Raises:
-        ValueError if the population name is not specified and there are multiple populations.
-    """
-    if name:
-        return name
-    names = list(names)
-    if len(names) > 1:
-        # population_names is an unordered set, so we don't know which one to choose
-        raise ValueError("population_name must be specified when there are multiple populations")
-    return names[0]
 
 
 def _get_node_population(
@@ -42,20 +27,39 @@ def _get_node_population(
         The loaded node population.
 
     """
+    population_names = {population_name} if population_name else None
+    node_populations = list(_get_node_populations(path, population_names))
+    if len(node_populations) > 1 and not population_name:
+        # population_names is an unordered set, so we don't know which one to choose
+        raise ValueError("population_name must be specified when there are multiple populations")
+    if len(node_populations) != 1:
+        raise RuntimeError("Exactly one node population should have been selected")
+    return node_populations[0]
+
+
+def _get_node_populations(
+    path: Path, population_names: Optional[Iterable[str]] = None
+) -> Iterator[libsonata.NodePopulation]:
+    """Load and yield libsonata node populations.
+
+        Args:
+        path: path to the circuit config file, or nodes file.
+        population_names: names of the node populations to load, or None to load all of them.
+
+    Yields:
+        The loaded node populations.
+
+    """
     if path.suffix == ".json":
-        try:
-            config = libsonata.CircuitConfig.from_file(path)
-            population_name = _ensure_population_name(population_name, config.population_names)
-            return config.node_population(population_name)
-        except libsonata.SonataError:
-            L.warning("Trying to manually parse the circuit configuration")
-            config = json.loads(Path(path).read_text(encoding="utf-8"))
-            manifest = config.get("manifest", {})
-            path = Path(config["networks"]["nodes"][0]["nodes_file"])
-            path = Path(*(manifest.get(part, part) for part in path.parts))
-    ns = libsonata.NodeStorage(path)
-    population_name = _ensure_population_name(population_name, ns.population_names)
-    return ns.open_population(population_name)
+        # sonata circuit config
+        config = libsonata.CircuitConfig.from_file(path)
+        for population_name in population_names or config.node_populations:
+            yield config.node_population(population_name)
+    else:
+        # hdf5 nodes file
+        ns = libsonata.NodeStorage(path)
+        for population_name in population_names or ns.population_names:
+            yield ns.open_population(population_name)
 
 
 def _filter_by_key(
@@ -211,6 +215,7 @@ def downsample(
     attributes: Optional[Iterable[str]] = None,
 ):
     """Downsample a node file."""
+
     # pylint: disable=too-many-locals
     def _filter_attributes(names: Set[str]):
         if attributes:
@@ -219,17 +224,15 @@ def downsample(
 
     rng = default_rng(seed)
     str_dt = h5py.special_dtype(vlen=str)
-    ns = libsonata.NodeStorage(input_path)
     L.info("Writing file: %s", output_path)
     with h5py.File(output_path, "w") as h5f:
-        population_names = {population_name} if population_name else ns.population_names
-        for pop_name in population_names:
-            node_population = ns.open_population(pop_name)
+        population_names = {population_name} if population_name else None
+        for node_population in _get_node_populations(input_path, population_names):
             high = len(node_population)
             ids = rng.choice(high, size=int(high * sampling_ratio), replace=False, shuffle=False)
             ids.sort()
             selection = libsonata.Selection(ids)
-            population_group = h5f.create_group(f"/nodes/{pop_name}")
+            population_group = h5f.create_group(f"/nodes/{node_population.name}")
             population_group.create_dataset("node_type_id", data=np.full(len(ids), -1))
             group = population_group.create_group("0")
             for name in _filter_attributes(node_population.enumeration_names):
