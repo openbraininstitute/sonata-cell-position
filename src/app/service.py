@@ -11,7 +11,7 @@ from numpy.random import default_rng
 
 from app.constants import DTYPES, MODALITIES, REGION_MAP, SAMPLING_RATIO
 from app.logger import L
-from app.utils import ensure_list, modality_names_to_columns
+from app.utils import ensure_dtypes, ensure_list, modality_names_to_columns
 
 
 def _get_node_population(
@@ -133,14 +133,12 @@ def _export_dataframe(
     # discard the ids in the index
     df.index = pd.RangeIndex(len(df))
     # ensure the desired dtypes
-    df = df.astype(DTYPES)
+    df = ensure_dtypes(df, dtypes=DTYPES)
     return df
 
 
-def _region_acronyms(regions: list[str] | None) -> list[str] | None:
+def _region_acronyms(regions: list[str]) -> list[str]:
     """Return acronyms of regions in `regions`."""
-    if regions is None:
-        return None
     result: set[str] = set()
     for region in regions:
         try:
@@ -178,7 +176,11 @@ def export(
     node_population = _get_node_population(input_path, population_name)
     modality_names = modality_names or list(MODALITIES)
     columns = modality_names_to_columns(modality_names)
-    query = {"region": _region_acronyms(regions), "mtype": mtypes}
+    query = {}
+    if mtypes:
+        query["mtype"] = mtypes
+    if regions:
+        query["region"] = _region_acronyms(regions)
     return _export_dataframe(
         node_population=node_population,
         sampling_ratio=sampling_ratio,

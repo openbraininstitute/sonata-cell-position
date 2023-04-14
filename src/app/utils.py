@@ -5,12 +5,25 @@ from functools import partial
 from itertools import chain
 from typing import Any
 
+import pandas as pd
+
 from app.constants import MODALITIES
 
 
 def ensure_list(x: Any) -> list[Any]:
     """Return x if x is already a list, [x] otherwise."""
     return list(x) if isinstance(x, list | tuple) else [x]
+
+
+def ensure_dtypes(df: pd.DataFrame, dtypes: dict[str, Any]) -> pd.DataFrame:
+    """Return a copy of the DataFrame with the desired dtypes depending on the column names.
+
+    If no conversions are needed, return the original DataFrame.
+    """
+    dtypes = {k: dtypes[k] for k in df.columns if k in dtypes and dtypes[k] != df.dtypes.at[k]}
+    if not dtypes:
+        return df
+    return df.astype(dtypes)
 
 
 def modality_names_to_columns(modality_names: list[str] | None = None) -> list[str]:

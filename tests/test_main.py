@@ -30,6 +30,30 @@ def test_version_get(monkeypatch):
     assert response.json() == {"project": project_path, "commit_sha": commit_sha}
 
 
+def test_read_circuit():
+    input_path = TEST_DATA_DIR / "circuit" / "circuit_config.json"
+
+    response = client.get(
+        "/circuit",
+        params={
+            "input_path": str(input_path),
+            "population_name": "default",
+            "how": "json",
+            "modality": ["position", "mtype"],
+            "sampling_ratio": 0.5,
+            "seed": 102,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "mtype": {"0": "L6_Y"},
+        "x": {"0": 201.0},
+        "y": {"0": 202.0},
+        "z": {"0": 203.0},
+    }
+
+
 def test_count_all():
     input_path = TEST_DATA_DIR / "circuit" / "circuit_config.json"
 
