@@ -30,6 +30,32 @@ def test_version_get(monkeypatch):
     assert response.json() == {"project": project_path, "commit_sha": commit_sha}
 
 
+def test_count_all():
+    input_path = TEST_DATA_DIR / "circuit" / "circuit_config.json"
+
+    response = client.get("/circuit/count", params={"input_path": str(input_path)})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "nodes": {"populations": {"default": {"size": 3}, "default2": {"size": 4}}}
+    }
+
+
+def test_count_population():
+    input_path = TEST_DATA_DIR / "circuit" / "circuit_config.json"
+
+    response = client.get(
+        "/circuit/count",
+        params={
+            "input_path": str(input_path),
+            "population_name": ["default"],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"nodes": {"populations": {"default": {"size": 3}}}}
+
+
 def test_node_sets_get():
     input_path = TEST_DATA_DIR / "circuit" / "circuit_config.json"
 

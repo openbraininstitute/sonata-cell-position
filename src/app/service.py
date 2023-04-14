@@ -200,8 +200,7 @@ def count(input_path: Path, population_names: list[str] | None = None) -> dict:
 
     """
     populations = {}
-    for name in population_names or [None]:  # type: ignore[list-item]
-        node_population = _get_node_population(input_path, population_name=name)
+    for node_population in _get_node_populations(input_path, population_names):
         populations[node_population.name] = {"size": node_population.size}
     return {"nodes": {"populations": populations}}
 
