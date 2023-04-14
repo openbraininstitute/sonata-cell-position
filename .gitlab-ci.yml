@@ -1,10 +1,12 @@
 include:
-  - project: cs/gitlabci-templates
-    file: /build-image-using-kaniko.yml
-  - project: nse/ci
-    file:
-      - /ci/lib/tox-docker.yml
-      - /ci/jobs/lint.yml
+- project: cs/gitlabci-templates
+  file: /build-image-using-kaniko.yml
+- project: nse/ci
+  file:
+  - /ci/lib/tox-docker.yml
+  - /ci/jobs/lint.yml
+  - /ci/jobs/coverage.yml
+  - /ci/jobs/check-packaging.yml
 
 
 variables:
@@ -27,8 +29,8 @@ deploy-prod:
     CI_COMMIT_SHORT_SHA: $CI_COMMIT_SHORT_SHA
     REGISTRY_IMAGE_TAG: $CI_COMMIT_SHORT_SHA-$(date +%s)
     KANIKO_EXTRA_ARGS:
-        --build-arg PROJECT_PATH=${CI_PROJECT_PATH}
-        --build-arg COMMIT_SHA=${CI_COMMIT_SHA}
+      --build-arg PROJECT_PATH=${CI_PROJECT_PATH}
+      --build-arg COMMIT_SHA=${CI_COMMIT_SHA}
   rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule"'
-    - if: '$DEPLOY == "true"'
+  - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "schedule"'
+  - if: '$DEPLOY == "true"'

@@ -1,14 +1,13 @@
 """Logger configuration."""
 import logging.config
 from pathlib import Path
-from typing import Dict
 
 import yaml
 
 from app.constants import LOGGING_CONFIG, LOGGING_LEVEL
 
 
-def _read_config_file() -> Dict:
+def _read_config_file() -> dict:
     path = Path(LOGGING_CONFIG)
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 

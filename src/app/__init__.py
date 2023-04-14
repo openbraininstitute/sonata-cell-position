@@ -1,0 +1,1 @@
+"""Sonata Cell Position app."""

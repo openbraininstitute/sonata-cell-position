@@ -2,7 +2,6 @@
 import logging
 import re
 from pathlib import Path
-from typing import List, Optional
 
 import click
 
@@ -51,11 +50,11 @@ def cli():
 def export(
     input_path: str,
     output_path: str,
-    population_name: Optional[str],
+    population_name: str | None,
     sampling_ratio: float,
-    modality: Optional[List[str]],
-    region: Optional[List[str]],
-    mtype: Optional[List[str]],
+    modality: list[str] | None,
+    region: list[str] | None,
+    mtype: list[str] | None,
     seed: int,
     how: str,
 ) -> None:
@@ -85,7 +84,7 @@ def export(
 def downsample(
     input_path: str,
     output_path: str,
-    population_name: Optional[str],
+    population_name: str | None,
     sampling_ratio: float,
     seed: int,
 ) -> None:

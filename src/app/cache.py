@@ -5,7 +5,7 @@ import os
 import shutil
 import time
 from pathlib import Path
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from app import service
 from app.constants import CACHE_CHECK_INTERVAL, CACHE_CHECK_TIMEOUT, SAMPLING_RATIO
@@ -17,14 +17,14 @@ class CacheParams(TypedDict, total=False):
     """Cache parameters."""
 
     input_path: Path
-    population_name: Optional[str]
+    population_name: str | None
     sampling_ratio: float
     seed: int
 
 
 def check_cache(
     input_path: Path,
-    population_name: Optional[str],
+    population_name: str | None,
     sampling_ratio: float,
     seed: int,
 ) -> CacheParams:

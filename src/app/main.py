@@ -2,7 +2,6 @@
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,7 +43,7 @@ async def root():
 
 
 @app.get("/version")
-async def version() -> Dict:
+async def version() -> dict:
     """Version endpoint."""
     return {
         "project": PROJECT_PATH,
@@ -55,10 +54,10 @@ async def version() -> Dict:
 @app.get("/circuit", response_class=FileResponse)
 async def read_circuit(
     input_path: Path = Depends(_validate_path),
-    region: Optional[List[str]] = Query(default=None),
-    mtype: Optional[List[str]] = Query(default=None),
-    modality: Optional[List[str]] = Query(default=None),
-    population_name: Optional[str] = None,
+    region: list[str] | None = Query(default=None),
+    mtype: list[str] | None = Query(default=None),
+    modality: list[str] | None = Query(default=None),
+    population_name: str | None = None,
     sampling_ratio: float = 0.01,
     seed: int = 0,
     how: str = Query(default=DEFAULT_SERIALIZER, regex=SERIALIZERS_REGEX),
@@ -98,7 +97,7 @@ async def read_circuit(
 @app.get("/circuit/downsample")
 async def downsample(
     input_path: Path = Depends(_validate_path),
-    population_name: Optional[str] = None,
+    population_name: str | None = None,
     sampling_ratio: float = 0.01,
     seed: int = 0,
 ) -> FileResponse:
@@ -129,8 +128,8 @@ async def downsample(
 @app.get("/circuit/count")
 def count(
     input_path: Path = Depends(_validate_path),
-    population_name: Optional[List[str]] = Query(default=None),
-) -> Dict:
+    population_name: list[str] | None = Query(default=None),
+) -> dict:
     """Return the number of nodes in a circuit."""
     # not cpu intensive, it can run in the current thread
     return service.count(input_path=input_path, population_names=population_name)
@@ -138,11 +137,11 @@ def count(
 
 def read_circuit_job(
     input_path: Path,
-    population_name: Optional[str],
+    population_name: str | None,
     sampling_ratio: float,
-    modality_names: Optional[List[str]],
-    regions: Optional[List[str]],
-    mtypes: Optional[List[str]],
+    modality_names: list[str] | None,
+    regions: list[str] | None,
+    mtypes: list[str] | None,
     seed: int,
     how: str,
     use_cache: bool,
@@ -170,7 +169,7 @@ def read_circuit_job(
 def downsample_job(
     input_path: Path,
     output_path: Path,
-    population_name: Optional[str],
+    population_name: str | None,
     sampling_ratio: float,
     seed: int,
 ) -> None:

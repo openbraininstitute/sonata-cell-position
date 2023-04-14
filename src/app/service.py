@@ -1,7 +1,7 @@
 """Service functions."""
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set
+from typing import Any
 
 import h5py
 import libsonata
@@ -15,7 +15,7 @@ from app.utils import ensure_list, modality_names_to_columns
 
 
 def _get_node_population(
-    path: Path, population_name: Optional[str] = None
+    path: Path, population_name: str | None = None
 ) -> libsonata.NodePopulation:
     """Load and return a libsonata node population.
 
@@ -38,11 +38,11 @@ def _get_node_population(
 
 
 def _get_node_populations(
-    path: Path, population_names: Optional[Iterable[str]] = None
+    path: Path, population_names: Iterable[str] | None = None
 ) -> Iterator[libsonata.NodePopulation]:
     """Load and yield libsonata node populations.
 
-        Args:
+    Args:
         path: path to the circuit config file, or nodes file.
         population_names: names of the node populations to load, or None to load all of them.
 
@@ -66,7 +66,7 @@ def _filter_by_key(
     node_population: libsonata.NodePopulation,
     df: pd.DataFrame,
     key: str,
-    values: List[Any],
+    values: list[Any],
     keep: bool,
 ) -> pd.DataFrame:
     """Filter a DataFrame based on the given key and values.
@@ -97,8 +97,8 @@ def _filter_by_key(
 
 def _export_dataframe(
     node_population: libsonata.NodePopulation,
-    query: Dict[str, Any],
-    columns: List[str],
+    query: dict[str, Any],
+    columns: list[str],
     sampling_ratio: float = SAMPLING_RATIO,
     seed: int = 0,
 ) -> pd.DataFrame:
@@ -137,11 +137,11 @@ def _export_dataframe(
     return df
 
 
-def _region_acronyms(regions: Optional[List[str]]) -> Optional[List[str]]:
+def _region_acronyms(regions: list[str] | None) -> list[str] | None:
     """Return acronyms of regions in `regions`."""
     if regions is None:
         return None
-    result: Set[str] = set()
+    result: set[str] = set()
     for region in regions:
         try:
             ids = REGION_MAP.find(int(region), "id", with_descendants=True)
@@ -153,11 +153,11 @@ def _region_acronyms(regions: Optional[List[str]]) -> Optional[List[str]]:
 
 def export(
     input_path: Path,
-    population_name: Optional[str] = None,
+    population_name: str | None = None,
     sampling_ratio: float = SAMPLING_RATIO,
-    modality_names: Optional[List[str]] = None,
-    regions: Optional[List[str]] = None,
-    mtypes: Optional[List[str]] = None,
+    modality_names: list[str] | None = None,
+    regions: list[str] | None = None,
+    mtypes: list[str] | None = None,
     seed: int = 0,
 ) -> pd.DataFrame:
     """Return a DataFrame of nodes attributes.
@@ -188,7 +188,7 @@ def export(
     )
 
 
-def count(input_path: Path, population_names: Optional[List[str]] = None) -> Dict:
+def count(input_path: Path, population_names: list[str] | None = None) -> dict:
     """Return the number of nodes per population in the given circuit.
 
     Args:
@@ -209,15 +209,15 @@ def count(input_path: Path, population_names: Optional[List[str]] = None) -> Dic
 def downsample(
     input_path: Path,
     output_path: Path,
-    population_name: Optional[str],
+    population_name: str | None,
     sampling_ratio: float = 0.01,
     seed: int = 0,
-    attributes: Optional[Iterable[str]] = None,
+    attributes: Iterable[str] | None = None,
 ):
     """Downsample a node file."""
 
     # pylint: disable=too-many-locals
-    def _filter_attributes(names: Set[str]):
+    def _filter_attributes(names: set[str]):
         if attributes:
             names = names.intersection(attributes)
         yield from sorted(names)

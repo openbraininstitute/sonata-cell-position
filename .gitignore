@@ -7,5 +7,6 @@ coverage.xml
 build
 dist
 venv
+tmp
 .eggs
 .idea

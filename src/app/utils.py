@@ -3,17 +3,17 @@ import asyncio
 import concurrent.futures
 from functools import partial
 from itertools import chain
-from typing import Any, List, Optional
+from typing import Any
 
 from app.constants import MODALITIES
 
 
-def ensure_list(x: Any) -> List[Any]:
+def ensure_list(x: Any) -> list[Any]:
     """Return x if x is already a list, [x] otherwise."""
-    return list(x) if isinstance(x, (list, tuple)) else [x]
+    return list(x) if isinstance(x, list | tuple) else [x]
 
 
-def modality_names_to_columns(modality_names: Optional[List[str]] = None) -> List[str]:
+def modality_names_to_columns(modality_names: list[str] | None = None) -> list[str]:
     """Convert a list of modality names to columns."""
     modality_names = modality_names or list(MODALITIES)
     return list(chain.from_iterable(MODALITIES[modality] for modality in modality_names))

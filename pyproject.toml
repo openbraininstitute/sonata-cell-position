@@ -1,14 +1,14 @@
 [build-system]
 requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta:__legacy__"
+build-backend = "setuptools.build_meta"
 
 
 [project]
 name = "sonata-cell-position"
-version = "2022.12.0"
+version = "2023.04.0"
 description = "sonata-cell-position web API"
-requires-python = ">=3.9"
-
+readme = "README.rst"
+requires-python = ">=3.10"
 dependencies = [
     "fastapi",
     "h5py",
@@ -20,14 +20,12 @@ dependencies = [
     "pyyaml",
     "uvicorn[standard]",
     "voxcell",
-    #"randomaccessbuffer @ git+ssh://git@bbpgitlab.epfl.ch/dke/randomaccessbufferpy.git",
 ]
 
 
 [project.optional-dependencies]
-test = [
-    "pytest",
-    "pytest-cov[all]",
+ram = [
+    "randomaccessbuffer @ git+ssh://git@bbpgitlab.epfl.ch/dke/randomaccessbufferpy.git",
 ]
 cli = [
     "click",
@@ -35,15 +33,27 @@ cli = [
 
 [tool.black]
 line-length = 100
-target-version = [
-    'py39',
-]
+target-version = ['py310']
 include = 'src/.*\.py$|tests/.*\.py$|doc/source/conf\.py$|setup\.py$'
 
 
 [tool.isort]
 profile = "black"
 line_length = 100
+
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = [
+    "D", # pydocstyle
+    "E", # pycodestyle
+    "F", # pyflakes
+    "UP", # pyupgrade
+]
+
+[tool.ruff.pydocstyle]
+convention = "google"
 
 
 [tool.pylint."messages control"]

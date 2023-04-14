@@ -1,11 +1,11 @@
 """Serialization functions."""
 import tempfile
+from collections.abc import Callable, Iterable, Iterator
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, TypedDict
+from typing import Any, TypedDict
 
 import pandas as pd
 import pyarrow as pa
-import randomaccessbuffer as rab  # pylint: disable=import-error
 from pyarrow import fs
 
 from app.constants import MODALITIES
@@ -14,8 +14,8 @@ from app.utils import modality_names_to_columns
 
 
 def _data_generator_parquet(
-    modality_names: List[str], df: pd.DataFrame, tmp_dir: Path
-) -> Iterator[Dict[str, Any]]:
+    modality_names: list[str], df: pd.DataFrame, tmp_dir: Path
+) -> Iterator[dict[str, Any]]:
     for modality_name in modality_names:
         wanted = MODALITIES[modality_name]
         tmp_file = tmp_dir / f"{modality_name}.tmp"
@@ -30,8 +30,8 @@ def _data_generator_parquet(
 
 
 def _data_generator_rab(
-    modality_names: List[str], df: pd.DataFrame, tmp_dir: Path
-) -> Iterator[Dict[str, Any]]:
+    modality_names: list[str], df: pd.DataFrame, tmp_dir: Path
+) -> Iterator[dict[str, Any]]:
     # pylint: disable=unused-argument
     for modality_name in modality_names:
         wanted = MODALITIES[modality_name]
@@ -45,7 +45,9 @@ def _data_generator_rab(
         )
 
 
-def _write_rab(filename: Path, data: Iterable[Dict[str, Any]]) -> None:
+def _write_rab(filename: Path, data: Iterable[dict[str, Any]]) -> None:
+    import randomaccessbuffer as rab  # pylint: disable=import-error,import-outside-toplevel
+
     rab_instance = rab.RandomAccessBuffer()
     for d in data:
         L.info("Generating and adding dataset %s to RAB file", d.get("dataset_name"))
@@ -55,7 +57,7 @@ def _write_rab(filename: Path, data: Iterable[Dict[str, Any]]) -> None:
 
 
 def to_rab(
-    df: pd.DataFrame, modality_names: List[str], output_path: Path, attrs: Optional[str]
+    df: pd.DataFrame, modality_names: list[str], output_path: Path, attrs: str | None
 ) -> None:
     """Write a DataFrame to file in RAB format."""
     generator = {
@@ -68,7 +70,7 @@ def to_rab(
 
 
 def to_parquet(
-    df: pd.DataFrame, modality_names: List[str], output_path: Path, attrs: Optional[str]
+    df: pd.DataFrame, modality_names: list[str], output_path: Path, attrs: str | None
 ) -> None:
     """Write a DataFrame to file in parquet format."""
     # pylint: disable=unused-argument
@@ -77,7 +79,7 @@ def to_parquet(
 
 
 def to_json(
-    df: pd.DataFrame, modality_names: List[str], output_path: Path, attrs: Optional[str]
+    df: pd.DataFrame, modality_names: list[str], output_path: Path, attrs: str | None
 ) -> None:
     """Write a DataFrame to file in JSON format."""
     columns = modality_names_to_columns(modality_names)
@@ -86,7 +88,7 @@ def to_json(
 
 
 def to_arrow(
-    df: pd.DataFrame, modality_names: List[str], output_path: Path, attrs: Optional[str]
+    df: pd.DataFrame, modality_names: list[str], output_path: Path, attrs: str | None
 ) -> None:
     """Write a DataFrame to file in arrow format."""
     # pylint: disable=unused-argument
@@ -97,9 +99,7 @@ def to_arrow(
             writer.write_table(table)
 
 
-def write(
-    df: pd.DataFrame, modality_names: Optional[List[str]], output_path: Path, how: str
-) -> None:
+def write(df: pd.DataFrame, modality_names: list[str] | None, output_path: Path, how: str) -> None:
     """Write a DataFrame to file."""
     how, _, attrs = how.partition(":")
     serializer = SERIALIZERS[how]["function"]
@@ -122,12 +122,12 @@ def get_extension(how: str) -> str:
 class Serializer(TypedDict):
     """Serializer type."""
 
-    function: Callable[[pd.DataFrame, List[str], Path, Optional[str]], None]
+    function: Callable[[pd.DataFrame, list[str], Path, str | None], None]
     content_type: str
     extension: str
 
 
-SERIALIZERS: Dict[str, Serializer] = {
+SERIALIZERS: dict[str, Serializer] = {
     "arrow": {
         "function": to_arrow,
         "content_type": "application/vnd.apache.arrow.file",
