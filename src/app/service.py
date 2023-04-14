@@ -252,3 +252,27 @@ def downsample(
                 data = node_population.get_attribute(name, selection)
                 dtype = str_dt if data.dtype == object else data.dtype
                 group.create_dataset(name, data=data, dtype=dtype)
+
+
+def get_node_sets(input_path: Path) -> dict:
+    """Return the names of the available node_sets.
+
+    Args:
+        input_path: path to the circuit config file.
+
+    Returns:
+        A dict containing the node_sets from the circuit_config.
+
+    """
+    cc = libsonata.CircuitConfig.from_file(input_path)
+    try:
+        ns = libsonata.NodeSets.from_file(cc.node_sets_path)
+        node_sets = sorted(ns.names)
+    except (libsonata.SonataError, RuntimeError) as ex:
+        # Possible errors:
+        # - RuntimeError: Path `` is not a file (if the key "node_sets_file" is missing)
+        # - RuntimeError: Path `/path/to/node_sets.json` is not a file (if the file doesn't exist)
+        # - RuntimeError: [json.exception.parse_error.101] parse error... (if the file is invalid)
+        L.warning("Error with node_sets for circuit %r: %r, fallback to empty list", input_path, ex)
+        node_sets = []
+    return {"node_sets": node_sets}

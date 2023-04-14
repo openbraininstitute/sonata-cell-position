@@ -135,6 +135,13 @@ def count(
     return service.count(input_path=input_path, population_names=population_name)
 
 
+@app.get("/circuit/node_sets")
+def node_sets(input_path: Path = Depends(_validate_path)) -> dict:
+    """Return the sorted list of node_sets in a circuit."""
+    # not cpu intensive, it can run in the current thread
+    return service.get_node_sets(input_path=input_path)
+
+
 def read_circuit_job(
     input_path: Path,
     population_name: str | None,
