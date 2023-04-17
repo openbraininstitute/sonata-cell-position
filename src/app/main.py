@@ -1,6 +1,7 @@
 """API entry points."""
 import shutil
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Query
@@ -9,7 +10,7 @@ from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 
 from app import cache, serialize, service, utils
-from app.constants import ALLOWED_EXTENSIONS, COMMIT_SHA, DEBUG, ORIGINS, PROJECT_PATH
+from app.constants import COMMIT_SHA, DEBUG, ORIGINS, PROJECT_PATH
 from app.logger import L
 from app.serialize import DEFAULT_SERIALIZER, SERIALIZERS_REGEX, get_content_type, get_extension
 
@@ -23,14 +24,17 @@ app.add_middleware(
 )
 
 
-def _validate_path(input_path: Path = Query(...)) -> Path:
-    if input_path.suffix not in ALLOWED_EXTENSIONS:
-        L.warning("Path forbidden: %s", input_path)
-        raise HTTPException(status_code=403, detail="Path forbidden")
-    if not input_path.exists():
-        L.warning("Path not found: %s", input_path)
-        raise HTTPException(status_code=404, detail="Path not found")
-    return input_path
+def _validate_path(extensions: set[str] | None = None) -> Callable[[Path], Path]:
+    def validate(input_path: Path = Query(...)) -> Path:
+        if extensions and input_path.suffix not in extensions:
+            L.warning("Path forbidden: %s", input_path)
+            raise HTTPException(status_code=403, detail="Path forbidden")
+        if not input_path.exists():
+            L.warning("Path not found: %s", input_path)
+            raise HTTPException(status_code=404, detail="Path not found")
+        return input_path
+
+    return validate
 
 
 @app.get("/")
@@ -53,7 +57,7 @@ async def version() -> dict:
 
 @app.get("/circuit", response_class=FileResponse)
 async def read_circuit(
-    input_path: Path = Depends(_validate_path),
+    input_path: Path = Depends(_validate_path({"json", ".h5"})),
     region: list[str] | None = Query(default=None),
     mtype: list[str] | None = Query(default=None),
     modality: list[str] | None = Query(default=None),
@@ -96,7 +100,7 @@ async def read_circuit(
 
 @app.get("/circuit/downsample")
 async def downsample(
-    input_path: Path = Depends(_validate_path),
+    input_path: Path = Depends(_validate_path({".json", ".h5"})),
     population_name: str | None = None,
     sampling_ratio: float = 0.01,
     seed: int = 0,
@@ -127,7 +131,7 @@ async def downsample(
 
 @app.get("/circuit/count")
 def count(
-    input_path: Path = Depends(_validate_path),
+    input_path: Path = Depends(_validate_path({".json", ".h5"})),
     population_name: list[str] | None = Query(default=None),
 ) -> dict:
     """Return the number of nodes in a circuit."""
@@ -136,7 +140,7 @@ def count(
 
 
 @app.get("/circuit/node_sets")
-def node_sets(input_path: Path = Depends(_validate_path)) -> dict:
+def node_sets(input_path: Path = Depends(_validate_path({".json"}))) -> dict:
     """Return the sorted list of node_sets in a circuit."""
     # not cpu intensive, it can run in the current thread
     return service.get_node_sets(input_path=input_path)
