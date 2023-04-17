@@ -34,6 +34,7 @@ def _validate_path(extensions: set[str] | None = None) -> Callable[[Path], Path]
             raise HTTPException(status_code=404, detail="Path not found")
         return input_path
 
+    assert not extensions or all(ext.startswith(".") for ext in extensions)
     return validate
 
 
@@ -57,7 +58,7 @@ async def version() -> dict:
 
 @app.get("/circuit", response_class=FileResponse)
 async def read_circuit(
-    input_path: Path = Depends(_validate_path({"json", ".h5"})),
+    input_path: Path = Depends(_validate_path({".json", ".h5"})),
     region: list[str] | None = Query(default=None),
     mtype: list[str] | None = Query(default=None),
     modality: list[str] | None = Query(default=None),
