@@ -1,5 +1,3 @@
-import io
-
 import pandas as pd
 import pyarrow as pa
 import pytest
@@ -75,61 +73,3 @@ def test_write_parquet(tmp_path):
 
     result_df = pd.read_parquet(output_path, engine="pyarrow")
     assert_frame_equal(result_df, df)
-
-
-def test_write_rab_parquet(tmp_path):
-    import randomaccessbuffer as rab
-
-    df = pd.DataFrame({"x": [10], "y": [20], "z": [30], "mtype": ["L2_X"]})
-    output_path = tmp_path / "output.rab"
-
-    test_module.write(
-        df=df,
-        modality_names=["position", "mtype"],
-        output_path=output_path,
-        how="rab:parquet",
-    )
-
-    rab_instance = rab.RandomAccessBuffer()
-    rab_instance.read(output_path)
-    dataset_ids = rab_instance.listDatasets()
-    assert dataset_ids == ["position", "mtype"]
-    # test position
-    assert rab_instance.getDatasetType("position") == rab.TYPES.BUFFER
-    data, meta = rab_instance.getDataset("position")
-    result_df = pd.read_parquet(io.BytesIO(data), engine="pyarrow")
-    assert_frame_equal(result_df, df[["x", "y", "z"]])
-    # test mtype
-    assert rab_instance.getDatasetType("mtype") == rab.TYPES.BUFFER
-    data, meta = rab_instance.getDataset("mtype")
-    result_df = pd.read_parquet(io.BytesIO(data), engine="pyarrow")
-    assert_frame_equal(result_df, df[["mtype"]])
-
-
-def test_write_rab_rab(tmp_path):
-    import randomaccessbuffer as rab
-
-    df = pd.DataFrame({"x": [10], "y": [20], "z": [30], "mtype": ["L2_X"]})
-    output_path = tmp_path / "output.rab"
-
-    test_module.write(
-        df=df,
-        modality_names=["position", "mtype"],
-        output_path=output_path,
-        how="rab:rab",
-    )
-
-    rab_instance = rab.RandomAccessBuffer()
-    rab_instance.read(output_path)
-    dataset_ids = rab_instance.listDatasets()
-    assert dataset_ids == ["position", "mtype"]
-    # test position
-    assert rab_instance.getDatasetType("position") == rab.TYPES.DATAFRAME
-    result_df, meta = rab_instance.getDataset("position")
-    assert isinstance(result_df, pd.DataFrame)
-    assert_frame_equal(result_df, df[["x", "y", "z"]])
-    # test mtype
-    assert rab_instance.getDatasetType("mtype") == rab.TYPES.DATAFRAME
-    result_df, meta = rab_instance.getDataset("mtype")
-    assert isinstance(result_df, pd.DataFrame)
-    assert_frame_equal(result_df, df[["mtype"]])

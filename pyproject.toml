@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sonata-cell-position"
-version = "2023.04.0"
+version = "2023.04.1"
 description = "sonata-cell-position web API"
 readme = "README.rst"
 requires-python = ">=3.10"
@@ -24,9 +24,6 @@ dependencies = [
 
 
 [project.optional-dependencies]
-rab = [
-    "randomaccessbuffer @ git+ssh://git@bbpgitlab.epfl.ch/dke/randomaccessbufferpy.git",
-]
 cli = [
     "click",
 ]
