@@ -104,7 +104,7 @@ def write(df: pd.DataFrame, modality_names: list[str] | None, output_path: Path,
     how, _, attrs = how.partition(":")
     serializer = SERIALIZERS[how]["function"]
     modality_names = modality_names or list(MODALITIES)
-    return serializer(df, modality_names, output_path, attrs)
+    serializer(df, modality_names, output_path, attrs)
 
 
 def get_content_type(how: str) -> str:

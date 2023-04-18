@@ -47,18 +47,19 @@ def _get_node_populations(
         population_names: names of the node populations to load, or None to load all of them.
 
     Yields:
-        The loaded node populations.
+        The loaded node populations. The populations are sorted by name to ensure reproducibility
+        when working with multiple populations and specific seeds.
 
     """
     if path.suffix == ".json":
         # sonata circuit config
         config = libsonata.CircuitConfig.from_file(path)
-        for population_name in population_names or config.node_populations:
+        for population_name in sorted(population_names or config.node_populations):
             yield config.node_population(population_name)
     else:
         # hdf5 nodes file
         ns = libsonata.NodeStorage(path)
-        for population_name in population_names or ns.population_names:
+        for population_name in sorted(population_names or ns.population_names):
             yield ns.open_population(population_name)
 
 

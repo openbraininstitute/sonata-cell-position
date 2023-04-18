@@ -1,9 +1,11 @@
 import shutil
 
+import libsonata
+import pytest
 from fastapi.testclient import TestClient
 
 import app.main as test_module
-from tests.utils import TEST_DATA_DIR, edit_json
+from tests.utils import TEST_DATA_DIR, _assert_populations_equal, _get_node_population, edit_json
 
 client = TestClient(test_module.app)
 
@@ -30,9 +32,14 @@ def test_version_get(monkeypatch):
     assert response.json() == {"project": project_path, "commit_sha": commit_sha}
 
 
-def test_read_circuit():
-    input_path = TEST_DATA_DIR / "circuit" / "circuit_config.json"
-
+@pytest.mark.parametrize(
+    "input_path",
+    [
+        TEST_DATA_DIR / "circuit" / "circuit_config.json",
+        TEST_DATA_DIR / "circuit" / "nodes.h5",
+    ],
+)
+def test_read_circuit(input_path):
     response = client.get(
         "/circuit",
         params={
@@ -54,9 +61,57 @@ def test_read_circuit():
     }
 
 
-def test_count_all():
-    input_path = TEST_DATA_DIR / "circuit" / "circuit_config.json"
+@pytest.mark.parametrize(
+    "params, expected",
+    [
+        (
+            {"population_name": "default"},
+            {"default": [[0], [1]]},
+        ),
+        (
+            {},
+            {"default": [[0], [1]], "default2": [[0, 1], [0, 3]]},
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "input_path",
+    [
+        TEST_DATA_DIR / "circuit" / "circuit_config.json",
+        TEST_DATA_DIR / "circuit" / "nodes.h5",
+    ],
+)
+def test_downsample(tmp_path, input_path, params, expected):
+    response = client.get(
+        "/circuit/downsample",
+        params={
+            "input_path": str(input_path),
+            "sampling_ratio": 0.5,
+            "seed": 103,  # affects the randomly selected ids
+            **params,
+        },
+    )
 
+    assert response.status_code == 200
+    output_path = tmp_path / "nodes.h5"
+    output_path.write_bytes(response.content)
+    ns = libsonata.NodeStorage(output_path)
+    assert ns.population_names == set(expected)
+    for population_name, (ids1, ids2) in expected.items():
+        node_population = ns.open_population(population_name)
+        node_population_orig = _get_node_population(input_path, population_name)
+        assert node_population.size == len(ids1) == len(ids2)
+        _assert_populations_equal(node_population, node_population_orig, ids1, ids2)
+
+
+@pytest.mark.parametrize(
+    "input_path",
+    [
+        TEST_DATA_DIR / "circuit" / "circuit_config.json",
+        TEST_DATA_DIR / "circuit" / "nodes.h5",
+    ],
+)
+def test_count_all(input_path):
     response = client.get("/circuit/count", params={"input_path": str(input_path)})
 
     assert response.status_code == 200
@@ -65,9 +120,14 @@ def test_count_all():
     }
 
 
-def test_count_population():
-    input_path = TEST_DATA_DIR / "circuit" / "circuit_config.json"
-
+@pytest.mark.parametrize(
+    "input_path",
+    [
+        TEST_DATA_DIR / "circuit" / "circuit_config.json",
+        TEST_DATA_DIR / "circuit" / "nodes.h5",
+    ],
+)
+def test_count_population(input_path):
     response = client.get(
         "/circuit/count",
         params={

@@ -24,7 +24,7 @@ dependencies = [
 
 
 [project.optional-dependencies]
-ram = [
+rab = [
     "randomaccessbuffer @ git+ssh://git@bbpgitlab.epfl.ch/dke/randomaccessbufferpy.git",
 ]
 cli = [
@@ -101,3 +101,28 @@ min-similarity-lines = 25
 # for classes with dynamically set attributes). This supports the use of
 # qualified names.
 ignored-classes = []
+
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:nptyping",
+]
+
+
+[tool.coverage.paths]
+source = [
+    "src",
+    "*/site-packages",
+]
+
+[tool.coverage.run]
+branch = true
+parallel = false
+
+[tool.coverage.report]
+show_missing = true
+precision = 0
+fail_under = 80
