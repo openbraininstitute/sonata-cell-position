@@ -27,7 +27,7 @@ def ensure_dtypes(df: pd.DataFrame, dtypes: dict[str, Any]) -> pd.DataFrame:
 
 
 def modality_names_to_columns(modality_names: list[str] | None = None) -> list[str]:
-    """Convert a list of modality names to columns."""
+    """Convert a list of modality names to attributes."""
     modality_names = modality_names or list(MODALITIES)
     return list(chain.from_iterable(MODALITIES[modality] for modality in modality_names))
 

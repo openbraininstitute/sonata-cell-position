@@ -32,13 +32,6 @@ def test_version_get(monkeypatch):
     assert response.json() == {"project": project_path, "commit_sha": commit_sha}
 
 
-@pytest.mark.parametrize(
-    "input_path",
-    [
-        TEST_DATA_DIR / "circuit" / "circuit_config.json",
-        TEST_DATA_DIR / "circuit" / "nodes.h5",
-    ],
-)
 def test_read_circuit(input_path):
     response = client.get(
         "/circuit",
@@ -74,13 +67,6 @@ def test_read_circuit(input_path):
         ),
     ],
 )
-@pytest.mark.parametrize(
-    "input_path",
-    [
-        TEST_DATA_DIR / "circuit" / "circuit_config.json",
-        TEST_DATA_DIR / "circuit" / "nodes.h5",
-    ],
-)
 def test_downsample(tmp_path, input_path, params, expected):
     response = client.get(
         "/circuit/downsample",
@@ -104,13 +90,6 @@ def test_downsample(tmp_path, input_path, params, expected):
         _assert_populations_equal(node_population, node_population_orig, ids1, ids2)
 
 
-@pytest.mark.parametrize(
-    "input_path",
-    [
-        TEST_DATA_DIR / "circuit" / "circuit_config.json",
-        TEST_DATA_DIR / "circuit" / "nodes.h5",
-    ],
-)
 def test_count_all(input_path):
     response = client.get("/circuit/count", params={"input_path": str(input_path)})
 
@@ -120,13 +99,6 @@ def test_count_all(input_path):
     }
 
 
-@pytest.mark.parametrize(
-    "input_path",
-    [
-        TEST_DATA_DIR / "circuit" / "circuit_config.json",
-        TEST_DATA_DIR / "circuit" / "nodes.h5",
-    ],
-)
 def test_count_population(input_path):
     response = client.get(
         "/circuit/count",

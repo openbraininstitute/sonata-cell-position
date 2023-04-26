@@ -5,16 +5,9 @@ import pytest
 from click.testing import CliRunner
 
 import app.cli as test_module
-from tests.utils import TEST_DATA_DIR, _assert_populations_equal, _get_node_population, load_json
+from tests.utils import _assert_populations_equal, _get_node_population, load_json
 
 
-@pytest.mark.parametrize(
-    "input_path",
-    [
-        TEST_DATA_DIR / "circuit" / "circuit_config.json",
-        TEST_DATA_DIR / "circuit" / "nodes.h5",
-    ],
-)
 def test_export(tmp_path, input_path):
     output_path = tmp_path / "output.json"
     assert not output_path.exists()
@@ -55,13 +48,6 @@ def test_export(tmp_path, input_path):
             [],
             {"default": [[0], [1]], "default2": [[0, 1], [0, 3]]},
         ),
-    ],
-)
-@pytest.mark.parametrize(
-    "input_path",
-    [
-        TEST_DATA_DIR / "circuit" / "circuit_config.json",
-        TEST_DATA_DIR / "circuit" / "nodes.h5",
     ],
 )
 def test_downsample(tmp_path, input_path, params, expected):

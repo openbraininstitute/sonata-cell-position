@@ -161,19 +161,22 @@ def read_circuit_job(
 ) -> None:
     """Function that can be pickled and executed in a subprocess."""
     # pylint: disable=too-many-arguments
-    cache_params: cache.CacheParams = {
-        "input_path": input_path,
-        "population_name": population_name,
-        "sampling_ratio": sampling_ratio,
-        "seed": seed,
-    }
+    cache_params = cache.CacheParams(
+        input_path=input_path,
+        population_name=population_name,
+        sampling_ratio=sampling_ratio,
+        seed=seed,
+    )
     if use_cache:
-        cache_params.update(cache.check_cache(**cache_params))
+        cache_params = cache.check_cache(cache_params)
     df = service.export(
+        input_path=cache_params.input_path,
+        population_name=cache_params.population_name,
+        sampling_ratio=cache_params.sampling_ratio,
         modality_names=modality_names,
         regions=regions,
         mtypes=mtypes,
-        **cache_params,
+        seed=cache_params.seed,
     )
     serialize.write(df=df, modality_names=modality_names, output_path=output_path, how=how)
 
