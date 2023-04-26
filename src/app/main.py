@@ -13,6 +13,8 @@ from app import cache, serialize, service, utils
 from app.constants import COMMIT_SHA, DEBUG, ORIGINS, PROJECT_PATH
 from app.logger import L
 from app.serialize import DEFAULT_SERIALIZER, SERIALIZERS_REGEX, get_content_type, get_extension
+from app.service import _region_acronyms
+from app.utils import modality_names_to_columns
 
 app = FastAPI(debug=DEBUG)
 app.add_middleware(
@@ -161,21 +163,27 @@ def read_circuit_job(
 ) -> None:
     """Function that can be pickled and executed in a subprocess."""
     # pylint: disable=too-many-arguments
+    attributes = modality_names_to_columns(modality_names)
     cache_params = cache.CacheParams(
         input_path=input_path,
         population_name=population_name,
+        attributes=attributes,
         sampling_ratio=sampling_ratio,
         seed=seed,
     )
     if use_cache:
         cache_params = cache.check_cache(cache_params)
+    query = {}
+    if mtypes:
+        query["mtype"] = mtypes
+    if regions:
+        query["region"] = _region_acronyms(regions)
     df = service.export(
         input_path=cache_params.input_path,
         population_name=cache_params.population_name,
         sampling_ratio=cache_params.sampling_ratio,
-        modality_names=modality_names,
-        regions=regions,
-        mtypes=mtypes,
+        query_list=[query],
+        attributes=attributes,
         seed=cache_params.seed,
     )
     serialize.write(df=df, modality_names=modality_names, output_path=output_path, how=how)

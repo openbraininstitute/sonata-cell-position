@@ -10,7 +10,6 @@ from pathlib import Path
 from app import service
 from app.constants import CACHE_CHECK_INTERVAL, CACHE_CHECK_TIMEOUT, SAMPLING_RATIO
 from app.logger import L
-from app.utils import modality_names_to_columns
 
 
 @dataclasses.dataclass(frozen=True)
@@ -19,6 +18,7 @@ class CacheParams:
 
     input_path: Path
     population_name: str | None
+    attributes: list[str]
     sampling_ratio: float
     seed: int
 
@@ -28,6 +28,7 @@ class CacheParams:
             {
                 "input_path": str(self.input_path),
                 "population_name": self.population_name,
+                "attributes": self.attributes,
                 "sampling_ratio": self.sampling_ratio,
                 "seed": self.seed,
             }
@@ -75,7 +76,6 @@ def _write_cache(paths: CachePaths, params: CacheParams) -> None:
     """Write the cache and the OK file."""
     L.info(f"Writing cache {paths.base.name}")
     try:
-        attributes = modality_names_to_columns()
         paths.metadata.write_text(params.json(), encoding="utf-8")
         service.downsample(
             input_path=params.input_path,
@@ -83,7 +83,7 @@ def _write_cache(paths: CachePaths, params: CacheParams) -> None:
             population_name=params.population_name,
             sampling_ratio=params.sampling_ratio,
             seed=params.seed,
-            attributes=attributes,
+            attributes=params.attributes,
         )
         paths.ok.touch(exist_ok=False)
     except BaseException:

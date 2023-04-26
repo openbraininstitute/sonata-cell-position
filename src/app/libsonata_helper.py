@@ -8,9 +8,9 @@ import numpy as np
 import pandas as pd
 from numpy.random import default_rng
 
-from app.constants import DTYPES, SAMPLING_RATIO
+from app.constants import DYNAMICS_PREFIX
 from app.logger import L
-from app.utils import ensure_dtypes, ensure_list
+from app.utils import ensure_list
 
 
 def get_node_population(path: Path, population_name: str | None = None) -> libsonata.NodePopulation:
@@ -60,31 +60,52 @@ def get_node_populations(
             yield ns.open_population(population_name)
 
 
-def _filter_by_key(
+def _filter_add_key(
     node_population: libsonata.NodePopulation,
     df: pd.DataFrame,
     key: str,
     values: list[Any],
     keep: bool,
 ) -> pd.DataFrame:
-    """Filter a DataFrame based on the given key and values.
+    """Filter a DataFrame based on the given key and values, and add the key as column.
 
     Args:
         node_population: libsonata node population instance.
-        df: DataFrame with ids as index.
+        df: DataFrame with sorted unique ids as index (it may be modified by the function).
         key: key to filter.
         values: list of values to filter, or empty to not apply any filter.
         keep: if True, add the filtering key as a column to the DataFrame.
 
     Returns:
-        The filtered DataFrame.
-
+        The filtered DataFrame (it may be a copy, or the original modified DataFrame).
     """
+
+    def _get_attribute(ids: np.ndarray) -> np.ndarray | pd.Categorical:
+        if len(ids) == node_population.size:
+            # since the ids are complete and already sorted, this is faster
+            selection = libsonata.Selection([(0, len(ids))])
+        else:
+            selection = libsonata.Selection(ids)
+        if key in node_population.enumeration_names:
+            return pd.Categorical.from_codes(
+                node_population.get_enumeration(key, selection),
+                categories=node_population.enumeration_values(key),
+            )
+        if key in node_population.attribute_names:
+            return node_population.get_attribute(key, selection)
+        if key.startswith(DYNAMICS_PREFIX):
+            stripped_key = key.removeprefix(DYNAMICS_PREFIX)
+            if stripped_key in node_population.dynamics_attribute_names:
+                return node_population.get_dynamics_attribute(stripped_key, selection)
+        raise RuntimeError(f"Attribute not found in population {node_population.name}: {key}")
+
     ids = df.index.to_numpy()
-    selection = libsonata.Selection(ids)
-    attribute: np.ndarray = node_population.get_attribute(key, selection)
+    attribute = _get_attribute(ids)
     if values:
-        mask = np.isin(attribute, values)
+        if len(values) == 1:
+            mask = attribute == values[0]
+        else:
+            mask = np.isin(attribute, values)
         ids = ids[mask]
         attribute = attribute[mask]
         df = df.loc[ids]
@@ -93,43 +114,104 @@ def _filter_by_key(
     return df
 
 
-def _export_dataframe(
+def query(
     node_population: libsonata.NodePopulation,
-    query: dict[str, Any],
-    columns: list[str],
-    sampling_ratio: float = SAMPLING_RATIO,
+    query_list: list[dict[str, Any]],
+    attributes: list[str] | None = None,
+    sampling_ratio: float = 1.0,
     seed: int = 0,
+    sort: bool = True,
+    with_node_ids: bool = True,
 ) -> pd.DataFrame:
-    """Create and return a DataFrame of attributes filtered as requested.
+    """Build and return a DataFrame of nodes from the given node_population and queries.
 
     Args:
         node_population: libsonata node population instance.
-        query: dict of attributes keys and values for filtering, where values can be single or list.
-        columns: list of attributes to be exported in the resulting DataFrame.
+        query_list: list of query dictionaries to select the nodes based on attributes.
+        attributes: list of attributes to export, or None to export all the attributes.
         sampling_ratio: sampling_ratio of cells to be considered, expressed as float (0.01 = 1%).
         seed: random number generator seed.
+        sort: True to sort the result by node id.
+        with_node_ids: True to return the node_ids as index of the resulting DataFrame
 
     Returns:
-        The resulting DataFrame.
+        pd.DataFrame of nodes with the requested attributes as columns.
 
     """
-    rng = default_rng(seed)
-    high = len(node_population)
-    ids = rng.choice(high, size=int(high * sampling_ratio), replace=False, shuffle=False)
-    ids.sort()
-    L.info("Selected random ids: %s", len(ids))
-    df = pd.DataFrame(index=ids)
-    columns_set = set(columns)
-    # Add columns to the filtering query to load all the required attributes.
-    # For better performance, keys that filter out more records should go first.
-    query = query | {column: None for column in columns if column not in query}
-    for key, values in query.items():
-        values = ensure_list(values) if values else []
-        keep = key in columns_set
-        df = _filter_by_key(node_population, df=df, key=key, values=values, keep=keep)
-        L.info("Filtered by %s=%s -> %s ids", key, values or "all", len(df))
-    # discard the ids in the index
-    df.index = pd.RangeIndex(len(df))
-    # ensure the desired dtypes
-    df = ensure_dtypes(df, dtypes=DTYPES)
-    return df
+
+    def _init_ids(high: int) -> np.ndarray:
+        """Return the sorted initial list of node ids to consider."""
+        if sampling_ratio >= 1:
+            L.info("Selected all ids: %s", high)
+            return np.arange(high)
+        rng = default_rng(seed)
+        ids = rng.choice(high, size=int(high * sampling_ratio), replace=False, shuffle=False)
+        ids.sort()
+        L.info("Selected random ids: %s", len(ids))
+        return ids
+
+    def _build_df_list(ids: np.ndarray, attributes: list[str]) -> list[pd.DataFrame]:
+        """Build and return a list of DataFrames, one for each query."""
+        df_list: list[pd.DataFrame] = []
+        attributes_set = set(attributes)
+        # if query_list is empty, an empty query dict is needed to select the attributes
+        for num, query_dict in enumerate(query_list or [{}], 1):
+            L.info("Starting %s", f"filter {num}/{len(query_list)}" if query_list else "export")
+            if df_list:
+                # remove from ids the ids already selected
+                ids = np.setdiff1d(ids, df_list[-1].index.to_numpy(), assume_unique=True)
+            # Add attributes to the filtering query to load all the required attributes.
+            # For better performance, keys that filter out more records should go first.
+            query_dict = query_dict | {col: [] for col in attributes if col not in query_dict}
+            df = pd.DataFrame(index=ids)
+            for key, values in query_dict.items():
+                values = ensure_list(values) if values else []
+                keep = key in attributes_set
+                df = _filter_add_key(node_population, df=df, key=key, values=values, keep=keep)
+                L.info("Filtered by %s=%s -> %s ids", key, values or "all", len(df))
+            # reorder the columns if needed
+            if attributes != df.columns.to_list():
+                df = df[attributes]
+            df_list.append(df)
+        if not df_list:
+            raise RuntimeError("No data selected")
+        return df_list
+
+    def _calculate():
+        ids = _init_ids(len(node_population))
+        if attributes is not None:
+            selected_attributes = attributes
+        else:
+            selected_attributes = [
+                *sorted(node_population.attribute_names),
+                *sorted(f"{DYNAMICS_PREFIX}{n}" for n in node_population.dynamics_attribute_names),
+            ]
+        df_list = _build_df_list(ids, attributes=selected_attributes)
+        if len(df_list) == 1:
+            # ids are already sorted
+            result = df_list[0]
+        else:
+            result = pd.concat(df_list)
+            result = result.sort_index() if sort else result
+        if not with_node_ids:
+            # discard the ids in the index
+            result.index = pd.RangeIndex(len(result))
+        return result
+
+    return _calculate()
+
+
+def query_from_file(input_path, population_name, **kwargs):
+    """Build and return a DataFrame of nodes from the given file, population name, and queries.
+
+    Args:
+        input_path: path to the circuit config file, or nodes file.
+        population_name: name of the node population.
+        **kwargs: arguments to be passed to the query function.
+
+    Returns:
+        pd.DataFrame of nodes with the requested attributes as columns.
+
+    """
+    node_population = get_node_population(input_path, population_name)
+    return query(node_population=node_population, **kwargs)

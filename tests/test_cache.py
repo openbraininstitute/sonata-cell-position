@@ -11,6 +11,7 @@ def test_check_cache(tmp_path, monkeypatch, input_path):
         test_module.CacheParams(
             input_path=input_path,
             population_name="default",
+            attributes=["x", "y", "z", "mtype"],
             sampling_ratio=0.5,
             seed=102,
         )
@@ -26,6 +27,7 @@ def test_check_cache(tmp_path, monkeypatch, input_path):
         test_module.CacheParams(
             input_path=input_path,
             population_name="default",
+            attributes=["x", "y", "z", "mtype"],
             sampling_ratio=0.1,
             seed=102,
         )
@@ -45,6 +47,7 @@ def test_check_cache_not_used(tmp_path, input_path):
     params = test_module.CacheParams(
         input_path=input_path,
         population_name="default",
+        attributes=["x", "y", "z", "mtype"],
         sampling_ratio=0.8,
         seed=102,
     )

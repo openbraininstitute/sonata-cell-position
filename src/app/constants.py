@@ -33,7 +33,7 @@ DTYPES = {
     "region": "category",
     "mtype": "category",
 }
-
+DYNAMICS_PREFIX = "@dynamics:"
 
 with importlib.resources.path("app.data", "hierarchy.json") as path:
     REGION_MAP = voxcell.region_map.RegionMap.load_json(path.absolute())

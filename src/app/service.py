@@ -1,6 +1,7 @@
 """Service functions."""
 from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
 import h5py
 import libsonata
@@ -8,10 +9,10 @@ import numpy as np
 import pandas as pd
 from numpy.random import default_rng
 
-from app.constants import MODALITIES, REGION_MAP, SAMPLING_RATIO
-from app.libsonata_helper import _export_dataframe, get_node_population, get_node_populations
+from app.constants import DTYPES, REGION_MAP, SAMPLING_RATIO
+from app.libsonata_helper import get_node_populations, query_from_file
 from app.logger import L
-from app.utils import modality_names_to_columns
+from app.utils import ensure_dtypes
 
 
 def _region_acronyms(regions: list[str]) -> list[str]:
@@ -30,9 +31,8 @@ def export(
     input_path: Path,
     population_name: str | None = None,
     sampling_ratio: float = SAMPLING_RATIO,
-    modality_names: list[str] | None = None,
-    regions: list[str] | None = None,
-    mtypes: list[str] | None = None,
+    query_list: list[dict[str, Any]] | None = None,
+    attributes: list[str] | None = None,
     seed: int = 0,
 ) -> pd.DataFrame:
     """Return a DataFrame of nodes attributes.
@@ -41,30 +41,27 @@ def export(
         input_path: path to the circuit config file, or nodes file.
         population_name: name of the node population.
         sampling_ratio: sampling_ratio of cells to be considered, expressed as float (0.01 = 1%).
-        modality_names: list of modalities, or None to export every modality.
-        regions: list of regions for filtering.
-        mtypes: list of mtypes for filtering.
+        query_list: list of query dictionaries.
+        attributes: list of attributes to export.
         seed: random number generator seed.
 
     Returns:
         The resulting DataFrame.
 
     """
-    node_population = get_node_population(input_path, population_name)
-    modality_names = modality_names or list(MODALITIES)
-    columns = modality_names_to_columns(modality_names)
-    query = {}
-    if mtypes:
-        query["mtype"] = mtypes
-    if regions:
-        query["region"] = _region_acronyms(regions)
-    return _export_dataframe(
-        node_population=node_population,
+    df = query_from_file(
+        input_path=input_path,
+        population_name=population_name,
         sampling_ratio=sampling_ratio,
-        query=query,
-        columns=columns,
+        query_list=query_list,
+        attributes=attributes,
         seed=seed,
+        sort=False,
+        with_node_ids=False,
     )
+    # ensure the desired dtypes (for example, to convert from float64 to float32)
+    df = ensure_dtypes(df, dtypes=DTYPES)
+    return df
 
 
 def count(input_path: Path, population_names: list[str] | None = None) -> dict:
