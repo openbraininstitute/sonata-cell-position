@@ -1,13 +1,16 @@
 import libsonata
+import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
 import app.libsonata_helper as test_module
+from tests.utils import dump_json, load_json
 
 
 def test_get_node_population(input_path):
     result = test_module.get_node_population(input_path, population_name="default")
+
     assert isinstance(result, libsonata.NodePopulation)
     assert result.name == "default"
 
@@ -26,6 +29,26 @@ def test_get_node_populations(input_path):
     for node_population, name in zip(result, ["default", "default2"]):
         assert isinstance(node_population, libsonata.NodePopulation)
         assert node_population.name == name
+
+
+def test_get_node_sets(circuit_path):
+    result = test_module.get_node_sets(circuit_path)
+    assert isinstance(result, libsonata.NodeSets)
+    assert len(result.names) == 12
+
+
+def test_get_node_sets_raises_on_nodes(nodes_path):
+    with pytest.raises(RuntimeError):
+        test_module.get_node_sets(nodes_path)
+
+
+def test_get_node_sets_raises(circuit_path, tmp_path):
+    content = load_json(circuit_path)
+    new_circuit_path = tmp_path / "config.json"
+    dump_json(new_circuit_path, content)
+
+    with pytest.raises(RuntimeError):
+        test_module.get_node_sets(new_circuit_path)
 
 
 @pytest.mark.parametrize(
@@ -154,6 +177,53 @@ def test_query_from_file_with_attributes_none(input_path):
             "@dynamics:holding_current",
         ],
         index=[1],
+    )
+    assert_frame_equal(result, expected)
+
+
+@pytest.mark.parametrize(
+    "node_set, expected_data, expected_ids",
+    [
+        (
+            None,
+            [2, 6, 6],
+            np.array([0, 1, 2]),
+        ),
+        (
+            "Population_default",
+            [2, 6, 6],
+            [0, 1, 2],
+        ),
+        (
+            "Population_default2",
+            np.empty(shape=(0, 1), dtype=int),
+            np.array([], dtype=int),
+        ),
+        (
+            "Layer2",
+            [2],
+            [0],
+        ),
+    ],
+)
+def test_query_from_file_node_set(circuit_path, node_set, expected_data, expected_ids):
+    result = test_module.query_from_file(
+        input_path=circuit_path,
+        population_name="default",
+        query_list=None,
+        node_set=node_set,
+        attributes=["layer"],
+        sampling_ratio=1.0,
+        seed=0,
+        sort=True,
+        with_node_ids=True,
+    )
+
+    assert isinstance(result, pd.DataFrame)
+    expected = pd.DataFrame(
+        data=expected_data,
+        columns=["layer"],
+        index=expected_ids,
     )
     assert_frame_equal(result, expected)
 

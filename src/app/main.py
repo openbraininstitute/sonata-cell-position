@@ -59,10 +59,11 @@ async def version() -> dict:
 
 
 @app.get("/circuit", response_class=FileResponse)
-async def read_circuit(
+async def read_circuit(  # pylint: disable=too-many-arguments
     input_path: Path = Depends(_validate_path({".json", ".h5"})),
     region: list[str] | None = Query(default=None),
     mtype: list[str] | None = Query(default=None),
+    node_set: str | None = Query(default=None),
     modality: list[str] | None = Query(default=None),
     population_name: str | None = None,
     sampling_ratio: float = 0.01,
@@ -88,6 +89,7 @@ async def read_circuit(
         modality_names=modality,
         regions=region,
         mtypes=mtype,
+        node_set=node_set,
         seed=seed,
         how=how,
         use_cache=use_cache,
@@ -146,7 +148,7 @@ def count(
 def node_sets(input_path: Path = Depends(_validate_path({".json"}))) -> dict:
     """Return the sorted list of node_sets in a circuit."""
     # not cpu intensive, it can run in the current thread
-    return service.get_node_sets(input_path=input_path)
+    return service.get_node_set_names(input_path=input_path)
 
 
 def read_circuit_job(
@@ -156,6 +158,7 @@ def read_circuit_job(
     modality_names: list[str] | None,
     regions: list[str] | None,
     mtypes: list[str] | None,
+    node_set: str | None,
     seed: int,
     how: str,
     use_cache: bool,
@@ -184,6 +187,7 @@ def read_circuit_job(
         sampling_ratio=cache_params.sampling_ratio,
         query_list=[query],
         attributes=attributes,
+        node_set=node_set,
         seed=cache_params.seed,
     )
     serialize.write(df=df, modality_names=modality_names, output_path=output_path, how=how)

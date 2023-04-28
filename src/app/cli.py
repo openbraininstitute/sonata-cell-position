@@ -43,11 +43,12 @@ def cli():
 @click.option("--modality", multiple=True)
 @click.option("--region", multiple=True)
 @click.option("--mtype", multiple=True)
+@click.option("--node-set", default=None)
 @click.option("--seed", type=int, default=0, show_default=True)
 @click.option(
     "--how", type=RegexParamType(SERIALIZERS_REGEX), default=DEFAULT_SERIALIZER, show_default=True
 )
-def export(
+def export(  # pylint: disable=too-many-arguments
     input_path: str,
     output_path: str,
     population_name: str | None,
@@ -55,6 +56,7 @@ def export(
     modality: list[str] | None,
     region: list[str] | None,
     mtype: list[str] | None,
+    node_set: str | None,
     seed: int,
     how: str,
 ) -> None:
@@ -67,6 +69,7 @@ def export(
         modality_names=modality,
         regions=region,
         mtypes=mtype,
+        node_set=node_set,
         seed=seed,
         how=how,
         use_cache=False,

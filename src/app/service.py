@@ -10,7 +10,7 @@ import pandas as pd
 from numpy.random import default_rng
 
 from app.constants import DTYPES, REGION_MAP, SAMPLING_RATIO
-from app.libsonata_helper import get_node_populations, query_from_file
+from app.libsonata_helper import get_node_populations, get_node_sets, query_from_file
 from app.logger import L
 from app.utils import ensure_dtypes
 
@@ -32,6 +32,7 @@ def export(
     population_name: str | None = None,
     sampling_ratio: float = SAMPLING_RATIO,
     query_list: list[dict[str, Any]] | None = None,
+    node_set: str | None = None,
     attributes: list[str] | None = None,
     seed: int = 0,
 ) -> pd.DataFrame:
@@ -42,6 +43,7 @@ def export(
         population_name: name of the node population.
         sampling_ratio: sampling_ratio of cells to be considered, expressed as float (0.01 = 1%).
         query_list: list of query dictionaries.
+        node_set: name of a node_set to load.
         attributes: list of attributes to export.
         seed: random number generator seed.
 
@@ -54,6 +56,7 @@ def export(
         population_name=population_name,
         sampling_ratio=sampling_ratio,
         query_list=query_list,
+        node_set=node_set,
         attributes=attributes,
         seed=seed,
         sort=False,
@@ -129,7 +132,7 @@ def downsample(
                 group.create_dataset(name, data=data, dtype=dtype)
 
 
-def get_node_sets(input_path: Path) -> dict:
+def get_node_set_names(input_path: Path) -> dict:
     """Return the names of the available node_sets.
 
     Args:
@@ -137,17 +140,12 @@ def get_node_sets(input_path: Path) -> dict:
 
     Returns:
         A dict containing the node_sets from the circuit_config.
-
     """
-    cc = libsonata.CircuitConfig.from_file(input_path)
     try:
-        ns = libsonata.NodeSets.from_file(cc.node_sets_path)
+        ns = get_node_sets(input_path)
         node_sets = sorted(ns.names)
     except (libsonata.SonataError, RuntimeError) as ex:
-        # Possible errors:
-        # - RuntimeError: Path `` is not a file (if the key "node_sets_file" is missing)
-        # - RuntimeError: Path `/path/to/node_sets.json` is not a file (if the file doesn't exist)
-        # - RuntimeError: [json.exception.parse_error.101] parse error... (if the file is invalid)
         L.warning("Error with node_sets for circuit %r: %r, fallback to empty list", input_path, ex)
         node_sets = []
+
     return {"node_sets": node_sets}
