@@ -1,4 +1,5 @@
 """Libsonata helper functions."""
+import json
 from collections.abc import Iterable, Iterator
 from pathlib import Path
 from typing import Any
@@ -126,6 +127,18 @@ def _get_sorted_choice(a: np.ndarray | int, sampling_ratio: float, seed: int) ->
     return np.sort(ids)
 
 
+def _check_for_node_ids(node_set_json):
+    """See if node_set_json contains `node_id` key.
+
+    Since the nodes.h5 file may be subsampled, the hardcoded node ids won't be valid
+    """
+    for v in node_set_json.values():
+        if not isinstance(v, dict):
+            continue
+        if "node_id" in v:
+            raise RuntimeError("nodesets with `node_id` aren't currently supported")
+
+
 def _init_ids(
     input_path: Path,
     node_population: libsonata.NodePopulation,
@@ -135,9 +148,18 @@ def _init_ids(
 ) -> np.ndarray:
     """Return the sorted initial list of node ids to consider."""
     if node_set:
-        if input_path.suffix != ".json":
+        node_sets_path = input_path.parent / "node_sets.json"
+
+        if node_sets_path.exists():
+            # see src/app/cache.py for where this file comes from
+            ns = libsonata.NodeSets.from_file(node_sets_path)
+        elif input_path.suffix == ".json":
+            # have a circuit_config, but not a cached node_sets.json, see if we can load it
+            ns = get_node_sets(input_path)
+        else:
             raise RuntimeError("Must pass circuit_config style JSON to load node_sets")
-        ns = get_node_sets(input_path)
+
+        _check_for_node_ids(json.loads(ns.toJSON()))
         a = ns.materialize(node_set, node_population).flatten().astype("int64")
         full_size = len(a)
     else:

@@ -258,3 +258,22 @@ def test_query_from_file_with_missing_attribute(input_path, missing):
             sort=True,
             with_node_ids=True,
         )
+
+
+def test__check_for_node_ids():
+    node_set_json = {"NodeSet0": {"node_id": 1}}
+    with pytest.raises(RuntimeError, match="nodesets with `node_id` aren't currently supported"):
+        test_module._check_for_node_ids(node_set_json)
+
+    node_set_json = {
+        "V1_point_prime": {
+            "population": "biophysical",
+            "model_type": "point",
+            "node_id": [1, 2, 3, 5, 7, 9],
+        }
+    }
+    with pytest.raises(RuntimeError, match="nodesets with `node_id` aren't currently supported"):
+        test_module._check_for_node_ids(node_set_json)
+
+    node_set_json = {}
+    test_module._check_for_node_ids(node_set_json)

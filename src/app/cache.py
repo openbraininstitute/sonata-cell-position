@@ -7,6 +7,8 @@ import shutil
 import time
 from pathlib import Path
 
+import libsonata
+
 from app import service
 from app.constants import CACHE_CHECK_INTERVAL, CACHE_CHECK_TIMEOUT, SAMPLING_RATIO
 from app.logger import L
@@ -105,18 +107,28 @@ def check_cache(params: CacheParams) -> CacheParams:
     params_to_cache = dataclasses.replace(params, sampling_ratio=SAMPLING_RATIO)
     checksum = params_to_cache.checksum()
     paths = CachePaths(base=Path(os.getenv("TMPDIR", "/tmp"), "cached_circuits", checksum))
+
     try:
         paths.base.mkdir(parents=True, exist_ok=False)
+        # TODO(gevaert): we're "magically" storing the node_sets.json file; this is less than ideal
+        # We probably need to restructure the `input_path` handling for all the functions that take
+        # it, and allow them to take a CacheParams instead of just a nodes.h5 or circuit_config.json
+        if params.input_path.suffix == ".json":
+            config = libsonata.CircuitConfig.from_file(params.input_path)
+            if config.node_sets_path:
+                shutil.copy(config.node_sets_path, paths.base / "node_sets.json")
     except OSError:
         if not paths.base.is_dir():
             raise
         is_cached = True
     else:
         is_cached = False
+
     if is_cached:
         _read_cache(paths)
     else:
         _write_cache(paths, params_to_cache)
+
     return dataclasses.replace(
         params,
         input_path=paths.nodes,
