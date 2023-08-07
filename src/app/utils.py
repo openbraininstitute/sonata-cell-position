@@ -26,10 +26,15 @@ def ensure_dtypes(df: pd.DataFrame, dtypes: dict[str, Any]) -> pd.DataFrame:
     return df.astype(dtypes)
 
 
-def modality_names_to_columns(modality_names: list[str] | None = None) -> list[str]:
+def modality_to_attributes(modality: list[str] | None = None) -> list[str]:
     """Convert a list of modality names to attributes."""
-    modality_names = modality_names or list(MODALITIES)
-    return list(chain.from_iterable(MODALITIES[modality] for modality in modality_names))
+    modality = modality or list(MODALITIES)
+    return list(chain.from_iterable(MODALITIES[modality] for modality in modality))
+
+
+def attributes_to_dict(**kwargs) -> dict[str, Any]:
+    """Convert attributes to dict, filtering out empty values."""
+    return {key: value for key, value in kwargs.items() if value}
 
 
 async def run_process_executor(func, **params):

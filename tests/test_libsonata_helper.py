@@ -37,22 +37,23 @@ def test_get_node_sets(circuit_path):
     assert len(result.names) == 12
 
 
-def test_get_node_sets_raises_on_nodes(nodes_path):
-    with pytest.raises(RuntimeError):
+def test_get_node_sets_raises_on_nodes_path(nodes_path):
+    # libsonata 0.1.22 raises a RuntimeError without description
+    with pytest.raises(RuntimeError, match=""):
         test_module.get_node_sets(nodes_path)
 
 
-def test_get_node_sets_raises(circuit_path, tmp_path):
+def test_get_node_sets_raises_on_non_existing_path(circuit_path, tmp_path):
     content = load_json(circuit_path)
     new_circuit_path = tmp_path / "config.json"
     dump_json(new_circuit_path, content)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(libsonata.SonataError, match="Path does not exist"):
         test_module.get_node_sets(new_circuit_path)
 
 
 @pytest.mark.parametrize(
-    "query_list, expected_data, expected_ids",
+    "queries, expected_data, expected_ids",
     [
         (
             None,
@@ -109,11 +110,11 @@ def test_get_node_sets_raises(circuit_path, tmp_path):
         ),
     ],
 )
-def test_query_from_file(input_path, query_list, expected_data, expected_ids):
+def test_query_from_file(input_path, queries, expected_data, expected_ids):
     result = test_module.query_from_file(
         input_path=input_path,
         population_name="default2",
-        query_list=query_list,
+        queries=queries,
         attributes=["x", "y", "z", "mtype", "@dynamics:holding_current"],
         sampling_ratio=1.0,
         seed=0,
@@ -133,7 +134,7 @@ def test_query_from_file_with_attributes_none(input_path):
     result = test_module.query_from_file(
         input_path=input_path,
         population_name="default2",
-        query_list=[{"morphology": "morph-E"}],
+        queries=[{"morphology": "morph-E"}],
         attributes=None,
         sampling_ratio=1.0,
         seed=0,
@@ -210,7 +211,7 @@ def test_query_from_file_node_set(circuit_path, node_set, expected_data, expecte
     result = test_module.query_from_file(
         input_path=circuit_path,
         population_name="default",
-        query_list=None,
+        queries=None,
         node_set=node_set,
         attributes=["layer"],
         sampling_ratio=1.0,
@@ -232,7 +233,7 @@ def test_query_from_file_with_attributes_empty_list(input_path):
     result = test_module.query_from_file(
         input_path=input_path,
         population_name="default2",
-        query_list=[{"morphology": "morph-E"}],
+        queries=[{"morphology": "morph-E"}],
         attributes=[],
         sampling_ratio=1.0,
         seed=0,
@@ -251,7 +252,7 @@ def test_query_from_file_with_missing_attribute(input_path, missing):
         test_module.query_from_file(
             input_path=input_path,
             population_name=pop,
-            query_list=[],
+            queries=[],
             attributes=["x", "y", "z", "mtype", missing],
             sampling_ratio=1.0,
             seed=0,

@@ -54,6 +54,29 @@ def test_read_circuit(input_path):
     }
 
 
+def test_query(input_path):
+    response = client.post(
+        "/circuit/query",
+        json={
+            "input_path": str(input_path),
+            "population_name": "default",
+            "how": "json",
+            "attributes": ["x", "y", "z", "mtype"],
+            "sampling_ratio": 0.5,
+            "seed": 102,
+            "query": [{"mtype": "L6_Y"}],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "mtype": {"0": "L6_Y"},
+        "x": {"0": 201.0},
+        "y": {"0": 202.0},
+        "z": {"0": 203.0},
+    }
+
+
 @pytest.mark.parametrize(
     "params, expected",
     [

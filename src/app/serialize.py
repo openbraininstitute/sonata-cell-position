@@ -7,46 +7,35 @@ import pandas as pd
 import pyarrow as pa
 from pyarrow import fs
 
-from app.constants import MODALITIES
-from app.utils import modality_names_to_columns
-
 
 def to_parquet(
-    df: pd.DataFrame, modality_names: list[str], output_path: Path, attrs: str | None
+    df: pd.DataFrame, attributes: list[str], output_path: Path, attrs: str | None
 ) -> None:
     """Write a DataFrame to file in parquet format."""
     # pylint: disable=unused-argument
-    columns = modality_names_to_columns(modality_names)
-    df[columns].to_parquet(output_path, engine="pyarrow", index=False)
+    df[attributes].to_parquet(output_path, engine="pyarrow", index=False)
 
 
-def to_json(
-    df: pd.DataFrame, modality_names: list[str], output_path: Path, attrs: str | None
-) -> None:
+def to_json(df: pd.DataFrame, attributes: list[str], output_path: Path, attrs: str | None) -> None:
     """Write a DataFrame to file in JSON format."""
-    columns = modality_names_to_columns(modality_names)
     orient = attrs or "columns"
-    df[columns].to_json(output_path, orient=orient)
+    df[attributes].to_json(output_path, orient=orient)
 
 
-def to_arrow(
-    df: pd.DataFrame, modality_names: list[str], output_path: Path, attrs: str | None
-) -> None:
+def to_arrow(df: pd.DataFrame, attributes: list[str], output_path: Path, attrs: str | None) -> None:
     """Write a DataFrame to file in arrow format."""
     # pylint: disable=unused-argument
-    columns = modality_names_to_columns(modality_names)
-    table = pa.Table.from_pandas(df[columns])
+    table = pa.Table.from_pandas(df[attributes])
     with fs.LocalFileSystem().open_output_stream(str(output_path)) as file:
         with pa.RecordBatchFileWriter(file, table.schema) as writer:
             writer.write_table(table)
 
 
-def write(df: pd.DataFrame, modality_names: list[str] | None, output_path: Path, how: str) -> None:
+def write(df: pd.DataFrame, attributes: list[str], output_path: Path, how: str) -> None:
     """Write a DataFrame to file."""
     how, _, attrs = how.partition(":")
     serializer = SERIALIZERS[how]["function"]
-    modality_names = modality_names or list(MODALITIES)
-    serializer(df, modality_names, output_path, attrs)
+    serializer(df, attributes, output_path, attrs)
 
 
 def get_content_type(how: str) -> str:

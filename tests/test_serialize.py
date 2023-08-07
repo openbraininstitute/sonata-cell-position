@@ -32,7 +32,7 @@ def test_write_json(tmp_path, how, orient, expected):
 
     test_module.write(
         df=df,
-        modality_names=["position", "mtype"],
+        attributes=["x", "y", "z", "mtype"],
         output_path=output_path,
         how=how,
     )
@@ -49,7 +49,7 @@ def test_write_arrow(tmp_path):
 
     test_module.write(
         df=df,
-        modality_names=["position", "mtype"],
+        attributes=["x", "y", "z", "mtype"],
         output_path=output_path,
         how="arrow",
     )
@@ -66,7 +66,7 @@ def test_write_parquet(tmp_path):
 
     test_module.write(
         df=df,
-        modality_names=["position", "mtype"],
+        attributes=["x", "y", "z", "mtype"],
         output_path=output_path,
         how="parquet",
     )

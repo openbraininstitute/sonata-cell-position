@@ -82,7 +82,9 @@ def _filter_add_key(
     """
 
     def _get_attribute(ids: np.ndarray) -> np.ndarray | pd.Categorical:
-        if len(ids) == node_population.size:
+        if len(ids) == 0:
+            selection = libsonata.Selection([])
+        elif len(ids) == node_population.size:
             # since the ids are complete and already sorted, this is faster
             selection = libsonata.Selection([(0, len(ids))])
         else:
@@ -177,16 +179,16 @@ def _init_ids(
 
 def _build_df_list(
     ids: np.ndarray,
-    query_list: list[dict[str, Any]] | None,
+    queries: list[dict[str, Any]] | None,
     node_population: libsonata.NodePopulation,
     attributes: list[str],
 ) -> list[pd.DataFrame]:
     """Build and return a list of DataFrames, one for each query."""
     df_list: list[pd.DataFrame] = []
     attributes_set = set(attributes)
-    # if query_list is empty, an empty query dict is needed to select the attributes
-    for num, query_dict in enumerate(query_list or [{}], 1):
-        L.info("Starting %s", f"filter {num}/{len(query_list)}" if query_list else "export")
+    # if queries is empty, an empty query dict is needed to select the attributes
+    for num, query_dict in enumerate(queries or [{}], 1):
+        L.info("Starting %s", f"filter {num}/{len(queries)}" if queries else "export")
         if df_list:
             # remove from ids the ids already selected
             ids = np.setdiff1d(ids, df_list[-1].index.to_numpy(), assume_unique=True)
@@ -211,7 +213,7 @@ def _build_df_list(
 def query_from_file(
     input_path: Path,
     population_name: str | None,
-    query_list: list[dict[str, Any]] | None,
+    queries: list[dict[str, Any]] | None,
     node_set: str | None = None,
     attributes: list[str] | None = None,
     sampling_ratio: float = 1.0,
@@ -224,7 +226,7 @@ def query_from_file(
     Args:
         input_path: path to the circuit config file, or nodes file.
         population_name: name of the node population.
-        query_list: list of query dictionaries to select the nodes based on attributes.
+        queries: list of query dictionaries to select the nodes based on attributes.
         node_set: name of a node_set to load.
         attributes: list of attributes to export, or None to export all the attributes.
         sampling_ratio: sampling_ratio of cells to be considered, expressed as float (0.01 = 1%).
@@ -246,7 +248,7 @@ def query_from_file(
             *sorted(f"{DYNAMICS_PREFIX}{n}" for n in node_population.dynamics_attribute_names),
         ]
     df_list = _build_df_list(
-        ids, query_list=query_list, node_population=node_population, attributes=selected_attributes
+        ids, queries=queries, node_population=node_population, attributes=selected_attributes
     )
     if len(df_list) == 1:
         # ids are already sorted
@@ -273,7 +275,11 @@ def get_node_sets(input_path: Path) -> libsonata.NodeSets:
         - RuntimeError: Path `` is not a file (if the key "node_sets_file" is missing)
         - RuntimeError: Path `/path/to/node_sets.json` is not a file (if the file doesn't exist)
         - RuntimeError: [json.exception.parse_error.101] parse error... (if the file is invalid)
+        - RuntimeError: (without description if the config file is invalid, in some cases)
+        - libsonata.SonataError: Error parsing config (if the config file is json, but invalid)
+        - libsonata.SonataError: Path does not exist (if the node_sets file doesn't exist)
     """
+    # TODO: wrap RuntimeError and SonataError with a custom exception
     cc = libsonata.CircuitConfig.from_file(input_path)
     ns = libsonata.NodeSets.from_file(cc.node_sets_path)
     return ns

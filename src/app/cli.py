@@ -6,8 +6,10 @@ from pathlib import Path
 import click
 
 import app.main
+from app.constants import MODALITIES_REGEX
 from app.logger import L
 from app.serialize import DEFAULT_SERIALIZER, SERIALIZERS_REGEX
+from app.utils import attributes_to_dict, modality_to_attributes
 
 
 class RegexParamType(click.ParamType):
@@ -40,7 +42,7 @@ def cli():
 @click.option("--output-path", type=click.Path(), required=True)
 @click.option("--population-name")
 @click.option("--sampling-ratio", type=float, default=0.01, show_default=True)
-@click.option("--modality", multiple=True)
+@click.option("--modality", multiple=True, type=RegexParamType(MODALITIES_REGEX))
 @click.option("--region", multiple=True)
 @click.option("--mtype", multiple=True)
 @click.option("--node-set", default=None)
@@ -62,13 +64,15 @@ def export(  # pylint: disable=too-many-arguments
 ) -> None:
     """Export circuit information to file."""
     L.info("Starting export")
+    attributes = modality_to_attributes(modality)
+    query = attributes_to_dict(region=region, mtype=mtype)
+    queries = [query] if query else None
     app.main.read_circuit_job(
         input_path=Path(input_path),
         population_name=population_name,
         sampling_ratio=sampling_ratio,
-        modality_names=modality,
-        regions=region,
-        mtypes=mtype,
+        attributes=attributes,
+        queries=queries,
         node_set=node_set,
         seed=seed,
         how=how,

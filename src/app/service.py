@@ -31,7 +31,7 @@ def export(
     input_path: Path,
     population_name: str | None = None,
     sampling_ratio: float = SAMPLING_RATIO,
-    query_list: list[dict[str, Any]] | None = None,
+    queries: list[dict[str, Any]] | None = None,
     node_set: str | None = None,
     attributes: list[str] | None = None,
     seed: int = 0,
@@ -42,7 +42,7 @@ def export(
         input_path: path to the circuit config file, or nodes file.
         population_name: name of the node population.
         sampling_ratio: sampling_ratio of cells to be considered, expressed as float (0.01 = 1%).
-        query_list: list of query dictionaries.
+        queries: list of query dictionaries.
         node_set: name of a node_set to load.
         attributes: list of attributes to export.
         seed: random number generator seed.
@@ -51,11 +51,15 @@ def export(
         The resulting DataFrame.
 
     """
+    queries = [
+        {**query, "region": _region_acronyms(query["region"])} if "region" in query else query
+        for query in queries or []
+    ]
     df = query_from_file(
         input_path=input_path,
         population_name=population_name,
         sampling_ratio=sampling_ratio,
-        query_list=query_list,
+        queries=queries,
         node_set=node_set,
         attributes=attributes,
         seed=seed,

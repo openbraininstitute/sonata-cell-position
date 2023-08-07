@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sonata-cell-position"
-version = "2023.04.3"
+version = "2023.07.1"
 description = "sonata-cell-position web API"
 readme = "README.rst"
 requires-python = ">=3.10"
@@ -16,7 +16,7 @@ dependencies = [
     "numpy",
     "pandas",
     "pyarrow",
-    "pydantic",
+    "pydantic<2",
     "pyyaml",
     "uvicorn[standard]",
     "voxcell",
@@ -52,6 +52,9 @@ select = [
 [tool.ruff.pydocstyle]
 convention = "google"
 
+
+[tool.pylint.main]
+extension-pkg-allow-list = ["pydantic"]
 
 [tool.pylint."messages control"]
 disable = ["fixme", "invalid-name", "len-as-condition", "no-else-return"]

@@ -32,3 +32,33 @@ def test_ensure_dtypes():
     assert result.dtypes.at["y"] == np.float32
     assert result.dtypes.at["z"] == np.float32
     assert result.dtypes.at["mtype"] == "category"
+
+
+@pytest.mark.parametrize(
+    "modality, expected",
+    [
+        (None, ["x", "y", "z", "region", "mtype"]),
+        ([], ["x", "y", "z", "region", "mtype"]),
+        (["mtype"], ["mtype"]),
+        (["mtype", "position"], ["mtype", "x", "y", "z"]),
+    ],
+)
+def test_modality_to_attributes(modality, expected):
+    result = test_module.modality_to_attributes(modality)
+
+    assert result == expected
+
+
+@pytest.mark.parametrize(
+    "attributes, expected",
+    [
+        ({}, {}),
+        ({"mtype": None, "region": None}, {}),
+        ({"mtype": [], "region": []}, {}),
+        ({"mtype": ["a"], "region": ["b", "c"]}, {"mtype": ["a"], "region": ["b", "c"]}),
+    ],
+)
+def test_attributes_to_dict(attributes, expected):
+    result = test_module.attributes_to_dict(**attributes)
+
+    assert result == expected
