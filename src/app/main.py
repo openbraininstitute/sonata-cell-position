@@ -6,11 +6,13 @@ from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
+from starlette.requests import Request
+from starlette.responses import FileResponse, JSONResponse
 
 from app import cache, serialize, service, utils
 from app.constants import COMMIT_SHA, DEBUG, ORIGINS, PROJECT_PATH
+from app.errors import CircuitError
 from app.logger import L
 from app.schemas import CountParams, DownsampleParams, NodeSetsParams, QueryParams, ValidatedQuery
 from app.serialize import get_content_type, get_extension
@@ -23,6 +25,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(CircuitError)
+async def circuit_error_handler(request: Request, exc: CircuitError) -> JSONResponse:
+    """Handle CircuitError."""
+    # pylint: disable=unused-argument
+    msg = f"CircuitError: {exc}"
+    L.warning(msg)
+    return JSONResponse(status_code=400, content={"message": msg})
 
 
 @app.get("/")

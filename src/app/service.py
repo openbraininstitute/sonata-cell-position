@@ -10,6 +10,7 @@ import pandas as pd
 from numpy.random import default_rng
 
 from app.constants import DTYPES, REGION_MAP, SAMPLING_RATIO
+from app.errors import CircuitError
 from app.libsonata_helper import get_node_populations, get_node_sets, query_from_file
 from app.logger import L
 from app.utils import ensure_dtypes
@@ -148,7 +149,7 @@ def get_node_set_names(input_path: Path) -> dict:
     try:
         ns = get_node_sets(input_path)
         node_sets = sorted(ns.names)
-    except (libsonata.SonataError, RuntimeError) as ex:
+    except CircuitError as ex:
         L.warning("Error with node_sets for circuit %r: %r, fallback to empty list", input_path, ex)
         node_sets = []
 

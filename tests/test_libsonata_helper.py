@@ -1,3 +1,5 @@
+import re
+
 import libsonata
 import numpy as np
 import pandas as pd
@@ -5,6 +7,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 import app.libsonata_helper as test_module
+from app.errors import CircuitError
 from tests.utils import dump_json, load_json
 
 
@@ -17,7 +20,7 @@ def test_get_node_population(input_path):
 
 def test_get_node_population_raises(input_path):
     with pytest.raises(
-        ValueError, match="population_name must be specified when there are multiple populations"
+        CircuitError, match="population_name must be specified when there are multiple populations"
     ):
         test_module.get_node_population(input_path)
 
@@ -39,7 +42,8 @@ def test_get_node_sets(circuit_path):
 
 def test_get_node_sets_raises_on_nodes_path(nodes_path):
     # libsonata 0.1.22 raises a RuntimeError without description
-    with pytest.raises(RuntimeError, match=""):
+    match = re.escape("Impossible to retrieve the node sets []")
+    with pytest.raises(CircuitError, match=match):
         test_module.get_node_sets(nodes_path)
 
 
@@ -48,7 +52,8 @@ def test_get_node_sets_raises_on_non_existing_path(circuit_path, tmp_path):
     new_circuit_path = tmp_path / "config.json"
     dump_json(new_circuit_path, content)
 
-    with pytest.raises(libsonata.SonataError, match="Path does not exist"):
+    match = re.escape("Impossible to retrieve the node sets [Path does not exist:")
+    with pytest.raises(CircuitError, match=match):
         test_module.get_node_sets(new_circuit_path)
 
 
@@ -248,7 +253,7 @@ def test_query_from_file_with_attributes_empty_list(input_path):
 @pytest.mark.parametrize("missing", ["unknown", "@dynamics:unknown"])
 def test_query_from_file_with_missing_attribute(input_path, missing):
     pop = "default2"
-    with pytest.raises(RuntimeError, match=f"Attribute not found in population {pop}: {missing}"):
+    with pytest.raises(CircuitError, match=f"Attribute not found in population {pop}: {missing}"):
         test_module.query_from_file(
             input_path=input_path,
             population_name=pop,
@@ -263,7 +268,7 @@ def test_query_from_file_with_missing_attribute(input_path, missing):
 
 def test__check_for_node_ids():
     node_set_json = {"NodeSet0": {"node_id": 1}}
-    with pytest.raises(RuntimeError, match="nodesets with `node_id` aren't currently supported"):
+    with pytest.raises(CircuitError, match="nodesets with `node_id` aren't currently supported"):
         test_module._check_for_node_ids(node_set_json)
 
     node_set_json = {
@@ -273,7 +278,7 @@ def test__check_for_node_ids():
             "node_id": [1, 2, 3, 5, 7, 9],
         }
     }
-    with pytest.raises(RuntimeError, match="nodesets with `node_id` aren't currently supported"):
+    with pytest.raises(CircuitError, match="nodesets with `node_id` aren't currently supported"):
         test_module._check_for_node_ids(node_set_json)
 
     node_set_json = {}

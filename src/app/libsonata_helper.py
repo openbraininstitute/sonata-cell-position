@@ -10,6 +10,7 @@ import pandas as pd
 from numpy.random import default_rng
 
 from app.constants import DYNAMICS_PREFIX
+from app.errors import CircuitError
 from app.logger import L
 from app.utils import ensure_list
 
@@ -29,9 +30,9 @@ def get_node_population(path: Path, population_name: str | None = None) -> libso
     node_populations = list(get_node_populations(path, population_names))
     if len(node_populations) > 1 and not population_name:
         # population_names is an unordered set, so we don't know which one to choose
-        raise ValueError("population_name must be specified when there are multiple populations")
+        raise CircuitError("population_name must be specified when there are multiple populations")
     if len(node_populations) != 1:
-        raise RuntimeError("Exactly one node population should have been selected")
+        raise CircuitError("Exactly one node population should have been selected")
     return node_populations[0]
 
 
@@ -49,16 +50,19 @@ def get_node_populations(
         when working with multiple populations and specific seeds.
 
     """
-    if path.suffix == ".json":
-        # sonata circuit config
-        config = libsonata.CircuitConfig.from_file(path)
-        for population_name in sorted(population_names or config.node_populations):
-            yield config.node_population(population_name)
-    else:
-        # hdf5 nodes file
-        ns = libsonata.NodeStorage(path)
-        for population_name in sorted(population_names or ns.population_names):
-            yield ns.open_population(population_name)
+    try:
+        if path.suffix == ".json":
+            # sonata circuit config
+            config = libsonata.CircuitConfig.from_file(path)
+            for population_name in sorted(population_names or config.node_populations):
+                yield config.node_population(population_name)
+        else:
+            # hdf5 nodes file
+            ns = libsonata.NodeStorage(path)
+            for population_name in sorted(population_names or ns.population_names):
+                yield ns.open_population(population_name)
+    except libsonata.SonataError as ex:
+        raise CircuitError(f"Impossible to retrieve the node population(s) [{ex}]") from ex
 
 
 def _filter_add_key(
@@ -100,7 +104,7 @@ def _filter_add_key(
             stripped_key = key.removeprefix(DYNAMICS_PREFIX)
             if stripped_key in node_population.dynamics_attribute_names:
                 return node_population.get_dynamics_attribute(stripped_key, selection)
-        raise RuntimeError(f"Attribute not found in population {node_population.name}: {key}")
+        raise CircuitError(f"Attribute not found in population {node_population.name}: {key}")
 
     ids = df.index.to_numpy()
     attribute = _get_attribute(ids)
@@ -138,7 +142,7 @@ def _check_for_node_ids(node_set_json):
         if not isinstance(v, dict):
             continue
         if "node_id" in v:
-            raise RuntimeError("nodesets with `node_id` aren't currently supported")
+            raise CircuitError("nodesets with `node_id` aren't currently supported")
 
 
 def _init_ids(
@@ -159,7 +163,7 @@ def _init_ids(
             # have a circuit_config, but not a cached node_sets.json, see if we can load it
             ns = get_node_sets(input_path)
         else:
-            raise RuntimeError("Must pass circuit_config style JSON to load node_sets")
+            raise CircuitError("Must pass circuit_config style JSON to load node_sets")
 
         _check_for_node_ids(json.loads(ns.toJSON()))
         a = ns.materialize(node_set, node_population).flatten().astype("int64")
@@ -205,8 +209,6 @@ def _build_df_list(
         if attributes != df.columns.to_list():
             df = df[attributes]
         df_list.append(df)
-    if not df_list:
-        raise RuntimeError("No data selected")
     return df_list
 
 
@@ -272,6 +274,8 @@ def get_node_sets(input_path: Path) -> libsonata.NodeSets:
         A dict containing the node_sets from the circuit_config.
 
     Raises:
+        CircuitError. Examples of wrapped exceptions:
+
         - RuntimeError: Path `` is not a file (if the key "node_sets_file" is missing)
         - RuntimeError: Path `/path/to/node_sets.json` is not a file (if the file doesn't exist)
         - RuntimeError: [json.exception.parse_error.101] parse error... (if the file is invalid)
@@ -279,7 +283,9 @@ def get_node_sets(input_path: Path) -> libsonata.NodeSets:
         - libsonata.SonataError: Error parsing config (if the config file is json, but invalid)
         - libsonata.SonataError: Path does not exist (if the node_sets file doesn't exist)
     """
-    # TODO: wrap RuntimeError and SonataError with a custom exception
-    cc = libsonata.CircuitConfig.from_file(input_path)
-    ns = libsonata.NodeSets.from_file(cc.node_sets_path)
+    try:
+        cc = libsonata.CircuitConfig.from_file(input_path)
+        ns = libsonata.NodeSets.from_file(cc.node_sets_path)
+    except (RuntimeError, libsonata.SonataError) as ex:
+        raise CircuitError(f"Impossible to retrieve the node sets [{ex}]") from ex
     return ns
