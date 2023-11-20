@@ -1,18 +1,16 @@
 """Schemas and validators definitions."""
-from functools import partial
 from inspect import signature
 from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import HTTPException, Query
-from pydantic import BaseModel, Field, ValidationError, validator
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import Field, ValidationError, field_validator
 
 from app.constants import MODALITIES_REGEX
 from app.logger import L
 from app.serialize import DEFAULT_SERIALIZER, SERIALIZERS_REGEX
 from app.utils import attributes_to_dict, modality_to_attributes
-
-validator = partial(validator, allow_reuse=True)
 
 
 class ValidatedQuery:
@@ -72,6 +70,14 @@ class PathValidator:
         return input_path
 
 
+class BaseModel(PydanticBaseModel):
+    """Custom BaseModel."""
+
+    model_config = {
+        "extra": "forbid",
+    }
+
+
 class QueryParams(BaseModel):
     """QueryParams."""
 
@@ -81,12 +87,12 @@ class QueryParams(BaseModel):
     node_set: str | None = None
     sampling_ratio: Annotated[float, Field(gt=0, le=1)] = 0.01
     seed: Annotated[int, Field(ge=0)] = 0
-    how: Annotated[str, Field(regex=SERIALIZERS_REGEX)] = DEFAULT_SERIALIZER
+    how: Annotated[str, Field(pattern=SERIALIZERS_REGEX)] = DEFAULT_SERIALIZER
     use_cache: bool = True
     queries: list[dict[str, Any]] | None = None
 
     # validators
-    _input_path_validator = validator("input_path")(PathValidator({".json", ".h5"}))
+    _input_path_validator = field_validator("input_path")(PathValidator({".json", ".h5"}))
 
     @classmethod
     def from_simplified_params(
@@ -94,7 +100,9 @@ class QueryParams(BaseModel):
         input_path: Path,
         region: Annotated[list[str] | None, Query()] = None,
         mtype: Annotated[list[str] | None, Query()] = None,
-        modality: Annotated[list[str] | None, Query(regex=MODALITIES_REGEX)] = None,
+        modality: Annotated[
+            list[Annotated[str, Query(pattern=MODALITIES_REGEX)]] | None, Query()
+        ] = None,
         population_name: str | None = None,
         node_set: str | None = None,
         sampling_ratio: float = 0.01,
@@ -130,17 +138,17 @@ class DownsampleParams(BaseModel):
     seed: int = 0
 
     # validators
-    _input_path_validator = validator("input_path")(PathValidator({".json", ".h5"}))
+    _input_path_validator = field_validator("input_path")(PathValidator({".json", ".h5"}))
 
 
 class CountParams(BaseModel):
     """CountParams."""
 
     input_path: Path
-    population_name: Annotated[list[str] | None, Query()] = None
+    population_name: str | None = None
 
     # validators
-    _input_path_validator = validator("input_path")(PathValidator({".json", ".h5"}))
+    _input_path_validator = field_validator("input_path")(PathValidator({".json", ".h5"}))
 
 
 class NodeSetsParams(BaseModel):
@@ -149,4 +157,4 @@ class NodeSetsParams(BaseModel):
     input_path: Path
 
     # validators
-    _input_path_validator = validator("input_path")(PathValidator({".json"}))
+    _input_path_validator = field_validator("input_path")(PathValidator({".json"}))

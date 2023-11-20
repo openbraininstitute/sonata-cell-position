@@ -72,20 +72,22 @@ def export(
     return df
 
 
-def count(input_path: Path, population_names: list[str] | None = None) -> dict:
+def count(input_path: Path, population_name: str | None = None) -> dict:
     """Return the number of nodes per population in the given circuit.
 
     Args:
         input_path: path to the circuit config file, or nodes file.
-        population_names: names of the node populations.
+        population_name: optional name of the node population.
 
     Returns:
         A dict containing the number of nodes per population.
 
     """
-    populations = {}
-    for node_population in get_node_populations(input_path, population_names):
-        populations[node_population.name] = {"size": node_population.size}
+    population_names = [population_name] if population_name else None
+    populations = {
+        node_population.name: {"size": node_population.size}
+        for node_population in get_node_populations(input_path, population_names)
+    }
     return {"nodes": {"populations": populations}}
 
 

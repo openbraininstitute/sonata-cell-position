@@ -1,6 +1,23 @@
 Changelog
 =========
 
+Version 2023.11.1
+-----------------
+
+- Upgrade to Pydantic v2.
+- Upgrade requirements.txt.
+- Forbid extra attributes in POST endpoints, to prevent potential mistakes in query parameters.
+- The endpoint ``/circuit/count`` now accepts only 0 (all) or 1 node populations, for consistency with other endpoints.
+- Explicitly require libsonata>=0.1.24 where toJSON() correctly serializes node_sets with node_id.
+- Raise the error "nodesets with `node_id` aren't currently supported" only when it's specified a node_set referencing node_id, directly or in a compound expression.
+
+
+Version 2023.08.1
+-----------------
+
+- Improve error handling.
+
+
 Version 2023.07.1
 -----------------
 

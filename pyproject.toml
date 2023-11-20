@@ -5,18 +5,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sonata-cell-position"
-version = "2023.08.1"
+version = "2023.11.1"
 description = "sonata-cell-position web API"
 readme = "README.rst"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi",
     "h5py",
-    "libsonata",
+    "libsonata>=0.1.24",
     "numpy",
     "pandas",
     "pyarrow",
-    "pydantic<2",
+    "pydantic>=2",
     "pyyaml",
     "uvicorn[standard]",
     "voxcell",

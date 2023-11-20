@@ -133,16 +133,20 @@ def _get_sorted_choice(a: np.ndarray | int, sampling_ratio: float, seed: int) ->
     return np.sort(ids)
 
 
-def _check_for_node_ids(node_set_json):
-    """See if node_set_json contains `node_id` key.
+def _check_for_node_ids(node_set_json: dict[str, Any], node_set_name: str) -> None:
+    """Check that node_set_json[node_set_name] does not contain `node_id` key.
 
     Since the nodes.h5 file may be subsampled, the hardcoded node ids won't be valid
     """
-    for v in node_set_json.values():
-        if not isinstance(v, dict):
-            continue
-        if "node_id" in v:
-            raise CircuitError("nodesets with `node_id` aren't currently supported")
+    if node_set_name not in node_set_json:
+        raise CircuitError(f"Node set {node_set_name!r} does not exist")
+    value = node_set_json[node_set_name]
+    if isinstance(value, dict) and "node_id" in value:
+        raise CircuitError("nodesets with `node_id` aren't currently supported")
+    if isinstance(value, list):
+        # handle compound expressions
+        for item in value:
+            _check_for_node_ids(node_set_json, item)
 
 
 def _init_ids(
@@ -165,7 +169,7 @@ def _init_ids(
         else:
             raise CircuitError("Must pass circuit_config style JSON to load node_sets")
 
-        _check_for_node_ids(json.loads(ns.toJSON()))
+        _check_for_node_ids(json.loads(ns.toJSON()), node_set)
         a = ns.materialize(node_set, node_population).flatten().astype("int64")
         full_size = len(a)
     else:

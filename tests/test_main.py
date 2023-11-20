@@ -54,6 +54,29 @@ def test_read_circuit(input_path):
     }
 
 
+def test_read_circuit_invalid_modality(input_path):
+    response = client.get(
+        "/circuit",
+        params={
+            "input_path": str(input_path),
+            "population_name": "default",
+            "how": "json",
+            "modality": ["position", "invalid"],
+            "sampling_ratio": 0.5,
+            "seed": 102,
+        },
+    )
+
+    assert response.status_code == 422
+    response_json = response.json()
+    assert len(response_json["detail"]) == 1
+    error = response_json["detail"][0]
+    assert error["type"] == "string_pattern_mismatch"
+    assert error["loc"] == ["query", "modality", 1]
+    assert error["msg"].startswith("String should match pattern")
+    assert error["input"] == "invalid"
+
+
 def test_query(input_path):
     response = client.post(
         "/circuit/query",
@@ -64,7 +87,7 @@ def test_query(input_path):
             "attributes": ["x", "y", "z", "mtype"],
             "sampling_ratio": 0.5,
             "seed": 102,
-            "query": [{"mtype": "L6_Y"}],
+            "queries": [{"mtype": "L6_Y"}],
         },
     )
 
@@ -75,6 +98,55 @@ def test_query(input_path):
         "y": {"0": 202.0},
         "z": {"0": 203.0},
     }
+
+
+def test_query_invalid_key(input_path):
+    response = client.post(
+        "/circuit/query",
+        json={
+            "input_path": str(input_path),
+            "population_name": "default",
+            "how": "json",
+            "attributes": ["x", "y", "z", "mtype"],
+            "sampling_ratio": 0.5,
+            "seed": 102,
+            "queries": [{"mtype": "L6_Y"}],
+            "invalid": "value",
+        },
+    )
+
+    assert response.status_code == 422
+    response_json = response.json()
+    assert len(response_json["detail"]) == 1
+    error = response_json["detail"][0]
+    assert error["type"] == "extra_forbidden"
+    assert error["loc"] == ["body", "invalid"]
+    assert error["msg"] == "Extra inputs are not permitted"
+    assert error["input"] == "value"
+
+
+def test_query_invalid_how(input_path):
+    response = client.post(
+        "/circuit/query",
+        json={
+            "input_path": str(input_path),
+            "population_name": "default",
+            "how": "invalid",
+            "attributes": ["x", "y", "z", "mtype"],
+            "sampling_ratio": 0.5,
+            "seed": 102,
+            "queries": [{"mtype": "L6_Y"}],
+        },
+    )
+
+    assert response.status_code == 422
+    response_json = response.json()
+    assert len(response_json["detail"]) == 1
+    error = response_json["detail"][0]
+    assert error["type"] == "string_pattern_mismatch"
+    assert error["loc"] == ["body", "how"]
+    assert error["msg"].startswith("String should match pattern")
+    assert error["input"] == "invalid"
 
 
 @pytest.mark.parametrize(
@@ -127,7 +199,7 @@ def test_count_population(input_path):
         "/circuit/count",
         params={
             "input_path": str(input_path),
-            "population_name": ["default"],
+            "population_name": "default",
         },
     )
 

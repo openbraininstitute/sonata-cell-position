@@ -127,7 +127,7 @@ async def downsample(
 def count(params: Annotated[CountParams, Depends(ValidatedQuery(CountParams))]) -> dict:
     """Return the number of nodes in a circuit."""
     # not cpu intensive, it can run in the current thread
-    return service.count(input_path=params.input_path, population_names=params.population_name)
+    return service.count(input_path=params.input_path, population_name=params.population_name)
 
 
 @app.get("/circuit/node_sets")

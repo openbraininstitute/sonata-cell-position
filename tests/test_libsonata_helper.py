@@ -1,3 +1,4 @@
+import contextlib
 import re
 
 import libsonata
@@ -266,20 +267,37 @@ def test_query_from_file_with_missing_attribute(input_path, missing):
         )
 
 
-def test__check_for_node_ids():
-    node_set_json = {"NodeSet0": {"node_id": 1}}
-    with pytest.raises(CircuitError, match="nodesets with `node_id` aren't currently supported"):
-        test_module._check_for_node_ids(node_set_json)
-
+@pytest.mark.parametrize(
+    "node_set_name, expected_error",
+    [
+        ("default", None),
+        ("unknown", "Node set 'unknown' does not exist"),
+        ("NodeSet0", "nodesets with `node_id` aren't currently supported"),
+        ("NodeSet1", "nodesets with `node_id` aren't currently supported"),
+        ("NodeSet2", "nodesets with `node_id` aren't currently supported"),
+        ("V1_point_prime", "nodesets with `node_id` aren't currently supported"),
+    ],
+)
+def test__check_for_node_ids(node_set_name, expected_error):
     node_set_json = {
+        "default": {"population": "default"},
         "V1_point_prime": {
             "population": "biophysical",
             "model_type": "point",
             "node_id": [1, 2, 3, 5, 7, 9],
-        }
+        },
+        "NodeSet0": {"node_id": 1},
+        "NodeSet1": ["NodeSet0"],
+        "NodeSet2": ["default", "NodeSet1"],
     }
-    with pytest.raises(CircuitError, match="nodesets with `node_id` aren't currently supported"):
-        test_module._check_for_node_ids(node_set_json)
+    if expected_error:
+        cm = pytest.raises(CircuitError, match=expected_error)
+    else:
+        cm = contextlib.nullcontext()
+    with cm:
+        test_module._check_for_node_ids(node_set_json, node_set_name)
 
-    node_set_json = {}
-    test_module._check_for_node_ids(node_set_json)
+
+def test__check_for_node_ids_with_empty_node_sets():
+    with pytest.raises(CircuitError, match="Node set 'unknown' does not exist"):
+        test_module._check_for_node_ids(node_set_json={}, node_set_name="unknown")
