@@ -14,7 +14,13 @@ from app import cache, serialize, service, utils
 from app.constants import COMMIT_SHA, DEBUG, ORIGINS, PROJECT_PATH
 from app.errors import CircuitError
 from app.logger import L
-from app.schemas import CountParams, DownsampleParams, NodeSetsParams, QueryParams, ValidatedQuery
+from app.schemas import (
+    CircuitConfigPath,
+    CircuitFilePath,
+    DownsampleParams,
+    QueryParams,
+    ValidatedQuery,
+)
 from app.serialize import get_content_type, get_extension
 
 app = FastAPI(debug=DEBUG)
@@ -95,10 +101,8 @@ async def query(params: QueryParams) -> FileResponse:
     )
 
 
-@app.get("/circuit/downsample")
-async def downsample(
-    params: Annotated[DownsampleParams, Depends(ValidatedQuery(DownsampleParams))]
-) -> FileResponse:
+@app.post("/circuit/downsample")
+async def downsample(params: DownsampleParams) -> FileResponse:
     """Downsample a node file."""
 
     def cleanup() -> None:
@@ -124,17 +128,20 @@ async def downsample(
 
 
 @app.get("/circuit/count")
-def count(params: Annotated[CountParams, Depends(ValidatedQuery(CountParams))]) -> dict:
+def count(
+    input_path: CircuitFilePath,
+    population_name: str | None = None,
+) -> dict:
     """Return the number of nodes in a circuit."""
     # not cpu intensive, it can run in the current thread
-    return service.count(input_path=params.input_path, population_name=params.population_name)
+    return service.count(input_path=input_path, population_name=population_name)
 
 
 @app.get("/circuit/node_sets")
-def node_sets(params: Annotated[NodeSetsParams, Depends(ValidatedQuery(NodeSetsParams))]) -> dict:
+def node_sets(input_path: CircuitConfigPath) -> dict:
     """Return the sorted list of node_sets in a circuit."""
     # not cpu intensive, it can run in the current thread
-    return service.get_node_set_names(input_path=params.input_path)
+    return service.get_node_set_names(input_path=input_path)
 
 
 def read_circuit_job(

@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 2023.11.2
+-----------------
+
+- Change /circuit/downsample from GET to POST.
+- Fix json serialization in case of validation error with pydantic v2.
+- Move query parameters to arguments.
+
+
 Version 2023.11.1
 -----------------
 

@@ -163,9 +163,9 @@ def test_query_invalid_how(input_path):
     ],
 )
 def test_downsample(tmp_path, input_path, params, expected):
-    response = client.get(
+    response = client.post(
         "/circuit/downsample",
-        params={
+        json={
             "input_path": str(input_path),
             "sampling_ratio": 0.5,
             "seed": 103,  # affects the randomly selected ids

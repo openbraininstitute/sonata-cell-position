@@ -1,11 +1,13 @@
 """Schemas and validators definitions."""
+import json
 from inspect import signature
 from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import HTTPException, Query
+from pydantic import AfterValidator
 from pydantic import BaseModel as PydanticBaseModel
-from pydantic import Field, ValidationError, field_validator
+from pydantic import Field, ValidationError
 
 from app.constants import MODALITIES_REGEX
 from app.logger import L
@@ -36,9 +38,11 @@ class ValidatedQuery:
         try:
             return self._callable(*args, **kwargs)
         except ValidationError as e:
-            for error in e.errors():
+            # ensure that all the values are JSON serializable
+            errors = json.loads(e.json())
+            for error in errors:
                 error["loc"] = ("query", *error["loc"])
-            raise HTTPException(422, detail=e.errors()) from None
+            raise HTTPException(422, detail=errors) from None
 
 
 class PathValidator:
@@ -70,6 +74,12 @@ class PathValidator:
         return input_path
 
 
+# Validated path to circuit config
+CircuitConfigPath = Annotated[Path, AfterValidator(PathValidator({".json"})), Query()]
+# Validated path to circuit config or directly to nodes hdf file
+CircuitFilePath = Annotated[Path, AfterValidator(PathValidator({".json", ".h5"})), Query()]
+
+
 class BaseModel(PydanticBaseModel):
     """Custom BaseModel."""
 
@@ -81,7 +91,7 @@ class BaseModel(PydanticBaseModel):
 class QueryParams(BaseModel):
     """QueryParams."""
 
-    input_path: Path
+    input_path: CircuitFilePath
     attributes: list[str]
     population_name: str | None = None
     node_set: str | None = None
@@ -90,9 +100,6 @@ class QueryParams(BaseModel):
     how: Annotated[str, Field(pattern=SERIALIZERS_REGEX)] = DEFAULT_SERIALIZER
     use_cache: bool = True
     queries: list[dict[str, Any]] | None = None
-
-    # validators
-    _input_path_validator = field_validator("input_path")(PathValidator({".json", ".h5"}))
 
     @classmethod
     def from_simplified_params(
@@ -132,29 +139,7 @@ class QueryParams(BaseModel):
 class DownsampleParams(BaseModel):
     """DownsampleParams."""
 
-    input_path: Path
+    input_path: CircuitFilePath
     population_name: str | None = None
     sampling_ratio: float = 0.01
     seed: int = 0
-
-    # validators
-    _input_path_validator = field_validator("input_path")(PathValidator({".json", ".h5"}))
-
-
-class CountParams(BaseModel):
-    """CountParams."""
-
-    input_path: Path
-    population_name: str | None = None
-
-    # validators
-    _input_path_validator = field_validator("input_path")(PathValidator({".json", ".h5"}))
-
-
-class NodeSetsParams(BaseModel):
-    """NodeSetsParams."""
-
-    input_path: Path
-
-    # validators
-    _input_path_validator = field_validator("input_path")(PathValidator({".json"}))
