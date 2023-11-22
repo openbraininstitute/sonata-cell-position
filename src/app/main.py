@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.background import BackgroundTask
 from starlette.requests import Request
@@ -135,6 +135,38 @@ def count(
     """Return the number of nodes in a circuit."""
     # not cpu intensive, it can run in the current thread
     return service.count(input_path=input_path, population_name=population_name)
+
+
+@app.get("/circuit/attribute_names")
+def get_attribute_names(
+    input_path: CircuitFilePath,
+    population_name: str | None = None,
+) -> dict:
+    """Return the attribute names of a circuit."""
+    return service.get_attribute_names(input_path=input_path, population_name=population_name)
+
+
+@app.get("/circuit/attribute_dtypes")
+def get_attribute_dtypes(
+    input_path: CircuitFilePath,
+    population_name: str | None = None,
+) -> dict:
+    """Return the attribute data types of a circuit."""
+    return service.get_attribute_dtypes(input_path=input_path, population_name=population_name)
+
+
+@app.get("/circuit/attribute_values")
+def get_attribute_values(
+    input_path: CircuitFilePath,
+    population_name: str | None = None,
+    attribute_names: Annotated[list[str] | None, Query()] = None,
+) -> dict:
+    """Return the unique values of the attributes of a circuit."""
+    return service.get_attribute_values(
+        input_path=input_path,
+        population_name=population_name,
+        attribute_names=attribute_names,
+    )
 
 
 @app.get("/circuit/node_sets")

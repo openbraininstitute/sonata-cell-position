@@ -216,16 +216,17 @@ def _build_df_list(
     return df_list
 
 
-def query_from_file(
+def query_from_file(  # pylint: disable=too-many-arguments
     input_path: Path,
     population_name: str | None,
-    queries: list[dict[str, Any]] | None,
+    queries: list[dict[str, Any]] | None = None,
     node_set: str | None = None,
     attributes: list[str] | None = None,
     sampling_ratio: float = 1.0,
     seed: int = 0,
     sort: bool = True,
     with_node_ids: bool = True,
+    ids: np.ndarray | None = None,
 ) -> pd.DataFrame:
     """Build and return a DataFrame of nodes from the given population and queries.
 
@@ -239,12 +240,14 @@ def query_from_file(
         seed: random number generator seed.
         sort: True to sort the result by node id.
         with_node_ids: True to return the node_ids as index of the resulting DataFrame
+        ids: array of node ids to be used directly. It can be used alternatively to sampling_ratio.
 
     Returns:
         pd.DataFrame of nodes with the requested attributes as columns.
     """
     node_population = get_node_population(input_path, population_name)
-    ids = _init_ids(input_path, node_population, seed, node_set, sampling_ratio)
+    if ids is None:
+        ids = _init_ids(input_path, node_population, seed, node_set, sampling_ratio)
 
     if attributes is not None:
         selected_attributes = attributes

@@ -207,6 +207,87 @@ def test_count_population(input_path):
     assert response.json() == {"nodes": {"populations": {"default": {"size": 3}}}}
 
 
+def test_attribute_names(input_path):
+    response = client.get(
+        "/circuit/attribute_names",
+        params={
+            "input_path": str(input_path),
+            "population_name": "default",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "populations": {
+            "default": [
+                "layer",
+                "model_template",
+                "model_type",
+                "morphology",
+                "mtype",
+                "rotation_angle_xaxis",
+                "rotation_angle_yaxis",
+                "rotation_angle_zaxis",
+                "x",
+                "y",
+                "z",
+                "@dynamics:holding_current",
+            ]
+        }
+    }
+
+
+def test_attribute_dtypes(input_path):
+    response = client.get(
+        "/circuit/attribute_dtypes",
+        params={
+            "input_path": str(input_path),
+            "population_name": "default",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "populations": {
+            "default": {
+                "@dynamics:holding_current": "float64",
+                "layer": "int64",
+                "model_template": "object",
+                "model_type": "object",
+                "morphology": "object",
+                "mtype": "object",
+                "rotation_angle_xaxis": "float64",
+                "rotation_angle_yaxis": "float64",
+                "rotation_angle_zaxis": "float64",
+                "x": "float64",
+                "y": "float64",
+                "z": "float64",
+            }
+        }
+    }
+
+
+def test_attribute_values(input_path):
+    response = client.get(
+        "/circuit/attribute_values",
+        params={
+            "input_path": str(input_path),
+            "population_name": "default",
+            "attribute_names": ["mtype", "morphology"],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "populations": {
+            "default": {
+                "mtype": ["L2_X", "L6_Y"],
+                "morphology": ["morph-A", "morph-B", "morph-C"],
+            },
+        },
+    }
+
+
 def test_node_sets_get():
     input_path = TEST_DATA_DIR / "circuit" / "circuit_config.json"
 

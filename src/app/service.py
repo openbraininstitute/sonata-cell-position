@@ -91,6 +91,158 @@ def count(input_path: Path, population_name: str | None = None) -> dict:
     return {"nodes": {"populations": populations}}
 
 
+def get_attribute_names(
+    input_path: Path,
+    population_name: str | None = None,
+) -> dict:
+    """Return the attribute names per node population in the given circuit.
+
+    Args:
+        input_path: path to the circuit config file, or nodes file.
+        population_name: optional name of the node population.
+
+    Returns:
+        A dict containing the attribute names per node population.
+
+    Examples:
+        {
+          "populations": {
+            "population_0": [
+              "morphology",
+              "mtype",
+              "x",
+              "y",
+              "z",
+            ]
+          }
+        }
+    """
+    population_names = [population_name] if population_name else None
+    return {
+        "populations": {
+            node_population.name: query_from_file(
+                input_path=input_path,
+                population_name=node_population.name,
+                sort=False,
+                with_node_ids=False,
+                ids=np.array([]),
+            ).columns.to_list()
+            for node_population in get_node_populations(input_path, population_names)
+        }
+    }
+
+
+def get_attribute_dtypes(
+    input_path: Path,
+    population_name: str | None = None,
+) -> dict:
+    """Return the data types of each attribute per node population in the given circuit.
+
+    Args:
+        input_path: path to the circuit config file, or nodes file.
+        population_name: optional name of the node population.
+
+    Returns:
+        A dict containing the data types of each attribute per node population.
+
+    Examples:
+        {
+          "populations": {
+            "population_0": {
+              "morphology": "object",
+              "mtype": "category",
+              "x": "float64",
+              "y": "float64",
+              "z": "float64",
+            }
+          }
+        }
+    """
+    population_names = [population_name] if population_name else None
+    return {
+        "populations": {
+            node_population.name: query_from_file(
+                input_path=input_path,
+                population_name=node_population.name,
+                sort=False,
+                with_node_ids=False,
+                ids=np.array([]),
+            )
+            .dtypes.apply(str)
+            .to_dict()
+            for node_population in get_node_populations(input_path, population_names)
+        }
+    }
+
+
+def get_attribute_values(
+    input_path: Path,
+    population_name: str | None = None,
+    attribute_names: list[str] | None = None,
+) -> dict:
+    """Return the unique values of each attribute per population in the given circuit.
+
+    Only the attributes having data type string or category (enum) are considered.
+
+    Args:
+        input_path: path to the circuit config file, or nodes file.
+        population_name: optional name of the node population.
+        attribute_names: optional list of attributes to retrieve.
+
+    Returns:
+        A dict containing the unique values of each attribute per node population.
+
+    Examples:
+        {
+          "populations": {
+            "population_0": {
+              "mtype": [
+                "L2_X",
+                "L6_Y"
+              ],
+              "morphology": [
+                "morph-A",
+                "morph-B",
+                "morph-C"
+              ]
+            }
+          }
+        }
+    """
+    population_names = [population_name] if population_name else None
+    populations: dict[str, dict[str, list[str]]] = {}
+    for node_population in get_node_populations(input_path, population_names):
+        df = query_from_file(
+            input_path=input_path,
+            population_name=node_population.name,
+            attributes=attribute_names,
+            sort=False,
+            with_node_ids=False,
+            ids=np.array([]),
+        )
+        props = populations[node_population.name] = {}
+        for attribute_name in df.columns:
+            if df.dtypes[attribute_name] == "category":
+                props[attribute_name] = (
+                    df[attribute_name].cat.categories.drop_duplicates().to_list()
+                )
+            elif df.dtypes[attribute_name] == "object":
+                # potentially slow, because it needs to load the full column
+                props[attribute_name] = (
+                    query_from_file(
+                        input_path=input_path,
+                        population_name=node_population.name,
+                        attributes=[attribute_name],
+                        sort=False,
+                        with_node_ids=False,
+                    )[attribute_name]
+                    .drop_duplicates()
+                    .sort_values()
+                    .to_list()
+                )
+    return {"populations": populations}
+
+
 def downsample(
     input_path: Path,
     output_path: Path,
