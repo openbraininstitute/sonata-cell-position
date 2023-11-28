@@ -11,7 +11,7 @@ from starlette.requests import Request
 from starlette.responses import FileResponse, JSONResponse, RedirectResponse
 from starlette.status import HTTP_302_FOUND, HTTP_400_BAD_REQUEST
 
-from app import cache, serialize, service, utils
+from app import cache, serialize, service
 from app.constants import COMMIT_SHA, DEBUG, ORIGINS, PROJECT_PATH
 from app.errors import CircuitError
 from app.logger import L
@@ -67,15 +67,15 @@ async def version() -> dict:
 
 
 @app.get("/circuit")
-async def read_circuit(
+def read_circuit(
     params: Annotated[QueryParams, Depends(ValidatedQuery(QueryParams.from_simplified_params))]
 ) -> FileResponse:
     """Return information about a circuit, for backward compatibility."""
-    return await query(params)
+    return query(params)
 
 
 @app.post("/circuit/query")
-async def query(params: QueryParams) -> FileResponse:
+def query(params: QueryParams) -> FileResponse:
     """Return information about a circuit."""
 
     def cleanup() -> None:
@@ -86,8 +86,7 @@ async def query(params: QueryParams) -> FileResponse:
     extension = get_extension(params.how)
     tmp_dir = Path(tempfile.mkdtemp(prefix="output_"))
     output_path = tmp_dir / f"output.{extension}"
-    await utils.run_process_executor(
-        func=read_circuit_job,
+    read_circuit_job(
         input_path=params.input_path,
         population_name=params.population_name,
         sampling_ratio=params.sampling_ratio,
@@ -108,7 +107,7 @@ async def query(params: QueryParams) -> FileResponse:
 
 
 @app.post("/circuit/downsample")
-async def downsample(params: DownsampleParams) -> FileResponse:
+def downsample(params: DownsampleParams) -> FileResponse:
     """Downsample a node file."""
 
     def cleanup() -> None:
@@ -117,8 +116,7 @@ async def downsample(params: DownsampleParams) -> FileResponse:
 
     tmp_dir = Path(tempfile.mkdtemp(prefix="output_"))
     output_path = tmp_dir / f"downsampled.{int(1 / params.sampling_ratio)}.h5"
-    await utils.run_process_executor(
-        func=downsample_job,
+    downsample_job(
         input_path=params.input_path,
         output_path=output_path,
         population_name=params.population_name,

@@ -1,7 +1,4 @@
 """Common utilities."""
-import asyncio
-import concurrent.futures
-from functools import partial
 from itertools import chain
 from typing import Any
 
@@ -35,11 +32,3 @@ def modality_to_attributes(modality: list[str] | None = None) -> list[str]:
 def attributes_to_dict(**kwargs) -> dict[str, Any]:
     """Convert attributes to dict, filtering out empty values."""
     return {key: value for key, value in kwargs.items() if value}
-
-
-async def run_process_executor(func, **params):
-    """Run a cpu-intensive function in a subprocess."""
-    loop = asyncio.get_running_loop()
-    func = partial(func, **params)
-    with concurrent.futures.ProcessPoolExecutor() as pool:
-        await loop.run_in_executor(pool, func)
