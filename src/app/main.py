@@ -8,7 +8,8 @@ from fastapi import Depends, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.background import BackgroundTask
 from starlette.requests import Request
-from starlette.responses import FileResponse, JSONResponse
+from starlette.responses import FileResponse, JSONResponse, RedirectResponse
+from starlette.status import HTTP_302_FOUND, HTTP_400_BAD_REQUEST
 
 from app import cache, serialize, service, utils
 from app.constants import COMMIT_SHA, DEBUG, ORIGINS, PROJECT_PATH
@@ -39,14 +40,19 @@ async def circuit_error_handler(request: Request, exc: CircuitError) -> JSONResp
     # pylint: disable=unused-argument
     msg = f"CircuitError: {exc}"
     L.warning(msg)
-    return JSONResponse(status_code=400, content={"message": msg})
+    return JSONResponse(status_code=HTTP_400_BAD_REQUEST, content={"message": msg})
 
 
 @app.get("/")
 async def root():
     """Root endpoint."""
+    return RedirectResponse(url="/docs", status_code=HTTP_302_FOUND)
+
+
+@app.get("/health")
+async def health():
+    """Health endpoint."""
     return {
-        "project": PROJECT_PATH,
         "status": "OK",
     }
 

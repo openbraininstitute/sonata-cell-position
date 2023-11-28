@@ -10,14 +10,18 @@ from tests.utils import TEST_DATA_DIR, _assert_populations_equal, _get_node_popu
 client = TestClient(test_module.app)
 
 
-def test_root_get(monkeypatch):
-    project_path = "project/sbo/sonata-cell-position"
-    monkeypatch.setattr(test_module, "PROJECT_PATH", project_path)
+def test_root_get():
+    response = client.get("/", follow_redirects=False)
 
-    response = client.get("/")
+    assert response.status_code == 302
+    assert response.next_request.url.path == "/docs"
+
+
+def test_health_get():
+    response = client.get("/health")
 
     assert response.status_code == 200
-    assert response.json() == {"project": project_path, "status": "OK"}
+    assert response.json() == {"status": "OK"}
 
 
 def test_version_get(monkeypatch):

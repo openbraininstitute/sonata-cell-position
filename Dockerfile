@@ -1,4 +1,5 @@
 FROM python:3.10
+SHELL ["/bin/bash", "-e", "-o", "pipefail", "-c"]
 
 WORKDIR /code
 
@@ -9,6 +10,19 @@ COPY ./requirements.txt /code/requirements.txt
 RUN \
     pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir --upgrade -r /code/requirements.txt
+
+ARG INSTALL_DEBUG_TOOLS
+RUN \
+    if [[ "${INSTALL_DEBUG_TOOLS}" == "true" ]]; then \
+        SYSTEM_DEBUG_TOOLS="curl jq htop strace" && \
+        PYTHON_DEBUG_TOOLS="py-spy memory-profiler" && \
+        echo "Installing tools for profiling and inspection..." && \
+        apt-get update && \
+        DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ${SYSTEM_DEBUG_TOOLS} && \
+        apt-get clean && \
+        rm -rf /var/lib/apt/lists/* && \
+        pip install --no-cache-dir --upgrade ${PYTHON_DEBUG_TOOLS} ; \
+    fi
 
 COPY ./src/app /code/app
 COPY ./logging.yaml /code/logging.yaml
