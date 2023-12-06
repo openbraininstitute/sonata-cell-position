@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import libsonata
+import pandas.testing as pdt
 from numpy.testing import assert_array_equal
 
 TEST_DIR = Path(__file__).parent.resolve()
@@ -71,3 +72,8 @@ def _assert_populations_equal(pop1, pop2, ids1, ids2):
             pop2.get_enumeration(name, ids2),
             err_msg=f"Different {name}",
         )
+
+
+def assert_frame_equal(*args, check_categorical=False, **kwargs):
+    """Same as pandas.testing.assert_frame_equal, but do not check categories by default."""
+    pdt.assert_frame_equal(*args, check_categorical=check_categorical, **kwargs)

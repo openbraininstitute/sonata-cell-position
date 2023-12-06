@@ -1,11 +1,11 @@
 {
   "Layer2": {
-    "layer": 2
+    "layer": "L2"
   },
   "Layer23": {
     "layer": [
-      2,
-      3
+      "L2",
+      "L3"
     ]
   },
   "Node2012": {

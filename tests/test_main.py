@@ -229,6 +229,7 @@ def test_attribute_names(input_path):
                 "model_type",
                 "morphology",
                 "mtype",
+                "region",
                 "rotation_angle_xaxis",
                 "rotation_angle_yaxis",
                 "rotation_angle_zaxis",
@@ -255,11 +256,12 @@ def test_attribute_dtypes(input_path):
         "populations": {
             "default": {
                 "@dynamics:holding_current": "float64",
-                "layer": "int64",
-                "model_template": "object",
-                "model_type": "object",
+                "layer": "category",
+                "model_template": "category",
+                "model_type": "category",
                 "morphology": "object",
                 "mtype": "object",
+                "region": "category",
                 "rotation_angle_xaxis": "float64",
                 "rotation_angle_yaxis": "float64",
                 "rotation_angle_zaxis": "float64",
