@@ -24,6 +24,8 @@ def _region_acronyms(regions: list[str]) -> list[str]:
             ids = REGION_MAP.find(int(region), "id", with_descendants=True)
         except ValueError:
             ids = REGION_MAP.find(region, "acronym", with_descendants=True)
+        if not ids:
+            raise CircuitError(f"No region ids found with region {region!r}")
         result.update(REGION_MAP.get(id_, "acronym") for id_ in ids)
     return list(result)
 

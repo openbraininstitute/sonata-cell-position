@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version 2023.12.1
+-----------------
+
+- When querying a circuit, check that each specified region can be resolved to region ids.
+- Update ``hierarchy.json``.
+
+
 Version 2023.11.2
 -----------------
 

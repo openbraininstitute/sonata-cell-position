@@ -58,6 +58,46 @@ def test_read_circuit(input_path):
     }
 
 
+def test_read_circuit_unknown_region_id(input_path):
+    response = client.get(
+        "/circuit",
+        params={
+            "input_path": str(input_path),
+            "population_name": "default",
+            "how": "json",
+            "modality": ["position", "mtype"],
+            "region": 9999999999999999,
+            "sampling_ratio": 0.5,
+            "seed": 102,
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "message": "CircuitError: No region ids found with region '9999999999999999'"
+    }
+
+
+def test_read_circuit_unknown_region_label(input_path):
+    response = client.get(
+        "/circuit",
+        params={
+            "input_path": str(input_path),
+            "population_name": "default",
+            "how": "json",
+            "modality": ["position", "mtype"],
+            "region": "unknown_region_acronym",
+            "sampling_ratio": 0.5,
+            "seed": 102,
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "message": "CircuitError: No region ids found with region 'unknown_region_acronym'"
+    }
+
+
 def test_read_circuit_invalid_modality(input_path):
     response = client.get(
         "/circuit",
