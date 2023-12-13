@@ -1,0 +1,20 @@
+# docker-compose.yml
+
+version: '3.8'
+
+services:
+  sonata-cell-position:
+    container_name: sonata-cell-position
+    build:
+      dockerfile: Dockerfile
+  sonata-cell-position-proxy:
+    container_name: sonata-cell-position-proxy
+    build:
+      context: proxy
+      dockerfile: Dockerfile
+    ports:
+    - "8000:8000"
+    depends_on:
+    - sonata-cell-position
+
+

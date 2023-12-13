@@ -32,4 +32,4 @@ ARG COMMIT_SHA
 ENV PROJECT_PATH=${PROJECT_PATH}
 ENV COMMIT_SHA=${COMMIT_SHA}
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--log-config", "/code/logging.yaml"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8050", "--proxy-headers", "--log-config", "/code/logging.yaml"]
