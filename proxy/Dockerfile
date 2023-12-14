@@ -1,4 +1,4 @@
-FROM nginx:latest
+FROM nginxinc/nginx-unprivileged:stable
 
 COPY nginx.conf /etc/nginx/nginx.conf
 
