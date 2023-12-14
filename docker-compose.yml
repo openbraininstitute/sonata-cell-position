@@ -13,7 +13,7 @@ services:
       context: proxy
       dockerfile: Dockerfile
     ports:
-    - "8000:8000"
+    - "8040:8040"
     depends_on:
     - sonata-cell-position
 

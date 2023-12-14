@@ -8,7 +8,7 @@ from fastapi import Depends, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.background import BackgroundTask
 from starlette.requests import Request
-from starlette.responses import FileResponse, JSONResponse, RedirectResponse
+from starlette.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from starlette.status import HTTP_302_FOUND, HTTP_400_BAD_REQUEST
 
 from app import cache, serialize, service
@@ -34,6 +34,12 @@ app.add_middleware(
 )
 
 
+def no_cache(response: Response) -> Response:
+    """Add Cache-Control: no-cache to the response headers."""
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 @app.exception_handler(CircuitError)
 async def circuit_error_handler(request: Request, exc: CircuitError) -> JSONResponse:
     """Handle CircuitError."""
@@ -49,15 +55,15 @@ async def root():
     return RedirectResponse(url="/docs", status_code=HTTP_302_FOUND)
 
 
-@app.get("/health")
-async def health():
+@app.get("/health", dependencies=[Depends(no_cache)])
+async def health() -> dict:
     """Health endpoint."""
     return {
         "status": "OK",
     }
 
 
-@app.get("/version")
+@app.get("/version", dependencies=[Depends(no_cache)])
 async def version() -> dict:
     """Version endpoint."""
     return {

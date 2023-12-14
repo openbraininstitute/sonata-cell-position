@@ -1,6 +1,26 @@
 Changelog
 =========
 
+Version 2023.12.4
+-----------------
+
+- Tune the reverse proxy parameters:
+
+  - increase inactive time to 24h
+  - use min_free instead of max_size
+  - exclude /health and /version from the cache
+  - change the listening port from 8000 to 8040
+
+Version 2023.12.3
+-----------------
+
+- Use nginx-unprivileged as the base image for the reverse proxy.
+
+Version 2023.12.2
+-----------------
+
+- Add a reverse proxy in front of the service.
+
 Version 2023.12.1
 -----------------
 

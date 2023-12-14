@@ -22,6 +22,7 @@ def test_health_get():
 
     assert response.status_code == 200
     assert response.json() == {"status": "OK"}
+    assert response.headers["Cache-Control"] == "no-cache"
 
 
 def test_version_get(monkeypatch):
@@ -34,6 +35,7 @@ def test_version_get(monkeypatch):
 
     assert response.status_code == 200
     assert response.json() == {"project": project_path, "commit_sha": commit_sha}
+    assert response.headers["Cache-Control"] == "no-cache"
 
 
 def test_read_circuit(input_path):
