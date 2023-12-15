@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 2023.12.5
+-----------------
+
+- Automate release after tag: when a tag is pushed or added through the GitLab UI, the Docker images are published to the registry and a release is created.
+
 Version 2023.12.4
 -----------------
 

@@ -8,6 +8,14 @@ include:
   - /ci/jobs/coverage.yml
   - /ci/jobs/check-packaging.yml
 
+workflow:
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "schedule"  # run for scheduled pipelines
+  - if: $CI_PIPELINE_SOURCE == "web"  # run for manually started pipelines from -/pipelines/new
+  - if: $CI_MERGE_REQUEST_IID  # run for all the types of merge request pipelines
+  - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH  # run for the default branch (not for tags)
+  - if: $CI_COMMIT_TAG =~ /\d{4}\.\d+\.\d+/  # run for release tags
+
 variables:
   FF_USE_FASTZIP: 'true'
   ARTIFACT_COMPRESSION_LEVEL: 'fast'
@@ -30,7 +38,7 @@ deploy-prod:
       --build-arg COMMIT_SHA=${CI_COMMIT_SHA}
       --build-arg INSTALL_DEBUG_TOOLS=${INSTALL_DEBUG_TOOLS}
   rules:
-  - if: $CI_COMMIT_TAG
+  - if: '$CI_COMMIT_TAG'
 
 deploy-proxy-prod:
   stage: publish
@@ -41,4 +49,15 @@ deploy-proxy-prod:
     REGISTRY_IMAGE_TAG: $(date +%s)-$CI_COMMIT_SHORT_SHA
     BUILD_PATH: "./proxy"
   rules:
-  - if: $CI_COMMIT_TAG
+  - if: '$CI_COMMIT_TAG'
+
+make-release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  script:
+  - echo "Making the release for tag $CI_COMMIT_TAG"
+  rules:
+  - if: '$CI_COMMIT_TAG'
+  release:
+    tag_name: '$CI_COMMIT_TAG'
+    description: '$CI_COMMIT_TAG'
