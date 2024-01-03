@@ -1,4 +1,4 @@
-# docker-compose.yml
+# docker-compose.yml for local deployment (see also tox.ini)
 
 version: '3.8'
 
@@ -7,6 +7,18 @@ services:
     container_name: sonata-cell-position
     build:
       dockerfile: Dockerfile
+    ports:
+    - "8050:8050"
+    volumes:
+    - type: bind
+      source: /gpfs
+      target: /gpfs
+      read_only: true
+    cap_add:
+    - SYS_PTRACE
+    environment:
+    - DEBUG=true
+    - LOGGING_LEVEL=DEBUG
   sonata-cell-position-proxy:
     container_name: sonata-cell-position-proxy
     build:
@@ -16,5 +28,3 @@ services:
     - "8040:8040"
     depends_on:
     - sonata-cell-position
-
-

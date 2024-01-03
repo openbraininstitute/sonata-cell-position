@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 2024.1.1
+-----------------
+
+- Simplify tox.ini with docker-compose.yml.
+
 Version 2023.12.5
 -----------------
 
