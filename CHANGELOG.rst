@@ -5,6 +5,14 @@ Version 2024.1.1
 -----------------
 
 - Simplify tox.ini with docker-compose.yml.
+- Tune nginx parameters:
+
+  - improve caching performance in accordance with https://www.nginx.com/blog/nginx-caching-guide/#Fine%E2%80%91Tuning-the-Cache-and-Improving-Performance
+  - enable gzip compression for known formats:
+
+    - The files are compressed on the fly if the client supports compression, while the cached files aren't compressed when stored.
+    - Files with content-type ``application/vnd.apache.parquet`` are not compressed, because they are already compressed by default using the snappy algorythm.
+    - Files with content-type ``application/vnd.apache.arrow.file`` are not compressed, although it seems that the only compression currently supported by Arrow is dictionary compression.
 
 Version 2023.12.5
 -----------------
