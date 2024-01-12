@@ -14,7 +14,7 @@ RUN \
 ARG INSTALL_DEBUG_TOOLS
 RUN \
     if [[ "${INSTALL_DEBUG_TOOLS}" == "true" ]]; then \
-        SYSTEM_DEBUG_TOOLS="curl jq htop strace net-tools iproute2" && \
+        SYSTEM_DEBUG_TOOLS="vim less curl jq htop strace net-tools iproute2" && \
         PYTHON_DEBUG_TOOLS="py-spy memory-profiler" && \
         echo "Installing tools for profiling and inspection..." && \
         apt-get update && \

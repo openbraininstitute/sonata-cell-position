@@ -45,12 +45,12 @@ def test_export(tmp_path, input_path):
             {"default": [[0], [1]]},
         ),
         (
-            [],
-            {"default": [[0], [1]], "default2": [[0, 1], [0, 3]]},
+            [("--population-name", "default2")],
+            {"default2": [[0, 1], [1, 3]]},
         ),
     ],
 )
-def test_downsample(tmp_path, input_path, params, expected):
+def test_sample(tmp_path, input_path, params, expected):
     output_path = tmp_path / "nodes.h5"
     assert not output_path.exists()
 
@@ -63,7 +63,7 @@ def test_downsample(tmp_path, input_path, params, expected):
     ]
     runner = CliRunner()
     with runner.isolated_filesystem(temp_dir=tmp_path) as td:
-        result = runner.invoke(test_module.cli, ["downsample", *chain.from_iterable(options)])
+        result = runner.invoke(test_module.cli, ["sample", *chain.from_iterable(options)])
 
     assert result.output == ""
     assert result.exit_code == 0

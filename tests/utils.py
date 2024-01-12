@@ -1,3 +1,4 @@
+import contextlib
 import json
 from contextlib import contextmanager
 from pathlib import Path
@@ -72,3 +73,21 @@ def _assert_populations_equal(pop1, pop2, ids1, ids2):
 def assert_frame_equal(*args, check_categorical=False, **kwargs):
     """Same as pandas.testing.assert_frame_equal, but do not check categories by default."""
     pdt.assert_frame_equal(*args, check_categorical=check_categorical, **kwargs)
+
+
+@contextlib.contextmanager
+def clear_cache(cached_func):
+    # ensure that the cache is cleared at the beginning and at the end of the context manager
+    cached_func.cache_clear()
+    assert_cache(cached_func, hits=0, misses=0, currsize=0)
+    try:
+        yield cached_func
+    finally:
+        cached_func.cache_clear()
+        assert_cache(cached_func, hits=0, misses=0, currsize=0)
+
+
+def assert_cache(cached_func, **kwargs):
+    cache_info = cached_func.cache_info()
+    for key, value in kwargs.items():
+        assert getattr(cache_info, key) == value, f"{key}: {getattr(cache_info, key)} != {value}"

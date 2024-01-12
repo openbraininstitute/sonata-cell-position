@@ -203,14 +203,14 @@ def test_query_invalid_how(input_path):
             {"default": [[0], [1]]},
         ),
         (
-            {},
-            {"default": [[0], [1]], "default2": [[0, 1], [0, 3]]},
+            {"population_name": "default2"},
+            {"default2": [[0, 1], [1, 3]]},
         ),
     ],
 )
-def test_downsample(tmp_path, input_path, params, expected):
+def test_sample(tmp_path, input_path, params, expected):
     response = client.post(
-        "/circuit/downsample",
+        "/circuit/sample",
         json={
             "input_path": str(input_path),
             "sampling_ratio": 0.5,
@@ -302,14 +302,14 @@ def test_attribute_dtypes(input_path):
                 "model_template": "category",
                 "model_type": "category",
                 "morphology": "object",
-                "mtype": "object",
+                "mtype": "category",
                 "region": "category",
                 "rotation_angle_xaxis": "float64",
                 "rotation_angle_yaxis": "float64",
                 "rotation_angle_zaxis": "float64",
-                "x": "float64",
-                "y": "float64",
-                "z": "float64",
+                "x": "float32",
+                "y": "float32",
+                "z": "float32",
             }
         }
     }

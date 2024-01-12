@@ -1,77 +1,116 @@
 """Service functions."""
-from collections.abc import Iterable
+import functools
+import importlib.resources
+from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import Any
 
-import h5py
-import libsonata
 import numpy as np
 import pandas as pd
-from numpy.random import default_rng
+from entity_management.atlas import AtlasRelease, ParcellationOntology
+from entity_management.simulation import DetailedCircuit
+from voxcell import RegionMap
 
-from app.constants import DTYPES, REGION_MAP, SAMPLING_RATIO
+from app import nexus
 from app.errors import CircuitError
-from app.libsonata_helper import get_node_populations, get_node_sets, query_from_file
+from app.libsonata_helper import (
+    get_node_population,
+    get_node_populations,
+    get_node_sets,
+    query_from_file,
+    sample_nodes,
+)
 from app.logger import L
-from app.utils import ensure_dtypes
+from app.schemas import CircuitParams, CircuitRef, NexusConfig
 
 
-def _region_acronyms(regions: list[str]) -> list[str]:
+def get_circuit_config_path(circuit_ref: CircuitRef, nexus_config: NexusConfig) -> Path:
+    """Return the circuit config path of the given circuit."""
+    if circuit_ref.path:
+        return circuit_ref.path
+    resource = nexus.load_cached_resource(
+        DetailedCircuit, circuit_ref.id, nexus_config=nexus_config
+    )
+    return nexus.get_circuit_config_path(resource)
+
+
+def get_single_node_population_name(circuit_ref: CircuitRef, nexus_config: NexusConfig) -> str:
+    """Return the single node population of the circuit, or raise an error if there are many."""
+    path = get_circuit_config_path(circuit_ref, nexus_config=nexus_config)
+    return get_node_population(path).name
+
+
+@functools.cache
+def get_bundled_region_map() -> RegionMap:
+    """Return the bundled region map."""
+    L.info("Loading bundled region map")
+    with importlib.resources.path("app.data", "hierarchy.json") as path:
+        return RegionMap.load_json(path.absolute())
+
+
+def get_region_map(circuit_ref: CircuitRef, nexus_config: NexusConfig) -> RegionMap:
+    """Return the region map used for the given circuit."""
+    if not circuit_ref.id:
+        return get_bundled_region_map()
+    detailed_circuit = nexus.load_cached_resource(
+        DetailedCircuit, resource_id=circuit_ref.id, nexus_config=nexus_config
+    )
+    atlas_release = nexus.load_cached_resource(
+        AtlasRelease, detailed_circuit.atlasRelease.get_id(), nexus_config=nexus_config
+    )
+    parcellation_ontology = nexus.load_cached_resource(
+        ParcellationOntology, atlas_release.parcellationOntology.get_id(), nexus_config=nexus_config
+    )
+    return nexus.load_cached_region_map(parcellation_ontology, nexus_config=nexus_config)
+
+
+def _region_acronyms(regions: list[str], region_map: RegionMap) -> list[str]:
     """Return acronyms of regions in `regions`."""
     result: set[str] = set()
     for region in regions:
         try:
-            ids = REGION_MAP.find(int(region), "id", with_descendants=True)
+            ids = region_map.find(int(region), "id", with_descendants=True)
         except ValueError:
-            ids = REGION_MAP.find(region, "acronym", with_descendants=True)
+            ids = region_map.find(region, "acronym", with_descendants=True)
         if not ids:
             raise CircuitError(f"No region ids found with region {region!r}")
-        result.update(REGION_MAP.get(id_, "acronym") for id_ in ids)
+        result.update(region_map.get(id_, "acronym") for id_ in ids)
     return list(result)
 
 
 def export(
-    input_path: Path,
-    population_name: str | None = None,
-    sampling_ratio: float = SAMPLING_RATIO,
-    queries: list[dict[str, Any]] | None = None,
-    node_set: str | None = None,
-    attributes: list[str] | None = None,
-    seed: int = 0,
-) -> pd.DataFrame:
+    circuit_params: CircuitParams,
+    queries: list[dict[str, Any]] | None,
+    node_set: str | None,
+    write: Callable[[pd.DataFrame], None],
+) -> None:
     """Return a DataFrame of nodes attributes.
 
     Args:
-        input_path: path to the circuit config file.
-        population_name: name of the node population.
-        sampling_ratio: sampling_ratio of cells to be considered, expressed as float (0.01 = 1%).
+        circuit_params: instance of CircuitParams,
         queries: list of query dictionaries.
         node_set: name of a node_set to load.
-        attributes: list of attributes to export.
-        seed: random number generator seed.
-
-    Returns:
-        The resulting DataFrame.
-
+        write: function accepting the DataFrame to write as a single parameter.
     """
     queries = [
-        {**query, "region": _region_acronyms(query["region"])} if "region" in query else query
+        query | {"region": _region_acronyms(query["region"], circuit_params.region_map)}
+        if "region" in query
+        else query
         for query in queries or []
     ]
+    key = circuit_params.key
     df = query_from_file(
-        input_path=input_path,
-        population_name=population_name,
-        sampling_ratio=sampling_ratio,
+        input_path=key.circuit_config_path,
+        population_name=key.population_name,
+        sampling_ratio=key.sampling_ratio,
         queries=queries,
         node_set=node_set,
-        attributes=attributes,
-        seed=seed,
+        attributes=key.attributes,
+        seed=key.seed,
         sort=False,
         with_node_ids=False,
     )
-    # ensure the desired dtypes (for example, to convert from float64 to float32)
-    df = ensure_dtypes(df, dtypes=DTYPES)
-    return df
+    write(df)
 
 
 def count(input_path: Path, population_name: str | None = None) -> dict:
@@ -221,6 +260,7 @@ def get_attribute_values(
             sort=False,
             with_node_ids=False,
             ids=np.array([]),
+            dtypes=False,
         )
         props = populations[node_population.name] = {}
         for attribute_name in df.columns:
@@ -237,6 +277,7 @@ def get_attribute_values(
                         attributes=[attribute_name],
                         sort=False,
                         with_node_ids=False,
+                        dtypes=False,
                     )[attribute_name]
                     .drop_duplicates()
                     .sort_values()
@@ -245,52 +286,25 @@ def get_attribute_values(
     return {"populations": populations}
 
 
-def downsample(
-    input_path: Path,
+def sample(
+    nexus_config: NexusConfig,
+    circuit_ref: CircuitRef,
     output_path: Path,
-    population_name: str | None,
+    population_name: str,
     sampling_ratio: float = 0.01,
     seed: int = 0,
     attributes: Iterable[str] | None = None,
-):
-    """Downsample a node file."""
-
-    # pylint: disable=too-many-locals
-    def _filter_attributes(names: set[str]):
-        if attributes:
-            names = names.intersection(attributes)
-        yield from sorted(names)
-
-    rng = default_rng(seed)
-    str_dt = h5py.special_dtype(vlen=str)
-    L.info("Writing file: %s", output_path)
-    with h5py.File(output_path, "w") as h5f:
-        population_names = {population_name} if population_name else None
-        for node_population in get_node_populations(input_path, population_names):
-            high = len(node_population)
-            ids = rng.choice(high, size=int(high * sampling_ratio), replace=False, shuffle=False)
-            ids.sort()
-            selection = libsonata.Selection(ids)
-            population_group = h5f.create_group(f"/nodes/{node_population.name}")
-            population_group.create_dataset("node_type_id", data=np.full(len(ids), -1))
-            group = population_group.create_group("0")
-            for name in _filter_attributes(node_population.enumeration_names):
-                L.info("Writing enumeration: %s", name)
-                data = node_population.enumeration_values(name)
-                group.create_dataset(f"@library/{name}", data=data, dtype=str_dt)
-                data = node_population.get_enumeration(name, selection)
-                group.create_dataset(name, data=data, dtype=data.dtype)
-            for name in _filter_attributes(node_population.dynamics_attribute_names):
-                L.info("Writing dynamics_attribute: %s", name)
-                data = node_population.get_dynamics_attribute(name, selection)
-                group.create_dataset(f"dynamics_params/{name}", data=data, dtype=data.dtype)
-            for name in _filter_attributes(
-                node_population.attribute_names - node_population.enumeration_names
-            ):
-                L.info("Writing attribute: %s", name)
-                data = node_population.get_attribute(name, selection)
-                dtype = str_dt if data.dtype == object else data.dtype
-                group.create_dataset(name, data=data, dtype=dtype)
+) -> None:
+    """Sample a node file."""
+    path = get_circuit_config_path(circuit_ref, nexus_config=nexus_config)
+    sample_nodes(
+        input_path=path,
+        output_path=output_path,
+        population_name=population_name,
+        sampling_ratio=sampling_ratio,
+        seed=seed,
+        attributes=attributes,
+    )
 
 
 def get_node_set_names(input_path: Path) -> dict:

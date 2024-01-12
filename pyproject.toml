@@ -10,14 +10,19 @@ description = "sonata-cell-position web API"
 readme = "README.rst"
 requires-python = ">=3.10"
 dependencies = [
+    "cachetools",
+    "entity-management>=1.2.36",
     "fastapi",
     "h5py",
-    "libsonata>=0.1.24",
+    "libsonata>=0.1.24,!=0.1.25",
+    "loky",
     "numpy",
     "pandas",
+    "psutil",  # allow early memory leak detections in loky
     "pyarrow",
     "pydantic>=2",
     "pyyaml",
+    "requests",
     "uvicorn[standard]",
     "voxcell",
 ]

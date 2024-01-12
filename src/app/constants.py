@@ -1,9 +1,8 @@
 """Common constants."""
-import importlib.resources
 import os
+from pathlib import Path
 
 import numpy as np
-import voxcell.region_map
 
 ORIGINS = [
     "http://localhost:3000",
@@ -18,23 +17,40 @@ COMMIT_SHA = os.environ.get("COMMIT_SHA")
 DEBUG = os.environ.get("DEBUG", "").lower() == "true"
 LOGGING_CONFIG = os.environ.get("LOGGING_CONFIG", "logging.yaml")
 LOGGING_LEVEL = os.environ.get("LOGGING_LEVEL")
+# maximum sampling ratio considered for caching
 SAMPLING_RATIO = 0.01
-CACHE_CHECK_TIMEOUT = 300
-CACHE_CHECK_INTERVAL = 1
+# mapping from modality to attributes
 MODALITIES = {
     "position": ["x", "y", "z"],
     "region": ["region"],
     "mtype": ["mtype"],
 }
+# enforced dtypes in the returned node DataFrame
 DTYPES = {
     "x": np.float32,
     "y": np.float32,
     "z": np.float32,
     "region": "category",
     "mtype": "category",
+    "layer": "category",
 }
 DYNAMICS_PREFIX = "@dynamics:"
 MODALITIES_REGEX = f"^({'|'.join(MODALITIES)})$"
 
-with importlib.resources.path("app.data", "hierarchy.json") as path:
-    REGION_MAP = voxcell.region_map.RegionMap.load_json(path.absolute())
+NEXUS_ENDPOINT = "https://bbp.epfl.ch/nexus/v1"
+NEXUS_BUCKET = "bbp/mmb-point-neuron-framework-model"
+
+ENTITY_CACHE_INFO = bool(int(os.getenv("ENTITY_CACHE_INFO", "0")))  # hits and misses
+ENTITY_CACHE_MAX_SIZE = 100  # maximum number of entities to keep in memory
+ENTITY_CACHE_TTL = 3600 * 24  # TTL in seconds
+
+REGION_MAP_CACHE_INFO = bool(int(os.getenv("REGION_MAP_CACHE_INFO", "0")))  # hits and misses
+REGION_MAP_CACHE_MAX_SIZE = 10  # maximum number of region maps to keep in memory
+REGION_MAP_CACHE_TTL = 3600 * 24  # TTL in seconds
+
+# circuit cache saved to disk (ideally RAM disk)
+CIRCUIT_CACHE_INFO = bool(int(os.getenv("CIRCUIT_CACHE_INFO", "0")))  # hits and misses
+CIRCUIT_CACHE_MAX_SIZE_MB = float(os.getenv("CIRCUIT_CACHE_MAX_SIZE_MB", "400"))
+CIRCUIT_CACHE_CHECK_TIMEOUT = 600  # in seconds
+CIRCUIT_CACHE_CHECK_INTERVAL = 1  # in seconds
+CIRCUIT_CACHE_PATH = Path(os.getenv("TMPDIR", "/tmp"), "cache", "circuits").resolve()

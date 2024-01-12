@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 import app.libsonata_helper as test_module
+from app.constants import DTYPES
 from app.errors import CircuitError
 from tests.utils import assert_frame_equal, dump_json, load_json
 
@@ -56,9 +57,7 @@ def _get_nodes_df(population_name=None):
             }
         ),
     }
-    dtypes = {
-        "layer": "category",
-        "region": "category",
+    dtypes = DTYPES | {
         "model_type": "category",
         "model_template": "category",
     }
@@ -95,7 +94,7 @@ def test_get_node_sets(input_path):
     assert len(result.names) == 12
 
 
-def test_get_node_sets_raises_on_non_existing_path(input_path, tmp_path):
+def test_get_node_sets_raises_on_non_existent_path(input_path, tmp_path):
     content = load_json(input_path)
     new_circuit_path = tmp_path / "config.json"
     dump_json(new_circuit_path, content)
@@ -237,39 +236,3 @@ def test_query_from_file_with_missing_attribute(input_path, missing):
             sort=True,
             with_node_ids=True,
         )
-
-
-@pytest.mark.parametrize(
-    "node_set_name, expected_error",
-    [
-        ("default", None),
-        ("unknown", "Node set 'unknown' does not exist"),
-        ("NodeSet0", "nodesets with `node_id` aren't currently supported"),
-        ("NodeSet1", "nodesets with `node_id` aren't currently supported"),
-        ("NodeSet2", "nodesets with `node_id` aren't currently supported"),
-        ("V1_point_prime", "nodesets with `node_id` aren't currently supported"),
-    ],
-)
-def test__check_for_node_ids(node_set_name, expected_error):
-    node_set_json = {
-        "default": {"population": "default"},
-        "V1_point_prime": {
-            "population": "biophysical",
-            "model_type": "point",
-            "node_id": [1, 2, 3, 5, 7, 9],
-        },
-        "NodeSet0": {"node_id": 1},
-        "NodeSet1": ["NodeSet0"],
-        "NodeSet2": ["default", "NodeSet1"],
-    }
-    if expected_error:
-        cm = pytest.raises(CircuitError, match=expected_error)
-    else:
-        cm = contextlib.nullcontext()
-    with cm:
-        test_module._check_for_node_ids(node_set_json, node_set_name)
-
-
-def test__check_for_node_ids_with_empty_node_sets():
-    with pytest.raises(CircuitError, match="Node set 'unknown' does not exist"):
-        test_module._check_for_node_ids(node_set_json={}, node_set_name="unknown")

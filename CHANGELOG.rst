@@ -5,6 +5,12 @@ Version 2024.1.2
 -----------------
 
 - Drop support for directly loading ``.h5`` files.
+- Add Nexus integration: it's now possible to specify the Nexus ``circuit_id`` instead of ``input_path`` in all the existing endpoints.
+  The Nexus token must be provided in the ``Nexus-Token`` request header.
+- Retrieve and cache resources from Nexus.
+- Retrieve hierarchy.json from Nexus and cache RegionMap.
+- Rewrite circuit caching logic: use a LRUCache, store to disk a partial circuit config with converted node_sets.
+- Rename endpoint /circuit/downsample to /circuit/sample.
 
 Version 2024.1.1
 -----------------
