@@ -113,10 +113,9 @@ def check_cache(params: CacheParams) -> CacheParams:
         # TODO(gevaert): we're "magically" storing the node_sets.json file; this is less than ideal
         # We probably need to restructure the `input_path` handling for all the functions that take
         # it, and allow them to take a CacheParams instead of just a nodes.h5 or circuit_config.json
-        if params.input_path.suffix == ".json":
-            config = libsonata.CircuitConfig.from_file(params.input_path)
-            if config.node_sets_path:
-                shutil.copy(config.node_sets_path, paths.base / "node_sets.json")
+        config = libsonata.CircuitConfig.from_file(params.input_path)
+        if config.node_sets_path:
+            shutil.copy(config.node_sets_path, paths.base / "node_sets.json")
     except OSError:
         if not paths.base.is_dir():
             raise

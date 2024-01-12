@@ -40,13 +40,8 @@ def edit_json(json_file, encoding="utf-8"):
 
 
 def _get_node_population(path, population_name):
-    if path.suffix == ".json":
-        config = libsonata.CircuitConfig.from_file(path)
-        node_population = config.node_population(population_name)
-    else:
-        ns_orig = libsonata.NodeStorage(path)
-        node_population = ns_orig.open_population(population_name)
-    return node_population
+    config = libsonata.CircuitConfig.from_file(path)
+    return config.node_population(population_name)
 
 
 def _assert_populations_equal(pop1, pop2, ids1, ids2):

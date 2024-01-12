@@ -76,8 +76,6 @@ class PathValidator:
 
 # Validated path to circuit config
 CircuitConfigPath = Annotated[Path, AfterValidator(PathValidator({".json"})), Query()]
-# Validated path to circuit config or directly to nodes hdf file
-CircuitFilePath = Annotated[Path, AfterValidator(PathValidator({".json", ".h5"})), Query()]
 
 
 class BaseModel(PydanticBaseModel):
@@ -91,7 +89,7 @@ class BaseModel(PydanticBaseModel):
 class QueryParams(BaseModel):
     """QueryParams."""
 
-    input_path: CircuitFilePath
+    input_path: CircuitConfigPath
     attributes: list[str]
     population_name: str | None = None
     node_set: str | None = None
@@ -139,7 +137,7 @@ class QueryParams(BaseModel):
 class DownsampleParams(BaseModel):
     """DownsampleParams."""
 
-    input_path: CircuitFilePath
+    input_path: CircuitConfigPath
     population_name: str | None = None
     sampling_ratio: float = 0.01
     seed: int = 0

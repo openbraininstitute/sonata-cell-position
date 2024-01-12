@@ -42,7 +42,7 @@ def export(
     """Return a DataFrame of nodes attributes.
 
     Args:
-        input_path: path to the circuit config file, or nodes file.
+        input_path: path to the circuit config file.
         population_name: name of the node population.
         sampling_ratio: sampling_ratio of cells to be considered, expressed as float (0.01 = 1%).
         queries: list of query dictionaries.
@@ -78,7 +78,7 @@ def count(input_path: Path, population_name: str | None = None) -> dict:
     """Return the number of nodes per population in the given circuit.
 
     Args:
-        input_path: path to the circuit config file, or nodes file.
+        input_path: path to the circuit config file.
         population_name: optional name of the node population.
 
     Returns:
@@ -100,7 +100,7 @@ def get_attribute_names(
     """Return the attribute names per node population in the given circuit.
 
     Args:
-        input_path: path to the circuit config file, or nodes file.
+        input_path: path to the circuit config file.
         population_name: optional name of the node population.
 
     Returns:
@@ -141,7 +141,7 @@ def get_attribute_dtypes(
     """Return the data types of each attribute per node population in the given circuit.
 
     Args:
-        input_path: path to the circuit config file, or nodes file.
+        input_path: path to the circuit config file.
         population_name: optional name of the node population.
 
     Returns:
@@ -187,7 +187,7 @@ def get_attribute_values(
     Only the attributes having data type string or category (enum) are considered.
 
     Args:
-        input_path: path to the circuit config file, or nodes file.
+        input_path: path to the circuit config file.
         population_name: optional name of the node population.
         attribute_names: optional list of attributes to retrieve.
 

@@ -19,7 +19,7 @@ def get_node_population(path: Path, population_name: str | None = None) -> libso
     """Load and return a libsonata node population.
 
     Args:
-        path: path to the circuit config file, or nodes file.
+        path: path to the circuit config file.
         population_name: name of the node population to load.
 
     Returns:
@@ -42,7 +42,7 @@ def get_node_populations(
     """Load and yield libsonata node populations.
 
     Args:
-        path: path to the circuit config file, or nodes file.
+        path: path to the circuit config file.
         population_names: names of the node populations to load, or None to load all of them.
 
     Yields:
@@ -51,16 +51,9 @@ def get_node_populations(
 
     """
     try:
-        if path.suffix == ".json":
-            # sonata circuit config
-            config = libsonata.CircuitConfig.from_file(path)
-            for population_name in sorted(population_names or config.node_populations):
-                yield config.node_population(population_name)
-        else:
-            # hdf5 nodes file
-            ns = libsonata.NodeStorage(path)
-            for population_name in sorted(population_names or ns.population_names):
-                yield ns.open_population(population_name)
+        config = libsonata.CircuitConfig.from_file(path)
+        for population_name in sorted(population_names or config.node_populations):
+            yield config.node_population(population_name)
     except libsonata.SonataError as ex:
         raise CircuitError(f"Impossible to retrieve the node population(s) [{ex}]") from ex
 
@@ -163,11 +156,9 @@ def _init_ids(
         if node_sets_path.exists():
             # see src/app/cache.py for where this file comes from
             ns = libsonata.NodeSets.from_file(node_sets_path)
-        elif input_path.suffix == ".json":
+        else:
             # have a circuit_config, but not a cached node_sets.json, see if we can load it
             ns = get_node_sets(input_path)
-        else:
-            raise CircuitError("Must pass circuit_config style JSON to load node_sets")
 
         _check_for_node_ids(json.loads(ns.toJSON()), node_set)
         a = ns.materialize(node_set, node_population).flatten().astype("int64")
@@ -231,7 +222,7 @@ def query_from_file(  # pylint: disable=too-many-arguments
     """Build and return a DataFrame of nodes from the given population and queries.
 
     Args:
-        input_path: path to the circuit config file, or nodes file.
+        input_path: path to the circuit config file.
         population_name: name of the node population.
         queries: list of query dictionaries to select the nodes based on attributes.
         node_set: name of a node_set to load.

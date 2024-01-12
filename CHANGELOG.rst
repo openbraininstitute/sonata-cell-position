@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 2024.1.2
+-----------------
+
+- Drop support for directly loading ``.h5`` files.
+
 Version 2024.1.1
 -----------------
 

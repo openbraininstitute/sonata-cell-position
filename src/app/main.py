@@ -15,13 +15,7 @@ from app import cache, serialize, service
 from app.constants import COMMIT_SHA, DEBUG, ORIGINS, PROJECT_PATH
 from app.errors import CircuitError
 from app.logger import L
-from app.schemas import (
-    CircuitConfigPath,
-    CircuitFilePath,
-    DownsampleParams,
-    QueryParams,
-    ValidatedQuery,
-)
+from app.schemas import CircuitConfigPath, DownsampleParams, QueryParams, ValidatedQuery
 from app.serialize import get_content_type, get_extension
 
 app = FastAPI(debug=DEBUG)
@@ -139,7 +133,7 @@ def downsample(params: DownsampleParams) -> FileResponse:
 
 @app.get("/circuit/count")
 def count(
-    input_path: CircuitFilePath,
+    input_path: CircuitConfigPath,
     population_name: str | None = None,
 ) -> dict:
     """Return the number of nodes in a circuit."""
@@ -149,7 +143,7 @@ def count(
 
 @app.get("/circuit/attribute_names")
 def get_attribute_names(
-    input_path: CircuitFilePath,
+    input_path: CircuitConfigPath,
     population_name: str | None = None,
 ) -> dict:
     """Return the attribute names of a circuit."""
@@ -158,7 +152,7 @@ def get_attribute_names(
 
 @app.get("/circuit/attribute_dtypes")
 def get_attribute_dtypes(
-    input_path: CircuitFilePath,
+    input_path: CircuitConfigPath,
     population_name: str | None = None,
 ) -> dict:
     """Return the attribute data types of a circuit."""
@@ -167,7 +161,7 @@ def get_attribute_dtypes(
 
 @app.get("/circuit/attribute_values")
 def get_attribute_values(
-    input_path: CircuitFilePath,
+    input_path: CircuitConfigPath,
     population_name: str | None = None,
     attribute_names: Annotated[list[str] | None, Query()] = None,
 ) -> dict:

@@ -89,21 +89,14 @@ def test_get_node_populations(input_path):
         assert node_population.name == name
 
 
-def test_get_node_sets(circuit_path):
-    result = test_module.get_node_sets(circuit_path)
+def test_get_node_sets(input_path):
+    result = test_module.get_node_sets(input_path)
     assert isinstance(result, libsonata.NodeSets)
     assert len(result.names) == 12
 
 
-def test_get_node_sets_raises_on_nodes_path(nodes_path):
-    # libsonata 0.1.22 raises a RuntimeError without description
-    match = re.escape("Impossible to retrieve the node sets []")
-    with pytest.raises(CircuitError, match=match):
-        test_module.get_node_sets(nodes_path)
-
-
-def test_get_node_sets_raises_on_non_existing_path(circuit_path, tmp_path):
-    content = load_json(circuit_path)
+def test_get_node_sets_raises_on_non_existing_path(input_path, tmp_path):
+    content = load_json(input_path)
     new_circuit_path = tmp_path / "config.json"
     dump_json(new_circuit_path, content)
 
@@ -195,9 +188,9 @@ def test_query_from_file_with_attributes_none(input_path):
         ),
     ],
 )
-def test_query_from_file_node_set(circuit_path, node_set, expected_ids):
+def test_query_from_file_node_set(input_path, node_set, expected_ids):
     result = test_module.query_from_file(
-        input_path=circuit_path,
+        input_path=input_path,
         population_name="default",
         queries=None,
         node_set=node_set,
