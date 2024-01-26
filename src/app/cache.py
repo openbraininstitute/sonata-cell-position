@@ -6,12 +6,12 @@ from threading import Lock
 import cachetools
 
 from app.constants import (
+    CACHED_SAMPLING_RATIO,
     CIRCUIT_CACHE_CHECK_INTERVAL,
     CIRCUIT_CACHE_CHECK_TIMEOUT,
     CIRCUIT_CACHE_INFO,
     CIRCUIT_CACHE_MAX_SIZE_MB,
     CIRCUIT_CACHE_PATH,
-    SAMPLING_RATIO,
 )
 from app.libsonata_helper import convert_nodesets, sample_nodes, write_circuit_config
 from app.logger import L
@@ -167,16 +167,17 @@ def get_cached_circuit_params(
         sampling_ratio=sampling_ratio,
         seed=seed,
     )
-    if not use_circuit_cache or sampling_ratio > SAMPLING_RATIO:
+    if not use_circuit_cache or sampling_ratio > CACHED_SAMPLING_RATIO:
         L.warning("Not caching nor using the sampled circuit")
     else:
-        # use SAMPLING_RATIO, to reuse the same cache even when passing a lower sampling_ratio
         key = key.model_copy(
             update={
-                "sampling_ratio": SAMPLING_RATIO,
+                "sampling_ratio": CACHED_SAMPLING_RATIO,
             }
         )
         paths = _get_sampled_circuit_paths(key)
+        # set circuit_config_path to the cached circuit config file,
+        # and sampling_ratio to the newly calculated sampling ratio
         key = key.model_copy(
             update={
                 "circuit_config_path": paths.circuit_config,

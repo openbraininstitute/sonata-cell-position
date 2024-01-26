@@ -18,7 +18,7 @@ DEBUG = os.environ.get("DEBUG", "").lower() == "true"
 LOGGING_CONFIG = os.environ.get("LOGGING_CONFIG", "logging.yaml")
 LOGGING_LEVEL = os.environ.get("LOGGING_LEVEL")
 # maximum sampling ratio considered for caching
-SAMPLING_RATIO = 0.01
+CACHED_SAMPLING_RATIO = float(os.getenv("CACHED_SAMPLING_RATIO", "0.01"))
 # mapping from modality to attributes
 MODALITIES = {
     "position": ["x", "y", "z"],

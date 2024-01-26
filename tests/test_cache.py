@@ -4,11 +4,7 @@ import app.cache as test_module
 from tests.utils import assert_cache, clear_cache
 
 
-def test_get_cached_circuit_params(tmp_path, monkeypatch, circuit_ref_path, nexus_config):
-    # patch SAMPLING_RATIO to use the cache even with sampling_ratio higher than 0.01
-    monkeypatch.setattr(test_module, "SAMPLING_RATIO", 0.5)
-    monkeypatch.setenv("TMPDIR", str(tmp_path))
-
+def test_get_cached_circuit_params(tmp_path, circuit_ref_path, nexus_config):
     with clear_cache(test_module._get_sampled_circuit_paths) as cached_func:
         # write the cache
         result1 = test_module.get_cached_circuit_params(
@@ -21,7 +17,7 @@ def test_get_cached_circuit_params(tmp_path, monkeypatch, circuit_ref_path, nexu
             use_circuit_cache=True,
         )
         assert isinstance(result1, test_module.CircuitParams)
-        assert result1.key.sampling_ratio == 1  # sampling_ratio / SAMPLING_RATIO
+        assert result1.key.sampling_ratio == 1  # sampling_ratio / CACHED_SAMPLING_RATIO
         path1 = result1.key.circuit_config_path
         assert path1.is_file()
         mtime1 = path1.stat().st_mtime_ns
@@ -38,7 +34,7 @@ def test_get_cached_circuit_params(tmp_path, monkeypatch, circuit_ref_path, nexu
             use_circuit_cache=True,
         )
         assert isinstance(result2, test_module.CircuitParams)
-        assert result2.key.sampling_ratio == 0.2  # sampling_ratio / SAMPLING_RATIO
+        assert result2.key.sampling_ratio == 0.2  # sampling_ratio / CACHED_SAMPLING_RATIO
         path2 = result2.key.circuit_config_path
         assert path2.is_file()
         mtime2 = path2.stat().st_mtime_ns
