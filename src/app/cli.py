@@ -1,4 +1,5 @@
 """CLI entry point."""
+
 import logging
 import os
 import re

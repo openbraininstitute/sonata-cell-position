@@ -1,4 +1,5 @@
 """Libsonata helper functions."""
+
 from collections.abc import Iterable, Iterator, Sequence
 from pathlib import Path
 from typing import Any

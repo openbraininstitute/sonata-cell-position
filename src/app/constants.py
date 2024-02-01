@@ -1,4 +1,5 @@
 """Common constants."""
+
 import os
 from pathlib import Path
 

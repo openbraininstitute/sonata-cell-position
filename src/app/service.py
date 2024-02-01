@@ -1,4 +1,5 @@
 """Service functions."""
+
 import functools
 import importlib.resources
 from collections.abc import Callable, Iterable
@@ -93,9 +94,11 @@ def export(
         write: function accepting the DataFrame to write as a single parameter.
     """
     queries = [
-        query | {"region": _region_acronyms(query["region"], circuit_params.region_map)}
-        if "region" in query
-        else query
+        (
+            query | {"region": _region_acronyms(query["region"], circuit_params.region_map)}
+            if "region" in query
+            else query
+        )
         for query in queries or []
     ]
     key = circuit_params.key

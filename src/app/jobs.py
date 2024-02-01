@@ -1,4 +1,5 @@
 """Jobs that can be called from the web service or the CLI."""
+
 from functools import partial
 from pathlib import Path
 from typing import Any

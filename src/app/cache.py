@@ -1,4 +1,5 @@
 """Circuit caching functions."""
+
 import shutil
 import time
 from threading import Lock

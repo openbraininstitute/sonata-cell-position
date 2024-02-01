@@ -1,4 +1,5 @@
 """Common utilities."""
+
 import json
 import os
 from itertools import chain
