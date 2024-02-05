@@ -41,6 +41,12 @@ MODALITIES_REGEX = f"^({'|'.join(MODALITIES)})$"
 NEXUS_ENDPOINT = "https://bbp.epfl.ch/nexus/v1"
 NEXUS_BUCKET = "bbp/mmb-point-neuron-framework-model"
 
+LOKY_EXECUTOR_ENABLED = bool(int(os.getenv("LOKY_EXECUTOR_ENABLED", "1")))
+LOKY_EXECUTOR_MAX_WORKERS = 4  # maximum number of workers
+LOKY_EXECUTOR_TIMEOUT = 2**31 // 1000  # seconds after which idle workers automatically shutdown
+# any value greater than 2147483 (around 24.86 days) would cause OverflowError: timeout is too large
+LOKY_START_METHOD = "loky"
+
 ENTITY_CACHE_INFO = bool(int(os.getenv("ENTITY_CACHE_INFO", "0")))  # hits and misses
 ENTITY_CACHE_MAX_SIZE = 100  # maximum number of entities to keep in memory
 ENTITY_CACHE_TTL = 3600 * 24  # TTL in seconds

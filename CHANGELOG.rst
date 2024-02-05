@@ -10,6 +10,7 @@ Version 2024.1.2
 - Retrieve and cache resources from Nexus.
 - Retrieve hierarchy.json from Nexus and cache RegionMap.
 - Rewrite circuit caching logic: use a LRUCache, store to disk a partial circuit config with converted node_sets.
+- Execute libsonata calls in a subprocess when they are I/O bound.
 - Rename endpoint /circuit/downsample to /circuit/sample.
 
 Version 2024.1.1

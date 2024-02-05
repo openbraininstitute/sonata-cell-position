@@ -13,7 +13,7 @@ from starlette.requests import Request
 from starlette.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from starlette.status import HTTP_302_FOUND, HTTP_400_BAD_REQUEST
 
-from app import jobs, serialize, service
+from app import jobs, serialize, service, utils
 from app.constants import COMMIT_SHA, DEBUG, ORIGINS, PROJECT_PATH
 from app.errors import ClientError
 from app.logger import L
@@ -30,6 +30,7 @@ async def lifespan(_: FastAPI):
     L.info("PID: %s", os.getpid())
     L.info("CPU count: %s", os.cpu_count())
     service.get_bundled_region_map()
+    utils.warmup_executors()
     yield
     L.info("Stopping the application")
 

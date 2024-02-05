@@ -1,14 +1,26 @@
 """Common utilities."""
 
+import functools
 import json
 import os
+import time
+from collections.abc import Callable
 from itertools import chain
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
+from loky import get_reusable_executor
+from loky.backend.context import set_start_method
 
-from app.constants import MODALITIES
+from app.constants import (
+    LOKY_EXECUTOR_ENABLED,
+    LOKY_EXECUTOR_MAX_WORKERS,
+    LOKY_EXECUTOR_TIMEOUT,
+    LOKY_START_METHOD,
+    MODALITIES,
+)
+from app.logger import L
 
 
 def dump_json(
@@ -62,3 +74,75 @@ def get_folder_size(path: Path | str) -> int:
             else:
                 total += entry.stat(follow_symlinks=False).st_size
     return total
+
+
+def with_pid(func: Callable) -> Callable:
+    """Decorator used to run a function and log pid and elapsed time."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        """Execute a function and return a tuple (result, pid)."""
+        start_time = time.monotonic()
+        pid = os.getpid()
+        try:
+            return func(*args, **kwargs)
+        finally:
+            exec_time = time.monotonic() - start_time
+            L.info("Executed %s in process %s in %.3f seconds", func.__name__, pid, exec_time)
+
+    return wrapper
+
+
+def prepare_callable(func: Callable, *args, **kwargs) -> Callable[[], Any]:
+    """Return a callable that can be called without arguments to get the result."""
+    executor = get_reusable_executor(
+        max_workers=LOKY_EXECUTOR_MAX_WORKERS,
+        timeout=LOKY_EXECUTOR_TIMEOUT,
+    )
+    future = executor.submit(func, *args, **kwargs)
+    return future.result
+
+
+def warmup_executors() -> None:
+    """Warm up the executors."""
+    if LOKY_EXECUTOR_ENABLED:
+
+        def _import_all():
+            # pylint: disable=import-outside-toplevel,unused-import,cyclic-import
+            from app import main  # noqa
+
+        L.info("Warming up subprocess executors")
+        set_start_method(LOKY_START_METHOD)
+        wrapped_func = with_pid(_import_all)
+        # submit a callable to each worker, without blocking
+        func_list = [prepare_callable(wrapped_func) for i in range(LOKY_EXECUTOR_MAX_WORKERS)]
+        # block until all the results are ready
+        for func in func_list:
+            func()
+
+
+def run_subprocess(func: Callable) -> Callable:
+    """Decorator used to run a function in a subprocess.
+
+    To avoid creating a new process each time, the process is executed using a persistent pool.
+
+    This can be useful when the function is I/O bound, and it doesn't release the GIL,
+    for example when calling libsonata functions doing heavy I/O operations.
+
+    It can be useful also when the function is CPU bound, provided that there are available cores.
+
+    Be aware that there may be some overhead to serialize and deserialize parameters and result.
+
+    If LOKY_EXECUTOR_ENABLED is False, then the function is executed in the current process.
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        """Execute the wrapped function."""
+        wrapped_func = with_pid(func)
+        if LOKY_EXECUTOR_ENABLED:
+            return prepare_callable(wrapped_func, *args, **kwargs)()
+        else:
+            return wrapped_func(*args, **kwargs)
+
+    return wrapper

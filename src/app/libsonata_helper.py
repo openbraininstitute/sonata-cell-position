@@ -13,7 +13,7 @@ from numpy.random import default_rng
 from app.constants import DTYPES, DYNAMICS_PREFIX
 from app.errors import CircuitError
 from app.logger import L
-from app.utils import dump_json, ensure_dtypes, ensure_list, load_json
+from app.utils import dump_json, ensure_dtypes, ensure_list, load_json, run_subprocess
 
 
 def get_node_population(
@@ -202,6 +202,7 @@ def _build_df_list(
     return df_list
 
 
+@run_subprocess
 def query_from_file(  # pylint: disable=too-many-arguments
     input_path: Path,
     population_name: str | None,
@@ -316,6 +317,7 @@ def _convert_ids(ids: np.ndarray, ids_map: pd.Series) -> np.ndarray:
     return ids_map.loc[ids].to_numpy()
 
 
+@run_subprocess
 def sample_nodes(
     input_path: Path,
     output_path: Path,
