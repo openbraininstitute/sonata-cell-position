@@ -45,7 +45,8 @@ def get_single_node_population_name(circuit_ref: CircuitRef, nexus_config: Nexus
 def get_bundled_region_map() -> RegionMap:
     """Return the bundled region map."""
     L.info("Loading bundled region map")
-    with importlib.resources.path("app.data", "hierarchy.json") as path:
+    ref = importlib.resources.files("app") / "data" / "hierarchy.json"
+    with importlib.resources.as_file(ref) as path:
         return RegionMap.load_json(path.absolute())
 
 

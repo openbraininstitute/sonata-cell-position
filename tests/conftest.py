@@ -35,5 +35,6 @@ def nexus_config():
 
 @pytest.fixture
 def region_map():
-    with importlib.resources.path("app.data", "hierarchy.json") as path:
+    ref = importlib.resources.files("app") / "data" / "hierarchy.json"
+    with importlib.resources.as_file(ref) as path:
         return RegionMap.load_json(path.absolute())

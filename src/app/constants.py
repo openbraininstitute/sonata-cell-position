@@ -11,6 +11,10 @@ ORIGINS = [
     "https://sonata.sbo.kcp.bbp.epfl.ch",
     "https://core-web-app-dev.sbo.kcp.bbp.epfl.ch",
     "https://bbpteam.epfl.ch",
+    "https://openbluebrain.com",
+    "https://openbluebrain.ch",
+    "https://openbrainplatform.org",
+    "https://openbrainplatform.com",
 ]
 
 PROJECT_PATH = os.environ.get("PROJECT_PATH")

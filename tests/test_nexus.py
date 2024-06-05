@@ -14,7 +14,8 @@ from tests.utils import assert_cache, clear_cache
 
 @pytest.fixture
 def hierarchy(tmp_path):
-    with importlib.resources.path("app.data", "hierarchy.json") as path:
+    ref = importlib.resources.files("app") / "data" / "hierarchy.json"
+    with importlib.resources.as_file(ref) as path:
         return shutil.copy(path, tmp_path)
 
 
