@@ -6,20 +6,26 @@
 #
 --index-url https://bbpteam.epfl.ch/repository/devpi/simple
 
-annotated-types==0.6.0
+annotated-types==0.7.0
     # via pydantic
-anyio==4.3.0
+anyio==4.4.0
     # via
+    #   httpx
     #   starlette
     #   watchfiles
 asttokens==2.4.1
     # via devtools
+async-property==0.2.2
+    # via python-keycloak
 attrs==23.2.0
     # via entity-management
-cachetools==5.3.3
+cachetools==5.4.0
     # via sonata-cell-position (pyproject.toml)
-certifi==2024.2.2
-    # via requests
+certifi==2024.7.4
+    # via
+    #   httpcore
+    #   httpx
+    #   requests
 cffi==1.16.0
     # via cryptography
 charset-normalizer==3.3.2
@@ -27,41 +33,66 @@ charset-normalizer==3.3.2
 click==8.1.7
     # via
     #   entity-management
+    #   typer
     #   uvicorn
 cloudpickle==3.0.0
     # via loky
-cryptography==42.0.5
+cryptography==42.0.8
     # via jwcrypto
 deprecation==2.1.0
     # via python-keycloak
 devtools==0.12.2
     # via entity-management
-entity-management==1.2.45
+dnspython==2.6.1
+    # via email-validator
+email-validator==2.2.0
+    # via fastapi
+entity-management==1.4.1
     # via sonata-cell-position (pyproject.toml)
 executing==2.0.1
     # via devtools
-fastapi==0.110.2
+fastapi==0.111.1
     # via sonata-cell-position (pyproject.toml)
+fastapi-cli==0.0.4
+    # via fastapi
 h11==0.14.0
-    # via uvicorn
+    # via
+    #   httpcore
+    #   uvicorn
 h5py==3.11.0
     # via
     #   sonata-cell-position (pyproject.toml)
     #   voxcell
+httpcore==1.0.5
+    # via httpx
 httptools==0.6.1
     # via uvicorn
+httpx==0.27.0
+    # via
+    #   fastapi
+    #   python-keycloak
 idna==3.7
     # via
     #   anyio
+    #   email-validator
+    #   httpx
     #   requests
 isodate==0.6.1
     # via rdflib
+jinja2==3.1.4
+    # via fastapi
 jwcrypto==1.5.6
     # via python-keycloak
-libsonata==0.1.26
+libsonata==0.1.27
     # via sonata-cell-position (pyproject.toml)
 loky==3.4.1
     # via sonata-cell-position (pyproject.toml)
+markdown-it-py==3.0.0
+    # via rich
+markupsafe==2.1.5
+    # via jinja2
+mdurl==0.1.2
+    # via markdown-it-py
 nptyping==2.5.0
     # via pynrrd
 numpy==1.26.4
@@ -75,26 +106,28 @@ numpy==1.26.4
     #   scipy
     #   sonata-cell-position (pyproject.toml)
     #   voxcell
-packaging==24.0
+packaging==24.1
     # via deprecation
 pandas==2.2.2
     # via
     #   sonata-cell-position (pyproject.toml)
     #   voxcell
-psutil==5.9.8
+psutil==6.0.0
     # via sonata-cell-position (pyproject.toml)
-pyarrow==16.0.0
+pyarrow==17.0.0
     # via sonata-cell-position (pyproject.toml)
 pycparser==2.22
     # via cffi
-pydantic==2.7.1
+pydantic==2.8.2
     # via
     #   fastapi
     #   sonata-cell-position (pyproject.toml)
-pydantic-core==2.18.2
+pydantic-core==2.20.1
     # via pydantic
-pygments==2.17.2
-    # via devtools
+pygments==2.18.0
+    # via
+    #   devtools
+    #   rich
 pyjwt==2.8.0
     # via
     #   entity-management
@@ -109,8 +142,10 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-dotenv==1.0.1
     # via uvicorn
-python-keycloak==4.0.0
+python-keycloak==4.2.2
     # via entity-management
+python-multipart==0.0.9
+    # via fastapi
 pytz==2024.1
     # via pandas
 pyyaml==6.0.1
@@ -121,7 +156,7 @@ rdflib==7.0.0
     # via
     #   entity-management
     #   sparqlwrapper
-requests==2.31.0
+requests==2.32.3
     # via
     #   entity-management
     #   python-keycloak
@@ -130,37 +165,48 @@ requests==2.31.0
     #   voxcell
 requests-toolbelt==1.0.0
     # via python-keycloak
-scipy==1.13.0
+rich==13.7.1
+    # via typer
+scipy==1.14.0
     # via voxcell
+shellingham==1.5.4
+    # via typer
 six==1.16.0
     # via
     #   asttokens
     #   isodate
     #   python-dateutil
 sniffio==1.3.1
-    # via anyio
+    # via
+    #   anyio
+    #   httpx
 sparqlwrapper==2.0.0
     # via entity-management
 starlette==0.37.2
     # via fastapi
-typing-extensions==4.11.0
+typer==0.12.3
+    # via fastapi-cli
+typing-extensions==4.12.2
     # via
     #   fastapi
     #   jwcrypto
     #   pydantic
     #   pydantic-core
     #   pynrrd
+    #   typer
 tzdata==2024.1
     # via pandas
-urllib3==2.2.1
+urllib3==2.2.2
     # via requests
-uvicorn==0.29.0
-    # via sonata-cell-position (pyproject.toml)
+uvicorn==0.30.1
+    # via
+    #   fastapi
+    #   sonata-cell-position (pyproject.toml)
 uvloop==0.19.0
     # via uvicorn
 voxcell==3.1.9
     # via sonata-cell-position (pyproject.toml)
-watchfiles==0.21.0
+watchfiles==0.22.0
     # via uvicorn
 websockets==12.0
     # via uvicorn
