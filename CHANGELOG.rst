@@ -1,17 +1,24 @@
 Changelog
 =========
 
-Version 2024.1.2
+Version 2024.4.1
 -----------------
 
-- Drop support for directly loading ``.h5`` files.
-- Add Nexus integration: it's now possible to specify the Nexus ``circuit_id`` instead of ``input_path`` in all the existing endpoints.
-  The Nexus token must be provided in the ``Nexus-Token`` request header.
-- Retrieve and cache resources from Nexus.
-- Retrieve hierarchy.json from Nexus and cache RegionMap.
+- Add Nexus integration:
+
+  - The authentication token should be provided in the ``Nexus-Token`` request header in all the ``/circuit`` endpoints.
+    If not provided, it's still possible to retrieve resources from Nexus if they aren't private, or from any explicit gpfs path if provided.
+  - The Nexus endpoint and bucket can be specified in the request headers ``Nexus-Endpoint`` and ``Nexus-Bucket``.
+  - Support Nexus ``circuit_id`` instead of ``input_path`` as a parameter in all the ``/circuit`` endpoints.
+  - Retrieve and cache the required resources from Nexus.
+  - Retrieve hierarchy.json from Nexus and cache the loaded RegionMap.
+  - Add the internal ``/auth`` endpoint, called by the reverse proxy to check the authorization of the user with Nexus.
+
 - Rewrite circuit caching logic: use a LRUCache, store to disk a partial circuit config with converted node_sets.
 - Execute libsonata calls in a subprocess when they are I/O bound.
-- Rename endpoint /circuit/downsample to /circuit/sample.
+- Rename endpoint ``/circuit/downsample`` to ``/circuit/sample``.
+- Drop support for directly loading ``.h5`` files.
+- Upgrade Dockerfile and tests to python 3.11.
 
 Version 2024.1.1
 -----------------

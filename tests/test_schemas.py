@@ -1,13 +1,30 @@
 import pytest
+from fastapi import HTTPException
 from pydantic import ValidationError
 
 import app.schemas as test_module
+
+
+def test_nexus_config():
+    result = test_module.NexusConfig(token="test-token")
+    assert isinstance(result, test_module.NexusConfig)
+    assert result.token == "test-token"
+
+
+def test_nexus_config_raises():
+    with pytest.raises(ValidationError, match="Nexus endpoint and/or bucket are invalid"):
+        test_module.NexusConfig(endpoint="https://fake-endpoint")
 
 
 def test_nexus_config_from_params():
     result = test_module.NexusConfig.from_params(nexus_token="test-token")
     assert isinstance(result, test_module.NexusConfig)
     assert result.token == "test-token"
+
+
+def test_nexus_config_from_params_raises():
+    with pytest.raises(HTTPException, match="Nexus endpoint and/or bucket are invalid"):
+        test_module.NexusConfig.from_params(nexus_endpoint="https://fake-endpoint")
 
 
 def test_circuit_ref_from_id():

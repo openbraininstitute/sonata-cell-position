@@ -5,22 +5,23 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sonata-cell-position"
-version = "2024.1.2"
+version = "2024.4.1"
 description = "sonata-cell-position web API"
-readme = "README.rst"
+readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "cachetools",
     "entity-management>=1.2.36",
     "fastapi",
     "h5py",
-    "libsonata>=0.1.24,!=0.1.25",
+    "libsonata>=0.1.24",
     "loky",
     "numpy",
     "pandas",
     "psutil",  # allow early memory leak detections in loky
     "pyarrow",
     "pydantic>=2",
+    "pyjwt",
     "pyyaml",
     "requests",
     "uvicorn[standard]",

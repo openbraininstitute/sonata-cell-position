@@ -1,7 +1,9 @@
 """Circuit caching functions."""
 
+import os
 import shutil
 import time
+from pathlib import Path
 from threading import Lock
 
 import cachetools
@@ -12,7 +14,6 @@ from app.constants import (
     CIRCUIT_CACHE_CHECK_TIMEOUT,
     CIRCUIT_CACHE_INFO,
     CIRCUIT_CACHE_MAX_SIZE_MB,
-    CIRCUIT_CACHE_PATH,
 )
 from app.libsonata_helper import convert_nodesets, sample_nodes, write_circuit_config
 from app.logger import L
@@ -98,11 +99,19 @@ def _circuit_cache_getsizeof(value: CircuitCachePaths) -> int:
     return size
 
 
+def _circuit_cache_path() -> Path:
+    """Return the base path to the circuit cache."""
+    if path := os.getenv("CIRCUIT_CACHE_PATH"):
+        return Path(path)
+    tmpdir = os.getenv("TMPDIR", "/tmp")
+    return Path(tmpdir).resolve() / "cache" / "circuits"
+
+
 def _circuit_cache_eviction_callback(key: CircuitCacheKey, value: CircuitCachePaths) -> None:
     """Remove the base directory of the evicted item."""
     path = value.base.resolve()
     L.info("Key %s evicted, removing directory %s", key, path)
-    assert path.is_relative_to(CIRCUIT_CACHE_PATH)
+    assert path.is_relative_to(_circuit_cache_path())
     shutil.rmtree(path, ignore_errors=True)
 
 
@@ -131,7 +140,7 @@ def _get_sampled_circuit_paths(key: CircuitCacheKey) -> CircuitCachePaths:
     Only the first thread will be able to create and populate the cache directory, while the others
     will wait until it's populated, or time out.
     """
-    paths = CircuitCachePaths(base=CIRCUIT_CACHE_PATH / key.checksum())
+    paths = CircuitCachePaths(base=_circuit_cache_path() / key.checksum())
 
     try:
         paths.base.mkdir(parents=True, exist_ok=False)

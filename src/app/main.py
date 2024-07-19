@@ -4,6 +4,7 @@ import os
 import tempfile
 from collections.abc import Callable, Iterator
 from contextlib import asynccontextmanager
+from http.client import responses
 from pathlib import Path
 from typing import Annotated
 
@@ -11,9 +12,9 @@ from fastapi import BackgroundTasks, Depends, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import FileResponse, JSONResponse, RedirectResponse, Response
-from starlette.status import HTTP_302_FOUND, HTTP_400_BAD_REQUEST
+from starlette.status import HTTP_302_FOUND
 
-from app import jobs, serialize, service, utils
+from app import jobs, nexus, serialize, service, utils
 from app.constants import COMMIT_SHA, DEBUG, ORIGINS, PROJECT_PATH
 from app.errors import ClientError
 from app.logger import L
@@ -96,7 +97,7 @@ async def client_error_handler(request: Request, exc: ClientError) -> JSONRespon
     # pylint: disable=unused-argument
     msg = f"{exc.__class__.__name__}: {exc}"
     L.warning(msg)
-    return JSONResponse(status_code=HTTP_400_BAD_REQUEST, content={"message": msg})
+    return JSONResponse(status_code=exc.status_code, content={"message": msg})
 
 
 @app.get("/")
@@ -120,6 +121,18 @@ async def version() -> dict:
         "project": PROJECT_PATH,
         "commit_sha": COMMIT_SHA,
     }
+
+
+@app.get("/auth")
+def auth(
+    nexus_config: NexusConfigDep,
+) -> JSONResponse:
+    """Auth endpoint."""
+    status_code = nexus.is_user_authorized(nexus_config)
+    return JSONResponse(
+        content={"message": responses[status_code]},
+        status_code=status_code,
+    )
 
 
 @app.get("/circuit")

@@ -1,7 +1,5 @@
 # docker-compose.yml for local deployment (see also tox.ini)
 
-version: '3.8'
-
 services:
   sonata-cell-position:
     container_name: sonata-cell-position

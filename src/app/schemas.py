@@ -12,7 +12,7 @@ from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field, ValidationError, model_validator
 from voxcell import RegionMap
 
-from app.constants import MODALITIES_REGEX, NEXUS_BUCKET, NEXUS_ENDPOINT
+from app.constants import MODALITIES_REGEX, NEXUS_BUCKET, NEXUS_ENDPOINT, NEXUS_READ_PERMISSIONS
 from app.logger import L
 from app.serialize import DEFAULT_SERIALIZER, SERIALIZERS_REGEX
 from app.utils import attributes_to_dict, modality_to_attributes
@@ -119,14 +119,27 @@ class NexusConfig(BaseModel):
         """Return Nexus project."""
         return self.bucket.partition("/")[2]
 
+    @model_validator(mode="after")
+    def check_endpoint_and_bucket(self) -> "NexusConfig":
+        """Check that the model is initialized with valid endpoint and bucket."""
+        if NEXUS_READ_PERMISSIONS.get(self.endpoint, {}).get(self.bucket) is None:
+            raise ValueError("Nexus endpoint and/or bucket are invalid")
+        return self
+
     @classmethod
     @ValidatedParams
     def from_params(
         cls,
+        nexus_endpoint: Annotated[str, Header()] = NEXUS_ENDPOINT,
+        nexus_bucket: Annotated[str, Header()] = NEXUS_BUCKET,
         nexus_token: Annotated[str | None, Header()] = None,
     ) -> "NexusConfig":
         """Return a new instance from the given parameters."""
-        return cls(token=nexus_token)
+        return cls(
+            endpoint=nexus_endpoint,
+            bucket=nexus_bucket,
+            token=nexus_token,
+        )
 
 
 class CircuitRef(FrozenBaseModel):

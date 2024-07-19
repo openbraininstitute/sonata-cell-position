@@ -1,7 +1,6 @@
 """Common constants."""
 
 import os
-from pathlib import Path
 
 import numpy as np
 
@@ -42,8 +41,34 @@ DTYPES = {
 DYNAMICS_PREFIX = "@dynamics:"
 MODALITIES_REGEX = f"^({'|'.join(MODALITIES)})$"
 
+# Nexus endpoint and bucket can be specified by the user in the request headers.
+# We may want to make them mandatory in the future, and remove the default values below.
 NEXUS_ENDPOINT = "https://bbp.epfl.ch/nexus/v1"
 NEXUS_BUCKET = "bbp/mmb-point-neuron-framework-model"
+
+# to support other Nexus endpoints and buckets, the required permissions need to be added here. see
+# https://bbpteam.epfl.ch/project/issues/browse/NSETM-2283?focusedId=234551#comment-234551
+NEXUS_READ_PERMISSIONS = {
+    "https://bbp.epfl.ch/nexus/v1": {
+        "bbp/mmb-point-neuron-framework-model": {
+            "events/read",
+            "projects/read",
+            "resources/read",
+            "views/query",
+            "gpfs-proj134/read",
+        },
+    },
+    "https://staging.nise.bbp.epfl.ch/nexus/v1": {
+        "bbp/mmb-point-neuron-framework-model": {
+            "events/read",
+            # "projects/read",  # not available in staging
+            "resources/read",
+            "views/query",
+            # "gpfs-proj134/read",  # not available in staging
+        },
+    },
+}
+NEXUS_AUTH_TIMEOUT = 10  # in seconds
 
 LOKY_EXECUTOR_ENABLED = bool(int(os.getenv("LOKY_EXECUTOR_ENABLED", "1")))
 LOKY_EXECUTOR_MAX_WORKERS = 4  # maximum number of workers
@@ -64,4 +89,3 @@ CIRCUIT_CACHE_INFO = bool(int(os.getenv("CIRCUIT_CACHE_INFO", "0")))  # hits and
 CIRCUIT_CACHE_MAX_SIZE_MB = float(os.getenv("CIRCUIT_CACHE_MAX_SIZE_MB", "400"))
 CIRCUIT_CACHE_CHECK_TIMEOUT = 600  # in seconds
 CIRCUIT_CACHE_CHECK_INTERVAL = 1  # in seconds
-CIRCUIT_CACHE_PATH = Path(os.getenv("TMPDIR", "/tmp"), "cache", "circuits").resolve()

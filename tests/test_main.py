@@ -38,6 +38,29 @@ def test_version_get(monkeypatch):
     assert response.headers["Cache-Control"] == "no-cache"
 
 
+def test_auth_get_success(monkeypatch):
+    monkeypatch.setattr(test_module.nexus, "is_user_authorized", lambda _: 200)
+
+    response = client.get("/auth")
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "OK"}
+
+
+@pytest.mark.parametrize(
+    "headers",
+    [
+        None,
+        {"Nexus-Token": "invalid"},
+    ],
+)
+def test_auth_get_failure(headers):
+    response = client.get("/auth", headers=headers)
+
+    assert response.status_code == 401
+    assert response.json() == {"message": "Unauthorized"}
+
+
 def test_read_circuit(input_path):
     response = client.get(
         "/circuit",
@@ -121,6 +144,33 @@ def test_read_circuit_invalid_modality(input_path):
     assert error["loc"] == ["query", "modality", 1]
     assert error["msg"].startswith("String should match pattern")
     assert error["input"] == "invalid"
+
+
+def test_read_circuit_invalid_nexus_endpoint(input_path):
+    response = client.get(
+        "/circuit",
+        params={
+            "circuit_id": "https://bbp.epfl.ch/data/fake-circuit-id",
+            "population_name": "default",
+            "how": "json",
+        },
+        headers={
+            "Nexus-Endpoint": "https://fake-endpoint",
+        },
+    )
+
+    assert response.status_code == 422
+    response_json = response.json()
+    assert len(response_json["detail"]) == 1
+    error = response_json["detail"][0]
+    assert error["type"] == "value_error"
+    assert error["loc"] == ["query"]
+    assert error["msg"].startswith("Value error, Nexus endpoint and/or bucket are invalid")
+    assert error["input"] == {
+        "endpoint": "https://fake-endpoint",
+        "bucket": "bbp/mmb-point-neuron-framework-model",
+        "token": None,
+    }
 
 
 def test_query(input_path):

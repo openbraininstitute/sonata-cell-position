@@ -1,9 +1,10 @@
-import importlib.resources
-import shutil
+import logging
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import jwt
 import pytest
+import requests
 import voxcell
 from requests import HTTPError
 
@@ -13,10 +14,97 @@ from tests.utils import assert_cache, clear_cache
 
 
 @pytest.fixture
-def hierarchy(tmp_path):
-    ref = importlib.resources.files("app") / "data" / "hierarchy.json"
-    with importlib.resources.as_file(ref) as path:
-        return shutil.copy(path, tmp_path)
+def nexus_acl():
+    return {
+        "@context": [
+            "https://bluebrain.github.io/nexus/contexts/metadata.json",
+            "https://bluebrain.github.io/nexus/contexts/search.json",
+            "https://bluebrain.github.io/nexus/contexts/acls.json",
+        ],
+        "_total": 1,
+        "_results": [
+            {
+                "@id": "https://bbp.epfl.ch/nexus/v1/acls/bbp/mmb-point-neuron-framework-model",
+                "@type": "AccessControlList",
+                "acl": [
+                    {
+                        "identity": {
+                            "@id": "https://bbp.epfl.ch/nexus/v1/realms/bbp/groups/bbp-staff",
+                            "@type": "Group",
+                            "group": "/bbp-staff",
+                            "realm": "bbp",
+                        },
+                        "permissions": [
+                            "projects/read",
+                            "views/query",
+                            "gpfs-proj134/read",
+                            "resources/read",
+                            "gpfs-proj134/write",
+                            "resources/write",
+                            "files/write",
+                            "events/read",
+                        ],
+                    },
+                    {
+                        "identity": {
+                            "@id": "https://bbp.epfl.ch/nexus/v1/realms/bbp/groups/bbp-dev-proj134",
+                            "@type": "Group",
+                            "group": "/bbp-dev-proj134",
+                            "realm": "bbp",
+                        },
+                        "permissions": [
+                            "archives/write",
+                            "views/query",
+                            "gpfs-proj134/read",
+                            "resources/read",
+                            "views/write",
+                            "gpfs-proj134/write",
+                            "resources/write",
+                            "files/write",
+                            "events/read",
+                        ],
+                    },
+                ],
+                "_constrainedBy": "https://bluebrain.github.io/nexus/schemas/acls.json",
+                "_createdAt": "2022-05-24T09:02:25.905Z",
+                "_createdBy": "https://bbp.epfl.ch/nexus/v1/realms/serviceaccounts/users/username",
+                "_deprecated": False,
+                "_path": "/bbp/mmb-point-neuron-framework-model",
+                "_rev": 13,
+                "_self": "https://bbp.epfl.ch/nexus/v1/acls/bbp/mmb-point-neuron-framework-model",
+                "_updatedAt": "2023-10-26T13:14:06.126Z",
+                "_updatedBy": "https://bbp.epfl.ch/nexus/v1/realms/bbp/users/username",
+            }
+        ],
+    }
+
+
+@pytest.fixture
+def nexus_token():
+    return jwt.encode(
+        {
+            "exp": 1706709167,
+            "iat": 1706705567,
+            "jti": "00000000-0000-0000-0000-000000000000",
+            "iss": "https://bbpauth.epfl.ch/auth/realms/BBP",
+            "aud": "coreservices-kubernetes",
+            "sub": "f:00000000-0000-0000-0000-000000000000:testuser",
+            "typ": "Bearer",
+            "azp": "bbp-workflow",
+            "session_state": "00000000-0000-0000-0000-000000000000",
+            "allowed-origins": ["*"],
+            "realm_access": {"roles": ["offline_access"]},
+            "scope": "profile offline_access openid groups email",
+            "sid": "00000000-0000-0000-0000-000000000000",
+            "email_verified": True,
+            "name": "Test User",
+            "preferred_username": "testuser",
+            "given_name": "Test",
+            "family_name": "User",
+            "email": "test.user@example.org",
+        },
+        key="",
+    )
 
 
 def test_load_cached_resource(nexus_config):
@@ -42,7 +130,10 @@ def test_load_cached_resource_with_nexus_error(nexus_config):
     resource_id = "test-resource-id"
     nexus_config.token = "test-token"
     resource_class = MagicMock()
-    resource_class.from_id.side_effect = HTTPError("401 Client Error: Unauthorized for url")
+    resource_class.from_id.side_effect = HTTPError(
+        "401 Client Error: Unauthorized for url",
+        response=MagicMock(status_code=401),
+    )
 
     with clear_cache(test_module.load_cached_resource) as tested_func:
         with pytest.raises(ClientError, match="401 Client Error: Unauthorized for url"):
@@ -54,22 +145,13 @@ def test_load_cached_resource_with_resource_id_none(nexus_config):
     resource_id = None
     nexus_config.token = "test-token"
     resource_class = MagicMock()
-    resource_class.from_id.side_effect = HTTPError("401 Client Error: Unauthorized for url")
+    resource_class.from_id.side_effect = HTTPError(
+        "401 Client Error: Unauthorized for url",
+        response=MagicMock(status_code=401),
+    )
 
     with clear_cache(test_module.load_cached_resource) as tested_func:
         with pytest.raises(ClientError, match="Resource id must be set"):
-            tested_func(resource_class, resource_id, nexus_config=nexus_config)
-        assert_cache(tested_func, hits=0, misses=1, currsize=0)
-
-
-def test_load_cached_resource_with_nexus_token_none(nexus_config):
-    resource_id = "test-resource-id"
-    nexus_config.token = None
-    resource_class = MagicMock()
-    resource_class.from_id.side_effect = HTTPError("401 Client Error: Unauthorized for url")
-
-    with clear_cache(test_module.load_cached_resource) as tested_func:
-        with pytest.raises(ClientError, match="Nexus token must be set"):
             tested_func(resource_class, resource_id, nexus_config=nexus_config)
         assert_cache(tested_func, hits=0, misses=1, currsize=0)
 
@@ -139,3 +221,124 @@ def test_get_circuit_config_path_with_missing_attribute():
         ClientError, match="Error in resource.*object has no attribute 'get_url_as_path'"
     ):
         test_module.get_circuit_config_path(resource)
+
+
+def test_is_user_authorized_true(nexus_config, nexus_acl, nexus_token, monkeypatch, caplog):
+    caplog.set_level(logging.INFO)
+    mock_response = MagicMock()
+    mock_response.json.return_value = nexus_acl
+    mock_get = MagicMock(return_value=mock_response)
+    monkeypatch.setattr(test_module.requests, "get", mock_get)
+    nexus_config.token = nexus_token
+
+    result = test_module.is_user_authorized(nexus_config)
+
+    assert result == 200
+    assert "User testuser [Test User] authorized" in caplog.text
+    assert mock_get.call_count == 1
+
+
+def test_is_user_authorized_false_because_of_permissions(
+    nexus_config, nexus_acl, nexus_token, monkeypatch, caplog
+):
+    caplog.set_level(logging.INFO)
+    nexus_acl["_results"][0]["acl"][0]["permissions"] = ["projects/read"]
+    nexus_acl["_results"][0]["acl"][1]["permissions"] = ["projects/read"]
+    mock_response = MagicMock()
+    mock_response.json.return_value = nexus_acl
+    mock_get = MagicMock(return_value=mock_response)
+    monkeypatch.setattr(test_module.requests, "get", mock_get)
+    nexus_config.token = nexus_token
+
+    result = test_module.is_user_authorized(nexus_config)
+
+    assert result == 403
+    assert "User testuser [Test User] not authorized because of permissions" in caplog.text
+    assert mock_get.call_count == 1
+
+
+def test_is_user_authorized_false_because_of_endpoint(nexus_config, nexus_token, caplog):
+    caplog.set_level(logging.INFO)
+    nexus_config.token = nexus_token
+    nexus_config.endpoint = "https://fake/endpoint"
+
+    result = test_module.is_user_authorized(nexus_config)
+
+    assert result == 403
+    assert (
+        "User testuser [Test User] not authorized because of the Nexus endpoint and bucket"
+        in caplog.text
+    )
+
+
+def test_is_user_authorized_false_because_of_bucket(nexus_config, nexus_token, caplog):
+    caplog.set_level(logging.INFO)
+    nexus_config.token = nexus_token
+    nexus_config.bucket = "fake/bucket"
+
+    result = test_module.is_user_authorized(nexus_config)
+
+    assert result == 403
+    assert (
+        "User testuser [Test User] not authorized because of the Nexus endpoint and bucket"
+        in caplog.text
+    )
+
+
+def test_is_user_authorized_false_because_of_missing_token(nexus_config, caplog):
+    caplog.set_level(logging.INFO)
+
+    result = test_module.is_user_authorized(nexus_config)
+
+    assert result == 401
+    assert "Missing authentication token" in caplog.text
+
+
+def test_is_user_authorized_false_because_of_invalid_token(nexus_config, caplog):
+    caplog.set_level(logging.INFO)
+    nexus_config.token = "invalid"
+
+    result = test_module.is_user_authorized(nexus_config)
+
+    assert result == 401
+    assert "Invalid authentication token" in caplog.text
+
+
+def test_is_user_authorized_false_because_of_http_error(
+    nexus_config, nexus_token, monkeypatch, caplog
+):
+    caplog.set_level(logging.INFO)
+    mock_response = MagicMock()
+    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+        response=MagicMock(status_code=403)
+    )
+    mock_get = MagicMock(return_value=mock_response)
+    monkeypatch.setattr(test_module.requests, "get", mock_get)
+    nexus_config.token = nexus_token
+
+    result = test_module.is_user_authorized(nexus_config)
+
+    assert result == 403
+    assert (
+        "User testuser [Test User] not authorized because of the error from Nexus: 403"
+        in caplog.text
+    )
+    assert mock_get.call_count == 1
+
+
+def test_is_user_authorized_false_because_of_request_exception(
+    nexus_config, nexus_token, monkeypatch, caplog
+):
+    caplog.set_level(logging.INFO)
+    mock_get = MagicMock(side_effect=requests.exceptions.SSLError("SSL Error"))
+    monkeypatch.setattr(test_module.requests, "get", mock_get)
+    nexus_config.token = nexus_token
+
+    result = test_module.is_user_authorized(nexus_config)
+
+    assert result == 500
+    assert (
+        "User testuser [Test User] not authorized because of the error from Nexus: SSL Error"
+        in caplog.text
+    )
+    assert mock_get.call_count == 1
