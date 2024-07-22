@@ -1,10 +1,16 @@
 Changelog
 =========
 
-Version 2024.4.1
+Version 2024.7.2
 -----------------
 
-- Add Nexus integration:
+- Temporarily pin libsonata==0.1.24.
+
+
+Version 2024.7.1
+-----------------
+
+- Add Nexus integration [NSETM-2283]:
 
   - The authentication token should be provided in the ``Nexus-Token`` request header in all the ``/circuit`` endpoints.
     If not provided, it's still possible to retrieve resources from Nexus if they aren't private, or from any explicit gpfs path if provided.
@@ -14,11 +20,17 @@ Version 2024.4.1
   - Retrieve hierarchy.json from Nexus and cache the loaded RegionMap.
   - Add the internal ``/auth`` endpoint, called by the reverse proxy to check the authorization of the user with Nexus.
 
+
+Version 2024.6.1
+-----------------
+
+- Update CORS origins. [BBPP154-256]
 - Rewrite circuit caching logic: use a LRUCache, store to disk a partial circuit config with converted node_sets.
-- Execute libsonata calls in a subprocess when they are I/O bound.
+- Execute libsonata calls in a subprocess when they are I/O bound. [NSETM-2282]
 - Rename endpoint ``/circuit/downsample`` to ``/circuit/sample``.
 - Drop support for directly loading ``.h5`` files.
 - Upgrade Dockerfile and tests to python 3.11.
+
 
 Version 2024.1.1
 -----------------

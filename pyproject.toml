@@ -14,7 +14,7 @@ dependencies = [
     "entity-management>=1.2.36",
     "fastapi",
     "h5py",
-    "libsonata>=0.1.24",
+    "libsonata==0.1.24",
     "loky",
     "numpy",
     "pandas",
