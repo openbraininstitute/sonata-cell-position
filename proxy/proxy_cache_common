@@ -8,9 +8,46 @@ proxy_cache_revalidate on;
 proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
 proxy_cache_background_update on;
 proxy_cache_lock on;
-add_header X-Cache-Status $upstream_cache_status always;
-add_header X-Request-Time $request_time always;
 
 proxy_read_timeout 600s;
 proxy_send_timeout 600s;
 proxy_next_upstream off;
+
+# cors configuration is handled in nginx so any cached header is overwritten
+proxy_hide_header Access-Control-Allow-Origin;
+proxy_hide_header Access-Control-Allow-Credentials;
+proxy_hide_header Access-Control-Max-Age;
+proxy_hide_header Access-Control-Allow-Methods;
+proxy_hide_header Access-Control-Allow-Headers;
+
+if ($cors != CORS ) {
+    add_header 'X-Cache-Status' $upstream_cache_status always;
+    add_header 'X-Request-Time' $request_time always;
+}
+
+set $cors "${cors}_${request_method}";
+
+if ($cors = CORS_GET) {
+    add_header 'Access-Control-Allow-Origin' "$http_origin";
+    add_header 'Access-Control-Allow-Credentials' 'true';
+    add_header 'X-Cache-Status' $upstream_cache_status always;
+    add_header 'X-Request-Time' $request_time always;
+}
+if ($cors = CORS_POST) {
+    add_header 'Access-Control-Allow-Origin' "$http_origin";
+    add_header 'Access-Control-Allow-Credentials' 'true';
+    add_header 'X-Cache-Status' $upstream_cache_status always;
+    add_header 'X-Request-Time' $request_time always;
+}
+if ($cors = CORS_OPTIONS ) {
+    add_header 'Access-Control-Allow-Origin' "$http_origin";
+    add_header 'Access-Control-Allow-Credentials' 'true';
+
+    add_header 'Access-Control-Max-Age' 3600;
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+    add_header 'Access-Control-Allow-Headers' '*';
+
+    add_header 'Content-Length' 0;
+    add_header 'Content-Type' 'text/plain charset=UTF-8';
+    return 204;
+}

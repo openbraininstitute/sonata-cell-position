@@ -9,13 +9,12 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import BackgroundTasks, Depends, FastAPI, Query
-from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from starlette.status import HTTP_302_FOUND
 
 from app import jobs, nexus, serialize, service, utils
-from app.constants import COMMIT_SHA, DEBUG, ORIGINS, PROJECT_PATH
+from app.constants import COMMIT_SHA, DEBUG, PROJECT_PATH
 from app.errors import ClientError
 from app.logger import L
 from app.schemas import CircuitRef, NexusConfig, QueryParams, SampleParams
@@ -37,13 +36,6 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(debug=DEBUG, lifespan=lifespan)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 def no_cache(response: Response) -> Response:

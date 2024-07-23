@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 2024.7.3
+-----------------
+
+- Return the correct CORS headers even when returning responses cached by nginx.
+
+
 Version 2024.7.2
 -----------------
 

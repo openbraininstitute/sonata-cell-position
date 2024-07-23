@@ -4,18 +4,6 @@ import os
 
 import numpy as np
 
-ORIGINS = [
-    "http://localhost:3000",
-    "https://bbp.epfl.ch",
-    "https://sonata.sbo.kcp.bbp.epfl.ch",
-    "https://core-web-app-dev.sbo.kcp.bbp.epfl.ch",
-    "https://bbpteam.epfl.ch",
-    "https://openbluebrain.com",
-    "https://openbluebrain.ch",
-    "https://openbrainplatform.org",
-    "https://openbrainplatform.com",
-]
-
 PROJECT_PATH = os.environ.get("PROJECT_PATH")
 COMMIT_SHA = os.environ.get("COMMIT_SHA")
 DEBUG = os.environ.get("DEBUG", "").lower() == "true"
