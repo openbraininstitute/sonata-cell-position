@@ -24,6 +24,10 @@ RUN \
         pip install --no-cache-dir --upgrade ${PYTHON_DEBUG_TOOLS} ; \
     fi
 
+# work around location of circuits on AWS by symlink where the S3 storage is mounted
+# (/sbo) to /gpfs.  On k8s, this link will be overlayed w/ the real GPFS
+RUN ln -s /sbo /gpfs
+
 COPY ./src/app /code/app
 COPY ./logging.yaml /code/logging.yaml
 
