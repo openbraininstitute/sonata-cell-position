@@ -1,28 +1,28 @@
-# docker-compose.yml for local deployment (see also tox.ini)
-
 services:
   sonata-cell-position:
-    container_name: sonata-cell-position
+    image: "${IMAGE_NAME}:${IMAGE_TAG}"
     build:
       dockerfile: Dockerfile
+      args:
+      - PROJECT_PATH
+      - COMMIT_SHA
     ports:
-    - "8050:8050"
+    - "127.0.0.1:8200:8000"
+    read_only: true
     volumes:
+    - tmp:/tmp
     - type: bind
       source: /gpfs
       target: /gpfs
       read_only: true
-    cap_add:
-    - SYS_PTRACE
     environment:
     - DEBUG=true
     - LOGGING_LEVEL=DEBUG
-  sonata-cell-position-proxy:
-    container_name: sonata-cell-position-proxy
-    build:
-      context: proxy
-      dockerfile: Dockerfile
-    ports:
-    - "8040:8040"
-    depends_on:
-    - sonata-cell-position
+
+volumes:
+  tmp:
+    driver: local
+    driver_opts:
+      type: "tmpfs"
+      device: "tmpfs"
+      o: "size=500m"

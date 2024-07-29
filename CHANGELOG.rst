@@ -1,6 +1,19 @@
 Changelog
 =========
 
+Version 2024.7.4
+-----------------
+
+- Unify docker images:
+
+    - add supervisord to run nginx
+    - upgrade docker image to python 3.12
+    - change listening port to 8000
+    - run the image as readonly locally, to simulate the k8s deployment
+    - add Makefile
+    - update README
+
+
 Version 2024.7.3
 -----------------
 

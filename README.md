@@ -2,12 +2,10 @@
 
 ## Description
 
-This service is composed by:
+This service consists of:
 
--   `sonata-cell-position-proxy`: reverse proxy with caching, listening
-    on port 8040
--   `sonata-cell-position`: main service, listening on port 8050 and
-    accessed through the proxy above
+-   a reverse proxy with caching, listening on port 8000, and exposed at 127.0.0.1:8200 when running the Docker image locally
+-   the main service, listening on port 8050 and accessed only through the proxy above
 
 This is a simplified request response diagram:
 
@@ -34,7 +32,16 @@ sequenceDiagram
 Both the `/auth` and `/circuit` requests can be independently cached on the proxy.
 
 
-## Deployment
+## Local build and deployment
+
+To build and start the Docker image locally, you can execute:
+
+```bash
+make run
+```
+
+
+## Remote deployment
 
 To make a release, build and publish the Docker images to the GitLab
 registry, you need to:
@@ -51,6 +58,7 @@ The format of the tag should be `YYYY.MM.DD`, where:
 The new Docker images are automatically deployed after a few minutes.
 
 See also the configuration files at <https://bbpgitlab.epfl.ch/project/sbo/k8s>.
+
 
 ## Documentation
 

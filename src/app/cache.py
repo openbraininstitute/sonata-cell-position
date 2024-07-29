@@ -104,7 +104,7 @@ def _circuit_cache_path() -> Path:
     if path := os.getenv("CIRCUIT_CACHE_PATH"):
         return Path(path)
     tmpdir = os.getenv("TMPDIR", "/tmp")
-    return Path(tmpdir).resolve() / "cache" / "circuits"
+    return Path(tmpdir).resolve() / "app_cache" / "circuits"
 
 
 def _circuit_cache_eviction_callback(key: CircuitCacheKey, value: CircuitCachePaths) -> None:

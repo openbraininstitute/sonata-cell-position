@@ -9,7 +9,7 @@ from app.constants import LOGGING_CONFIG, LOGGING_LEVEL
 
 
 def _read_config_file() -> dict | None:
-    path = Path(LOGGING_CONFIG)
+    path = Path(__file__).parent.parent / LOGGING_CONFIG
     try:
         return yaml.safe_load(path.read_text(encoding="utf-8"))
     except FileNotFoundError:
