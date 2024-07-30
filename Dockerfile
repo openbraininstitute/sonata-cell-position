@@ -1,6 +1,10 @@
 FROM python:3.12
 SHELL ["/bin/bash", "-e", "-o", "pipefail", "-c"]
 
+# create the app user with the same id used for bbpsbok8sonatacells. See:
+# https://bbpgitlab.epfl.ch/cs/kubernetes/flux2-admin/-/blob/3b6fea5/kyverno/gpfs-policies.yml#L499
+ARG APP_USER_ID=905632
+
 ARG REQUIRED_PACKAGES="supervisor nginx libnginx-mod-http-js"
 ARG OPTIONAL_PACKAGES="vim less curl jq htop strace net-tools iproute2 psmisc"
 
@@ -15,8 +19,7 @@ RUN \
     # allow access to circuits on AWS by symlink where the S3 storage is mounted
     # (/sbo) to /gpfs. On k8s, this link will be overlayed w/ the real GPFS
     ln -sf /sbo/data/project /gpfs && \
-    # create app user
-    useradd --create-home --shell /bin/sh -u 1001 app
+    useradd --create-home --shell /bin/sh -u $APP_USER_ID app
 
 COPY ./nginx/ /etc/nginx/
 COPY ./supervisord.conf /etc/supervisor/supervisord.conf

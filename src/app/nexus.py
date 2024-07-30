@@ -293,8 +293,8 @@ def is_user_authorized(nexus_config: NexusConfig) -> int:
             acl["permissions"] for result in response["_results"] for acl in result["acl"]
         )
     )
-    if not user_permissions.issuperset(permissions):
-        L.info("User %s not authorized because of permissions", user)
+    if missing := permissions - user_permissions:
+        L.info("User %s not authorized because of permissions. Missing: %s", user, sorted(missing))
         return HTTP_403_FORBIDDEN
     L.info("User %s authorized", user)
     return HTTP_200_OK

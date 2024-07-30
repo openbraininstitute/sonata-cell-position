@@ -39,11 +39,9 @@ NEXUS_BUCKET = "bbp/mmb-point-neuron-framework-model"
 NEXUS_READ_PERMISSIONS = {
     "https://sbo-nexus-delta.shapes-registry.org/v1": {
         "bbp/mmb-point-neuron-framework-model": {
-            "events/read",
             "projects/read",
             "resources/read",
             "views/query",
-            "gpfs-proj134/read",
         },
     },
     "https://bbp.epfl.ch/nexus/v1": {

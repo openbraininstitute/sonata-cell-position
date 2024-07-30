@@ -253,7 +253,11 @@ def test_is_user_authorized_false_because_of_permissions(
     result = test_module.is_user_authorized(nexus_config)
 
     assert result == 403
-    assert "User testuser [Test User] not authorized because of permissions" in caplog.text
+    expected_message = (
+        "User testuser [Test User] not authorized because of permissions. "
+        "Missing: ['events/read', 'gpfs-proj134/read', 'resources/read', 'views/query']"
+    )
+    assert expected_message in caplog.text
     assert mock_get.call_count == 1
 
 
