@@ -14,7 +14,7 @@ from starlette.responses import FileResponse, JSONResponse, RedirectResponse, Re
 from starlette.status import HTTP_302_FOUND
 
 from app import jobs, nexus, serialize, service, utils
-from app.constants import COMMIT_SHA, DEBUG, PROJECT_PATH
+from app.config import settings
 from app.errors import ClientError
 from app.logger import L
 from app.schemas import CircuitRef, NexusConfig, QueryParams, SampleParams
@@ -35,7 +35,7 @@ async def lifespan(_: FastAPI):
     L.info("Stopping the application")
 
 
-app = FastAPI(debug=DEBUG, lifespan=lifespan)
+app = FastAPI(debug=settings.DEBUG, lifespan=lifespan)
 
 
 def no_cache(response: Response) -> Response:
@@ -110,8 +110,8 @@ async def health() -> dict:
 async def version() -> dict:
     """Version endpoint."""
     return {
-        "project": PROJECT_PATH,
-        "commit_sha": COMMIT_SHA,
+        "project": settings.PROJECT_PATH,
+        "commit_sha": settings.COMMIT_SHA,
     }
 
 

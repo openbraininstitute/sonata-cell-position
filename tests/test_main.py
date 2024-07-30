@@ -28,8 +28,8 @@ def test_health_get():
 def test_version_get(monkeypatch):
     project_path = "project/sbo/sonata-cell-position"
     commit_sha = "12345678"
-    monkeypatch.setattr(test_module, "PROJECT_PATH", project_path)
-    monkeypatch.setattr(test_module, "COMMIT_SHA", commit_sha)
+    monkeypatch.setattr(test_module.settings, "PROJECT_PATH", project_path)
+    monkeypatch.setattr(test_module.settings, "COMMIT_SHA", commit_sha)
 
     response = client.get("/version")
 

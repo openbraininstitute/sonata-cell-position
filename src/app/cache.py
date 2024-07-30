@@ -8,13 +8,7 @@ from threading import Lock
 
 import cachetools
 
-from app.constants import (
-    CACHED_SAMPLING_RATIO,
-    CIRCUIT_CACHE_CHECK_INTERVAL,
-    CIRCUIT_CACHE_CHECK_TIMEOUT,
-    CIRCUIT_CACHE_INFO,
-    CIRCUIT_CACHE_MAX_SIZE_MB,
-)
+from app.config import settings
 from app.libsonata_helper import convert_nodesets, sample_nodes, write_circuit_config
 from app.logger import L
 from app.schemas import CircuitCacheKey, CircuitCachePaths, CircuitParams, CircuitRef, NexusConfig
@@ -48,9 +42,9 @@ def _read_circuit_cache(paths: CircuitCachePaths) -> None:
     Raise an exception in case of timeout or if the cache directory has been removed.
     """
     L.info(f"Reading cache: {paths.base}")
-    counter = CIRCUIT_CACHE_CHECK_TIMEOUT // CIRCUIT_CACHE_CHECK_INTERVAL
+    counter = settings.CIRCUIT_CACHE_CHECK_TIMEOUT // settings.CIRCUIT_CACHE_CHECK_INTERVAL
     while not paths.ok.exists() and counter > 0:
-        time.sleep(CIRCUIT_CACHE_CHECK_INTERVAL)
+        time.sleep(settings.CIRCUIT_CACHE_CHECK_INTERVAL)
         counter -= 1
         if not paths.base.exists():
             # immediately exit in case the base directory has been removed,
@@ -120,7 +114,7 @@ def _circuit_cache_eviction_callback(key: CircuitCacheKey, value: CircuitCachePa
 # - values: instances of CircuitCachePaths having as `base` the directory containing the
 #           sampled circuit. When an item is evicted, the directory is automatically deleted.
 CIRCUIT_CACHE = CircuitCache(
-    maxsize=CIRCUIT_CACHE_MAX_SIZE_MB * 2**20,
+    maxsize=settings.CIRCUIT_CACHE_MAX_SIZE_MB * 2**20,
     getsizeof=_circuit_cache_getsizeof,
     eviction_callback=_circuit_cache_eviction_callback,
 )
@@ -129,7 +123,7 @@ CIRCUIT_CACHE = CircuitCache(
 @cachetools.cached(
     cache=CIRCUIT_CACHE,
     lock=Lock(),
-    info=CIRCUIT_CACHE_INFO,
+    info=settings.CIRCUIT_CACHE_INFO,
 )
 def _get_sampled_circuit_paths(key: CircuitCacheKey) -> CircuitCachePaths:
     """Return the CircuitCachePaths corresponding to CircuitCacheKey.
@@ -177,12 +171,12 @@ def get_cached_circuit_params(
         sampling_ratio=sampling_ratio,
         seed=seed,
     )
-    if not use_circuit_cache or sampling_ratio > CACHED_SAMPLING_RATIO:
+    if not use_circuit_cache or sampling_ratio > settings.CACHED_SAMPLING_RATIO:
         L.warning("Not caching nor using the sampled circuit")
     else:
         key = key.model_copy(
             update={
-                "sampling_ratio": CACHED_SAMPLING_RATIO,
+                "sampling_ratio": settings.CACHED_SAMPLING_RATIO,
             }
         )
         paths = _get_sampled_circuit_paths(key)

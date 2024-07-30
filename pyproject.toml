@@ -21,6 +21,7 @@ dependencies = [
     "psutil",  # allow early memory leak detections in loky
     "pyarrow",
     "pydantic>=2",
+    "pydantic-settings",
     "pyjwt",
     "pyyaml",
     "requests",

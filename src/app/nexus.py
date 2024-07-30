@@ -22,16 +22,7 @@ from starlette.status import (
 )
 from voxcell import RegionMap
 
-from app.constants import (
-    ENTITY_CACHE_INFO,
-    ENTITY_CACHE_MAX_SIZE,
-    ENTITY_CACHE_TTL,
-    NEXUS_AUTH_TIMEOUT,
-    NEXUS_READ_PERMISSIONS,
-    REGION_MAP_CACHE_INFO,
-    REGION_MAP_CACHE_MAX_SIZE,
-    REGION_MAP_CACHE_TTL,
-)
+from app.config import settings
 from app.errors import ClientError
 from app.schemas import NexusConfig
 
@@ -39,12 +30,12 @@ L = logging.getLogger(__name__)
 T = TypeVar("T", bound=Identifiable)
 
 ENTITY_CACHE: cachetools.Cache = cachetools.TTLCache(
-    maxsize=ENTITY_CACHE_MAX_SIZE,
-    ttl=ENTITY_CACHE_TTL,
+    maxsize=settings.ENTITY_CACHE_MAX_SIZE,
+    ttl=settings.ENTITY_CACHE_TTL,
 )
 REGION_MAP_CACHE: cachetools.Cache = cachetools.TTLCache(
-    maxsize=REGION_MAP_CACHE_MAX_SIZE,
-    ttl=REGION_MAP_CACHE_TTL,
+    maxsize=settings.REGION_MAP_CACHE_MAX_SIZE,
+    ttl=settings.REGION_MAP_CACHE_TTL,
 )
 
 
@@ -98,7 +89,7 @@ def _get_cached_region_map_key(
     cache=ENTITY_CACHE,
     key=_get_cached_resource_key,
     lock=Lock(),
-    info=ENTITY_CACHE_INFO,
+    info=settings.ENTITY_CACHE_INFO,
 )
 def load_cached_resource(
     resource_class: type[T],
@@ -140,7 +131,7 @@ def load_cached_resource(
     cache=REGION_MAP_CACHE,
     key=_get_cached_region_map_key,
     lock=Lock(),
-    info=REGION_MAP_CACHE_INFO,
+    info=settings.REGION_MAP_CACHE_INFO,
 )
 def load_cached_region_map(resource: ParcellationOntology, nexus_config: NexusConfig) -> RegionMap:
     """Return the RegionMap instance for the given ParcellationOntology id.
@@ -252,7 +243,7 @@ def _get_nexus_acl(nexus_config: NexusConfig) -> dict:
     response = requests.get(
         f"{nexus_config.endpoint}/acls/{nexus_config.bucket}",
         headers={"Authorization": f"Bearer {nexus_config.token}"},
-        timeout=NEXUS_AUTH_TIMEOUT,
+        timeout=settings.NEXUS_AUTH_TIMEOUT,
     )
     response.raise_for_status()
     return response.json()
@@ -270,7 +261,9 @@ def is_user_authorized(nexus_config: NexusConfig) -> int:
         L.info("Invalid authentication token: %s", ex)
         return HTTP_401_UNAUTHORIZED
     user = f"{token_info.get('preferred_username')} [{token_info.get('name')}]"
-    permissions = NEXUS_READ_PERMISSIONS.get(nexus_config.endpoint, {}).get(nexus_config.bucket)
+    permissions = settings.NEXUS_READ_PERMISSIONS.get(nexus_config.endpoint, {}).get(
+        nexus_config.bucket
+    )
     if not permissions:
         L.info(
             "User %s not authorized because of the Nexus endpoint and bucket: %s, %s",

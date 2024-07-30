@@ -5,11 +5,11 @@ from pathlib import Path
 
 import yaml
 
-from app.constants import LOGGING_CONFIG, LOGGING_LEVEL
+from app.config import settings
 
 
 def _read_config_file() -> dict | None:
-    path = Path(__file__).parent.parent / LOGGING_CONFIG
+    path = Path(__file__).parent.parent / settings.LOGGING_CONFIG
     try:
         return yaml.safe_load(path.read_text(encoding="utf-8"))
     except FileNotFoundError:
@@ -22,8 +22,8 @@ def _configure(logger: logging.Logger | None) -> logging.Logger:
     assert logger is not None
     if logging_config_dict := _read_config_file():
         logging.config.dictConfig(logging_config_dict)
-    if LOGGING_LEVEL:
-        logger.setLevel(LOGGING_LEVEL)
+    if settings.LOGGING_LEVEL:
+        logger.setLevel(settings.LOGGING_LEVEL)
     return logger
 
 

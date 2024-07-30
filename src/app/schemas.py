@@ -12,7 +12,8 @@ from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field, ValidationError, model_validator
 from voxcell import RegionMap
 
-from app.constants import MODALITIES_REGEX, NEXUS_BUCKET, NEXUS_ENDPOINT, NEXUS_READ_PERMISSIONS
+from app.config import settings
+from app.constants import MODALITIES_REGEX
 from app.logger import L
 from app.serialize import DEFAULT_SERIALIZER, SERIALIZERS_REGEX
 from app.utils import attributes_to_dict, modality_to_attributes
@@ -105,8 +106,8 @@ class FrozenBaseModel(PydanticBaseModel):
 class NexusConfig(BaseModel):
     """Nexus configuration."""
 
-    endpoint: str = NEXUS_ENDPOINT
-    bucket: str = NEXUS_BUCKET
+    endpoint: str = settings.NEXUS_ENDPOINT
+    bucket: str = settings.NEXUS_BUCKET
     token: str | None = None
 
     @property
@@ -122,7 +123,7 @@ class NexusConfig(BaseModel):
     @model_validator(mode="after")
     def check_endpoint_and_bucket(self) -> "NexusConfig":
         """Check that the model is initialized with valid endpoint and bucket."""
-        if NEXUS_READ_PERMISSIONS.get(self.endpoint, {}).get(self.bucket) is None:
+        if settings.NEXUS_READ_PERMISSIONS.get(self.endpoint, {}).get(self.bucket) is None:
             raise ValueError("Nexus endpoint and/or bucket are invalid")
         return self
 
@@ -130,8 +131,8 @@ class NexusConfig(BaseModel):
     @ValidatedParams
     def from_params(
         cls,
-        nexus_endpoint: Annotated[str, Header()] = NEXUS_ENDPOINT,
-        nexus_bucket: Annotated[str, Header()] = NEXUS_BUCKET,
+        nexus_endpoint: Annotated[str, Header()] = settings.NEXUS_ENDPOINT,
+        nexus_bucket: Annotated[str, Header()] = settings.NEXUS_BUCKET,
         nexus_token: Annotated[str | None, Header()] = None,
     ) -> "NexusConfig":
         """Return a new instance from the given parameters."""

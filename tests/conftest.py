@@ -4,7 +4,7 @@ import shutil
 import pytest
 from voxcell import RegionMap
 
-from app.constants import NEXUS_BUCKET, NEXUS_ENDPOINT
+from app.config import settings
 from app.schemas import CircuitRef, NexusConfig
 from tests.utils import TEST_DATA_DIR
 
@@ -35,8 +35,8 @@ def circuit_ref_path(input_path):
 @pytest.fixture
 def nexus_config():
     return NexusConfig(
-        endpoint=NEXUS_ENDPOINT,
-        bucket=NEXUS_BUCKET,
+        endpoint=settings.NEXUS_ENDPOINT,
+        bucket=settings.NEXUS_BUCKET,
     )
 
 

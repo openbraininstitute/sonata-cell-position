@@ -13,13 +13,8 @@ import pandas as pd
 from loky import get_reusable_executor
 from loky.backend.context import set_start_method
 
-from app.constants import (
-    LOKY_EXECUTOR_ENABLED,
-    LOKY_EXECUTOR_MAX_WORKERS,
-    LOKY_EXECUTOR_TIMEOUT,
-    LOKY_START_METHOD,
-    MODALITIES,
-)
+from app.config import settings
+from app.constants import MODALITIES
 from app.logger import L
 
 
@@ -96,8 +91,8 @@ def with_pid(func: Callable) -> Callable:
 def prepare_callable(func: Callable, *args, **kwargs) -> Callable[[], Any]:
     """Return a callable that can be called without arguments to get the result."""
     executor = get_reusable_executor(
-        max_workers=LOKY_EXECUTOR_MAX_WORKERS,
-        timeout=LOKY_EXECUTOR_TIMEOUT,
+        max_workers=settings.LOKY_EXECUTOR_MAX_WORKERS,
+        timeout=settings.LOKY_EXECUTOR_TIMEOUT,
     )
     future = executor.submit(func, *args, **kwargs)
     return future.result
@@ -105,17 +100,19 @@ def prepare_callable(func: Callable, *args, **kwargs) -> Callable[[], Any]:
 
 def warmup_executors() -> None:
     """Warm up the executors."""
-    if LOKY_EXECUTOR_ENABLED:
+    if settings.LOKY_EXECUTOR_ENABLED:
 
         def _import_all():
             # pylint: disable=import-outside-toplevel,unused-import,cyclic-import
             from app import main  # noqa
 
         L.info("Warming up subprocess executors")
-        set_start_method(LOKY_START_METHOD)
+        set_start_method(settings.LOKY_START_METHOD)
         wrapped_func = with_pid(_import_all)
         # submit a callable to each worker, without blocking
-        func_list = [prepare_callable(wrapped_func) for i in range(LOKY_EXECUTOR_MAX_WORKERS)]
+        func_list = [
+            prepare_callable(wrapped_func) for i in range(settings.LOKY_EXECUTOR_MAX_WORKERS)
+        ]
         # block until all the results are ready
         for func in func_list:
             func()
@@ -140,7 +137,7 @@ def run_subprocess(func: Callable) -> Callable:
     def wrapper(*args, **kwargs):
         """Execute the wrapped function."""
         wrapped_func = with_pid(func)
-        if LOKY_EXECUTOR_ENABLED:
+        if settings.LOKY_EXECUTOR_ENABLED:
             return prepare_callable(wrapped_func, *args, **kwargs)()
         else:
             return wrapped_func(*args, **kwargs)
