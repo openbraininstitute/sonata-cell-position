@@ -37,6 +37,15 @@ NEXUS_BUCKET = "bbp/mmb-point-neuron-framework-model"
 # to support other Nexus endpoints and buckets, the required permissions need to be added here. see
 # https://bbpteam.epfl.ch/project/issues/browse/NSETM-2283?focusedId=234551#comment-234551
 NEXUS_READ_PERMISSIONS = {
+    "https://sbo-nexus-delta.shapes-registry.org/v1": {
+        "bbp/mmb-point-neuron-framework-model": {
+            "events/read",
+            "projects/read",
+            "resources/read",
+            "views/query",
+            "gpfs-proj134/read",
+        },
+    },
     "https://bbp.epfl.ch/nexus/v1": {
         "bbp/mmb-point-neuron-framework-model": {
             "events/read",

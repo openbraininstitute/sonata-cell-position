@@ -1,6 +1,16 @@
 Changelog
 =========
 
+Version 2024.7.5
+-----------------
+
+- Allow to run the image as a non-privileged user.
+- Add new nexus endpoint on aws.
+- Fix gpfs symlink.
+- Ensure that pip doesn't use any cache.
+- Add stopasgroup to supervisord to stop the app subprocesses.
+
+
 Version 2024.7.4
 -----------------
 
