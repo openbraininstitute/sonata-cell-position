@@ -1,11 +1,18 @@
 Changelog
 =========
 
+Version 2024.7.8
+-----------------
+
+- Use loguru and structured logging.
+
+
 Version 2024.7.7
 -----------------
 
 - Set the required permissions from ACLs on AWS Nexus.
 - Set the user id required for k8s deployment in Dockerfile.
+
 
 Version 2024.7.6
 -----------------

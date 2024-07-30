@@ -160,7 +160,7 @@ def _init_ids(
         a = full_size = len(node_population)
     ids = _get_sorted_choice(a, sampling_ratio=sampling_ratio, seed=seed)
     L.info(
-        "Selected ids from %s in node_population %s with node_set %s: %s/%s",
+        "Selected ids from {} in node_population {} with node_set {}: {}/{}",
         input_path,
         node_population.name,
         node_set,
@@ -182,7 +182,7 @@ def _build_df_list(
     attributes_set = set(attributes)
     # if queries is empty, an empty query dict is needed to select the attributes
     for num, query_dict in enumerate(queries or [{}], 1):
-        L.info("Starting %s", f"filter {num}/{len(queries)}" if queries else "export")
+        L.info("Starting {}", f"filter {num}/{len(queries)}" if queries else "export")
         if df_list:
             # remove from ids the ids already selected
             ids = np.setdiff1d(ids, df_list[-1].index.to_numpy(), assume_unique=True)
@@ -194,7 +194,7 @@ def _build_df_list(
             values = ensure_list(values) if values else []
             keep = key in attributes_set
             df = _filter_add_key(node_population, df=df, key=key, values=values, keep=keep)
-            L.info("Filtered by %s=%s -> %s ids", key, values or "all", len(df))
+            L.info("Filtered by {}={} -> {} ids", key, values or "all", len(df))
         # reorder the columns if needed
         if attributes != df.columns.to_list():
             df = df[attributes]
@@ -338,8 +338,8 @@ def sample_nodes(
     rng = default_rng(seed)
     str_dt = h5py.special_dtype(vlen=str)
     L.info(
-        "Writing file %s for input_path=%s, "
-        "population_name=%s, sampling_ratio=%s, seed=%s, attributes=%s",
+        "Writing file {} for input_path={}, "
+        "population_name={}, sampling_ratio={}, seed={}, attributes={}",
         output_path,
         input_path,
         population_name,
@@ -354,26 +354,26 @@ def sample_nodes(
         high = len(node_population)
         ids = rng.choice(high, size=int(high * sampling_ratio), replace=False, shuffle=False)
         ids.sort()
-        L.info("Sampled ids: %s/%s", len(ids), high)
+        L.info("Sampled ids: {}/{}", len(ids), high)
         selection = libsonata.Selection(ids)
         sampled_node_ids[population_name] = ids
         population_group = h5f.create_group(f"/nodes/{node_population.name}")
         population_group.create_dataset("node_type_id", data=np.full(len(ids), -1))
         group = population_group.create_group("0")
         for name in _filter_attributes(node_population.enumeration_names):
-            L.info("Writing enumeration: %s", name)
+            L.info("Writing enumeration: {}", name)
             data = node_population.enumeration_values(name)
             group.create_dataset(f"@library/{name}", data=data, dtype=str_dt)
             data = node_population.get_enumeration(name, selection)
             group.create_dataset(name, data=data, dtype=data.dtype)
         for name in _filter_attributes(node_population.dynamics_attribute_names):
-            L.info("Writing dynamics_attribute: %s", name)
+            L.info("Writing dynamics_attribute: {}", name)
             data = node_population.get_dynamics_attribute(name, selection)
             group.create_dataset(f"dynamics_params/{name}", data=data, dtype=data.dtype)
         for name in _filter_attributes(
             node_population.attribute_names - node_population.enumeration_names
         ):
-            L.info("Writing attribute: %s", name)
+            L.info("Writing attribute: {}", name)
             data = node_population.get_attribute(name, selection)
             dtype = str_dt if data.dtype == object else data.dtype
             group.create_dataset(name, data=data, dtype=dtype)
@@ -404,7 +404,7 @@ def convert_nodesets(
     for node_set_name, node_set in node_sets.items():
         if isinstance(node_set, dict) and "node_id" in node_set:
             if "population" in node_set and node_set["population"] in mapping_per_population:
-                L.info("Converting node set %r", node_set_name)
+                L.info("Converting node set {!r}", node_set_name)
                 mapping = mapping_per_population[node_set["population"]]
                 node_set["node_id"] = _convert_ids(node_set["node_id"], mapping).tolist()
             else:

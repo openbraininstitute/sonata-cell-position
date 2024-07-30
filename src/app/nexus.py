@@ -1,6 +1,5 @@
 """Nexus related functions."""
 
-import logging
 from itertools import chain
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -24,9 +23,9 @@ from voxcell import RegionMap
 
 from app.config import settings
 from app.errors import ClientError
+from app.logger import L
 from app.schemas import NexusConfig
 
-L = logging.getLogger(__name__)
 T = TypeVar("T", bound=Identifiable)
 
 ENTITY_CACHE: cachetools.Cache = cachetools.TTLCache(
@@ -168,7 +167,7 @@ def get_circuit_config_path(resource: DetailedCircuit) -> Path:
         path = resource.circuitConfigPath.get_url_as_path()
     except Exception as e:
         raise ClientError(f"Error in resource {resource.get_id()}: {e!r}") from e
-    L.debug("Circuit config path: %s", path)
+    L.debug("Circuit config path: {}", path)
     return Path(path)
 
 
@@ -258,7 +257,7 @@ def is_user_authorized(nexus_config: NexusConfig) -> int:
     try:
         token_info = jwt.decode(nexus_config.token, options={"verify_signature": False})
     except jwt.exceptions.DecodeError as ex:
-        L.info("Invalid authentication token: %s", ex)
+        L.info("Invalid authentication token: {}", ex)
         return HTTP_401_UNAUTHORIZED
     user = f"{token_info.get('preferred_username')} [{token_info.get('name')}]"
     permissions = settings.NEXUS_READ_PERMISSIONS.get(nexus_config.endpoint, {}).get(
@@ -266,7 +265,7 @@ def is_user_authorized(nexus_config: NexusConfig) -> int:
     )
     if not permissions:
         L.info(
-            "User %s not authorized because of the Nexus endpoint and bucket: %s, %s",
+            "User {} not authorized because of the Nexus endpoint and bucket: {}, {}",
             user,
             nexus_config.endpoint,
             nexus_config.bucket,
@@ -276,10 +275,10 @@ def is_user_authorized(nexus_config: NexusConfig) -> int:
         response = _get_nexus_acl(nexus_config)
     except requests.exceptions.HTTPError as ex:
         status_code = ex.response.status_code
-        L.info("User %s not authorized because of the error from Nexus: %s", user, status_code)
+        L.info("User {} not authorized because of the error from Nexus: {}", user, status_code)
         return status_code
     except requests.exceptions.RequestException as ex:
-        L.info("User %s not authorized because of the error from Nexus: %s", user, ex)
+        L.info("User {} not authorized because of the error from Nexus: {}", user, ex)
         return HTTP_500_INTERNAL_SERVER_ERROR
     user_permissions = set(
         chain.from_iterable(
@@ -287,7 +286,7 @@ def is_user_authorized(nexus_config: NexusConfig) -> int:
         )
     )
     if missing := permissions - user_permissions:
-        L.info("User %s not authorized because of permissions. Missing: %s", user, sorted(missing))
+        L.info("User {} not authorized because of permissions. Missing: {}", user, sorted(missing))
         return HTTP_403_FORBIDDEN
-    L.info("User %s authorized", user)
+    L.info("User {} authorized", user)
     return HTTP_200_OK

@@ -61,5 +61,5 @@ def test_get_cached_circuit_params_cache_not_used(tmp_path, circuit_ref_path, ne
         assert result.key.sampling_ratio == 0.8
         assert_cache(cached_func, hits=0, misses=0, currsize=0)
         assert caplog.record_tuples == [
-            ("root", logging.WARNING, "Not caching nor using the sampled circuit")
+            ("app.cache", logging.WARNING, "Not caching nor using the sampled circuit")
         ]

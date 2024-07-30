@@ -1,3 +1,4 @@
+import re
 import shutil
 
 import libsonata
@@ -423,5 +424,5 @@ def test_node_sets_get_without_node_sets_file(tmp_path, caplog):
 
     assert response.status_code == 200
     assert response.json() == {"node_sets": []}
-    msg = "Error with node_sets for circuit %r: %r, fallback to empty list"
-    assert any(msg == rec.msg for rec in caplog.records), "Log message not found"
+    pattern = "Error with node_sets for circuit .*, fallback to empty list"
+    assert any(re.search(pattern, rec.msg) for rec in caplog.records), "Log message not found"

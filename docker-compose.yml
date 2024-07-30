@@ -16,8 +16,13 @@ services:
       target: /gpfs
       read_only: true
     environment:
-    - DEBUG=true
-    - LOGGING_LEVEL=DEBUG
+    - APP_DEBUG=true
+    - PYTHONASYNCIODEBUG=1
+    - LOG_LEVEL=DEBUG
+    - LOG_SERIALIZE=false
+    - LOG_BACKTRACE=true
+    - LOG_DIAGNOSE=true
+    - LOG_STANDARD_LOGGER__root=INFO
 
 volumes:
   tmp:

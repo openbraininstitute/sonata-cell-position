@@ -83,7 +83,7 @@ def with_pid(func: Callable) -> Callable:
             return func(*args, **kwargs)
         finally:
             exec_time = time.monotonic() - start_time
-            L.info("Executed %s in process %s in %.3f seconds", func.__name__, pid, exec_time)
+            L.info("Executed {} in process {} in {:.3f} seconds", func.__name__, pid, exec_time)
 
     return wrapper
 

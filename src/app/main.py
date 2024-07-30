@@ -27,15 +27,23 @@ CircuitRefDep = Annotated[CircuitRef, Depends(CircuitRef.from_params)]
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     """Execute actions on server startup and shutdown."""
-    L.info("PID: %s", os.getpid())
-    L.info("CPU count: %s", os.cpu_count())
+    L.info(
+        "Starting application [PID={}, CPU_COUNT={}]",
+        os.getpid(),
+        os.cpu_count(),
+    )
     service.get_bundled_region_map()
     utils.warmup_executors()
     yield
     L.info("Stopping the application")
 
 
-app = FastAPI(debug=settings.DEBUG, lifespan=lifespan)
+app = FastAPI(
+    title=settings.APP_NAME,
+    debug=settings.APP_DEBUG,
+    lifespan=lifespan,
+    root_path=settings.ROOT_PATH,
+)
 
 
 def no_cache(response: Response) -> Response:
@@ -67,7 +75,7 @@ def make_temp_path(suffix=None, prefix=None) -> Callable:
         """Create a temporary directory and remove it at the end."""
 
         def cleanup():
-            L.info("Removing directory %s", temp_dir.name)
+            L.info("Removing directory {}", temp_dir.name)
             temp_dir.cleanup()
 
         # pylint: disable=consider-using-with
@@ -95,7 +103,7 @@ async def client_error_handler(request: Request, exc: ClientError) -> JSONRespon
 @app.get("/")
 async def root():
     """Root endpoint."""
-    return RedirectResponse(url="/docs", status_code=HTTP_302_FOUND)
+    return RedirectResponse(url=f"{settings.ROOT_PATH}/docs", status_code=HTTP_302_FOUND)
 
 
 @app.get("/health", dependencies=[Depends(no_cache)])

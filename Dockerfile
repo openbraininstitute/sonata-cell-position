@@ -38,7 +38,6 @@ RUN \
     echo -e 'alias ll="ls -l"\nalias la="ls -lA"' >> ~/.bash_aliases
 
 COPY --chown=app:app ./src/app/ /code/app/
-COPY --chown=app:app ./logging.yaml /code/logging.yaml
 
 ARG PROJECT_PATH
 ARG COMMIT_SHA

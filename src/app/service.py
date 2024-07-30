@@ -324,7 +324,9 @@ def get_node_set_names(input_path: Path) -> dict:
         ns = get_node_sets(input_path)
         node_sets = sorted(ns.names)
     except CircuitError as ex:
-        L.warning("Error with node_sets for circuit %r: %r, fallback to empty list", input_path, ex)
+        L.warning(
+            "Error with node_sets for circuit {!r}: {!r}, fallback to empty list", input_path, ex
+        )
         node_sets = []
 
     return {"node_sets": node_sets}

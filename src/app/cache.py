@@ -41,7 +41,7 @@ def _read_circuit_cache(paths: CircuitCachePaths) -> None:
 
     Raise an exception in case of timeout or if the cache directory has been removed.
     """
-    L.info(f"Reading cache: {paths.base}")
+    L.info("Reading cache: {}", paths.base)
     counter = settings.CIRCUIT_CACHE_CHECK_TIMEOUT // settings.CIRCUIT_CACHE_CHECK_INTERVAL
     while not paths.ok.exists() and counter > 0:
         time.sleep(settings.CIRCUIT_CACHE_CHECK_INTERVAL)
@@ -56,7 +56,7 @@ def _read_circuit_cache(paths: CircuitCachePaths) -> None:
 
 def _write_circuit_cache(paths: CircuitCachePaths, key: CircuitCacheKey) -> None:
     """Write the circuit cache and the OK file."""
-    L.info(f"Writing cache: {paths.base}")
+    L.info("Writing cache: {}", paths.base)
     try:
         sample_nodes(
             input_path=key.circuit_config_path,
@@ -89,7 +89,7 @@ def _write_circuit_cache(paths: CircuitCachePaths, key: CircuitCacheKey) -> None
 def _circuit_cache_getsizeof(value: CircuitCachePaths) -> int:
     """Return the size of the cached value."""
     size = get_folder_size(value.base)
-    L.info("Size of %s: %s bytes", value.base, size)
+    L.info("Size of {}: {} bytes", value.base, size)
     return size
 
 
@@ -104,7 +104,7 @@ def _circuit_cache_path() -> Path:
 def _circuit_cache_eviction_callback(key: CircuitCacheKey, value: CircuitCachePaths) -> None:
     """Remove the base directory of the evicted item."""
     path = value.base.resolve()
-    L.info("Key %s evicted, removing directory %s", key, path)
+    L.info("Key {} evicted, removing directory {}", key, path)
     assert path.is_relative_to(_circuit_cache_path())
     shutil.rmtree(path, ignore_errors=True)
 
