@@ -5,15 +5,15 @@
 This service consists of:
 
 -   a reverse proxy with caching, listening on port 8000, and exposed at 127.0.0.1:8200 when running the Docker image locally
--   the main service, listening on port 8050 and accessed only through the proxy above
+-   the main service, listening on port 8010 and accessed only through the proxy above
 
 This is a simplified request response diagram:
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant Proxy as Proxy:8040
-    participant API as API:8050
+    participant Proxy as Proxy:8000
+    participant API as API:8010
     participant Nexus
     User->>+Proxy: GET /circuit
     Proxy->>+API: GET /auth

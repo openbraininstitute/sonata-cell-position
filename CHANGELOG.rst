@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 2024.7.6
+-----------------
+
+- Ensure that the service is exposed only through the reverse proxy.
+- Run the service programmatically instead of calling the uvicorn binary.
+
 Version 2024.7.5
 -----------------
 
