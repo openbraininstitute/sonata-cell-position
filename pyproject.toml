@@ -136,3 +136,6 @@ parallel = false
 show_missing = true
 precision = 0
 fail_under = 80
+omit = [
+    "__main__.py",
+]
