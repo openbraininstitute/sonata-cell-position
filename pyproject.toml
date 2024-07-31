@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sonata-cell-position"
-version = "2024.4.1"
+version = "2024.7.9"
 description = "sonata-cell-position web API"
 readme = "README.md"
 requires-python = ">=3.10"

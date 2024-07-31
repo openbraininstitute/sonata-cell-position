@@ -21,9 +21,6 @@ RUN \
     ln -sf /sbo/data/project /gpfs && \
     useradd --create-home --shell /bin/sh -u $APP_USER_ID app
 
-COPY ./nginx/ /etc/nginx/
-COPY ./supervisord.conf /etc/supervisor/supervisord.conf
-
 USER app
 WORKDIR /code
 ENV PATH="/home/app/.local/bin:$PATH"
@@ -37,6 +34,8 @@ RUN \
     pip install --user --upgrade -r /code/requirements.txt && \
     echo -e 'alias ll="ls -l"\nalias la="ls -lA"' >> ~/.bash_aliases
 
+COPY ./nginx/ /etc/nginx/
+COPY ./supervisord.conf /etc/supervisor/supervisord.conf
 COPY --chown=app:app ./src/app/ /code/app/
 
 ARG PROJECT_PATH

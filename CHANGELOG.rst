@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version 2024.7.9
+-----------------
+
+- Ensure that logging is configured in each subprocess.
+- Configure structured logs in nginx.
+
+
 Version 2024.7.8
 -----------------
 

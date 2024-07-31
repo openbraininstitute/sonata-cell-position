@@ -80,22 +80,26 @@ def str_formatter(record: "loguru.Record") -> str:
     return f"{settings.LOG_FORMAT}{extras}\n{{exception}}"
 
 
-def configure_logging() -> int:
+def configure_logging(extra: dict | None = None) -> int:
     """Configure logging."""
-    L.remove()
-    handler_id = L.add(
-        sink=sys.stderr,
-        level=settings.LOG_LEVEL,
-        format=json_formatter if settings.LOG_SERIALIZE else str_formatter,
-        backtrace=settings.LOG_BACKTRACE,
-        diagnose=settings.LOG_DIAGNOSE,
-        enqueue=settings.LOG_ENQUEUE,
-        catch=settings.LOG_CATCH,
+    handler_ids = L.configure(
+        handlers=[
+            {
+                "sink": sys.stderr,
+                "level": settings.LOG_LEVEL,
+                "format": json_formatter if settings.LOG_SERIALIZE else str_formatter,
+                "backtrace": settings.LOG_BACKTRACE,
+                "diagnose": settings.LOG_DIAGNOSE,
+                "enqueue": settings.LOG_ENQUEUE,
+                "catch": settings.LOG_CATCH,
+            }
+        ],
+        extra=extra,
+        activation=[("app", True)],
     )
-    L.enable("app")
     logging.basicConfig(handlers=[InterceptHandler()], level=logging.NOTSET, force=True)
     for logger_name, logger_level in settings.LOG_STANDARD_LOGGER.items():
         L.info("Setting standard logger level: {}={}", logger_name, logger_level)
         logging.getLogger(logger_name).setLevel(logger_level)
     L.info("Logging configured")
-    return handler_id
+    return handler_ids[0]

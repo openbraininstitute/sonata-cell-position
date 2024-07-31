@@ -15,7 +15,7 @@ from loky.backend.context import set_start_method
 
 from app.config import settings
 from app.constants import MODALITIES
-from app.logger import L
+from app.logger import L, configure_logging
 
 
 def dump_json(
@@ -105,6 +105,9 @@ def warmup_executors() -> None:
         def _import_all():
             # pylint: disable=import-outside-toplevel,unused-import,cyclic-import
             from app import main  # noqa
+
+            # ensure that logging is configured once in each subprocess
+            configure_logging(extra={"pid": os.getpid()})
 
         L.info("Warming up subprocess executors")
         set_start_method(settings.LOKY_START_METHOD)
