@@ -86,7 +86,7 @@ See also the configuration files at <https://bbpgitlab.epfl.ch/project/sbo/k8s>.
    1. Nexus on AWS
 
       ```bash
-      NEXUS_ENDPOINT="https://sbo-nexus-delta.shapes-registry.org/v1"
+      NEXUS_ENDPOINT="https://openbluebrain.com/api/nexus/v1"
       NEXUS_BUCKET="bbp/mmb-point-neuron-framework-model"
       CIRCUIT_ID="https://bbp.epfl.ch/data/bbp/mmb-point-neuron-framework-model/2b29d249-6520-4a98-9586-27ec7803aed2"
       ```
