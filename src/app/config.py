@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     # to support other Nexus endpoints and buckets, the required permissions need to be added here.
     # see https://bbpteam.epfl.ch/project/issues/browse/NSETM-2283?focusedId=234551#comment-234551
     NEXUS_READ_PERMISSIONS: dict[str, dict[str, set[str]]] = {
-        "https://sbo-nexus-delta.shapes-registry.org/v1": {  # aws prod
+        "https://openbluebrain.com/api/nexus/v1": {  # aws prod
             "bbp/mmb-point-neuron-framework-model": {
                 "resources/read",
             },
