@@ -20,7 +20,7 @@ from app.logger import L
 from app.schemas import CircuitRef, NexusConfig, QueryParams, SampleParams
 
 # dependency aliases
-NexusConfigDep = Annotated[NexusConfig, Depends(NexusConfig.from_params)]
+NexusConfigDep = Annotated[NexusConfig, Depends(NexusConfig.from_headers)]
 CircuitRefDep = Annotated[CircuitRef, Depends(CircuitRef.from_params)]
 
 
@@ -123,7 +123,7 @@ async def version() -> dict:
     }
 
 
-@app.get("/auth")
+@app.get("/auth", include_in_schema=False)
 def auth(
     nexus_config: NexusConfigDep,
 ) -> JSONResponse:

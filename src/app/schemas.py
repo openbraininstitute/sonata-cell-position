@@ -1,7 +1,7 @@
 """Schemas and validators definitions."""
 
 import hashlib
-import json
+from collections.abc import Sequence
 from inspect import signature
 from pathlib import Path
 from typing import Annotated, Any
@@ -10,6 +10,7 @@ from fastapi import Header, HTTPException, Query
 from pydantic import AfterValidator
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field, ValidationError, model_validator
+from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_422_UNPROCESSABLE_ENTITY
 from voxcell import RegionMap
 
 from app.config import settings
@@ -36,6 +37,8 @@ class ValidatedParams:
         and decorate the class method `from_params` with @ValidatedParams
     """
 
+    _loc_prefix = "query"
+
     def __init__(self, callable_obj):
         """Init the wrapper with the given callable_obj."""
         self._callable = callable_obj
@@ -47,11 +50,31 @@ class ValidatedParams:
         try:
             return self._callable(*args, **kwargs)
         except ValidationError as e:
-            # ensure that all the values are JSON serializable
-            errors = json.loads(e.json())
+            errors = e.errors(include_url=False, include_context=False, include_input=False)
             for error in errors:
-                error["loc"] = ("query", *error["loc"])
-            raise HTTPException(422, detail=errors) from None
+                error["loc"] = (self._loc_prefix, *error["loc"])
+            L.info("ValidationError: {}", errors)
+            raise self._error(errors) from None
+
+    @staticmethod
+    def _error(errors: Sequence[Any]) -> Exception:
+        """Return the error to be raised in case of validation error."""
+        return HTTPException(HTTP_422_UNPROCESSABLE_ENTITY, detail=errors)
+
+
+class ValidatedAuthHeaders(ValidatedParams):
+    """Subclass of ValidatedParams raising 401_UNAUTHORIZED instead of 422_UNPROCESSABLE_ENTITY.
+
+    This is needed in particular for the /auth endpoint called by nginx, because it would consider
+    an error any response code different from 2xx, 401, 403, and it would return 500 to the client.
+    """
+
+    _loc_prefix = "headers"
+
+    @staticmethod
+    def _error(errors: Sequence[Any]) -> Exception:
+        """Return the error to be raised in case of validation error."""
+        return HTTPException(HTTP_401_UNAUTHORIZED, detail=errors)
 
 
 class PathValidator:
@@ -123,13 +146,16 @@ class NexusConfig(BaseModel):
     @model_validator(mode="after")
     def check_endpoint_and_bucket(self) -> "NexusConfig":
         """Check that the model is initialized with valid endpoint and bucket."""
-        if settings.NEXUS_READ_PERMISSIONS.get(self.endpoint, {}).get(self.bucket) is None:
-            raise ValueError("Nexus endpoint and/or bucket are invalid")
+        endpoint = settings.NEXUS_READ_PERMISSIONS.get(self.endpoint)
+        if endpoint is None:
+            raise ValueError(f"Nexus endpoint is invalid: {self.endpoint!r}")
+        if endpoint.get(self.bucket) is None:
+            raise ValueError(f"Nexus bucket is invalid: {self.bucket!r}")
         return self
 
     @classmethod
-    @ValidatedParams
-    def from_params(
+    @ValidatedAuthHeaders
+    def from_headers(
         cls,
         nexus_endpoint: Annotated[str, Header()] = settings.NEXUS_ENDPOINT,
         nexus_bucket: Annotated[str, Header()] = settings.NEXUS_BUCKET,
