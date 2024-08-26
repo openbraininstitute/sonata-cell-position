@@ -37,6 +37,7 @@ RUN \
 COPY ./nginx/ /etc/nginx/
 COPY ./supervisord.conf /etc/supervisor/supervisord.conf
 COPY --chown=app:app ./src/app/ /code/app/
+COPY --chown=app:app ./scripts/healthcheck.sh /code/scripts/healthcheck.sh
 
 ARG PROJECT_PATH
 ARG COMMIT_SHA
