@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 2024.8.3
+-----------------
+
+- Configure nginx to write the cache even when the client disconnects.
+
 Version 2024.8.2
 -----------------
 
