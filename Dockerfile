@@ -39,9 +39,12 @@ COPY ./supervisord.conf /etc/supervisor/supervisord.conf
 COPY --chown=app:app ./src/app/ /code/app/
 COPY --chown=app:app ./scripts/healthcheck.sh /code/scripts/healthcheck.sh
 
-ARG PROJECT_PATH
+ARG APP_NAME
+ARG APP_VERSION
 ARG COMMIT_SHA
-ENV PROJECT_PATH="${PROJECT_PATH}"
+
+ENV APP_NAME="${APP_NAME}"
+ENV APP_VERSION="${APP_VERSION}"
 ENV COMMIT_SHA="${COMMIT_SHA}"
 ENV PYTHONPATH=/code
 

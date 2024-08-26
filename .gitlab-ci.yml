@@ -33,7 +33,8 @@ deploy-prod:
     CI_COMMIT_SHORT_SHA: $CI_COMMIT_SHORT_SHA
     REGISTRY_IMAGE_TAG: $(date +%s)-$CI_COMMIT_SHORT_SHA
     KANIKO_EXTRA_ARGS:
-      --build-arg PROJECT_PATH=${CI_PROJECT_PATH}
+      --build-arg APP_NAME=${CI_PROJECT_NAME}
+      --build-arg APP_VERSION=${CI_COMMIT_TAG}
       --build-arg COMMIT_SHA=${CI_COMMIT_SHA}
   rules:
   - if: '$CI_COMMIT_TAG'

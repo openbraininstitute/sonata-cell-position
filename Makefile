@@ -3,7 +3,6 @@ SHELL := /bin/bash
 export ENVIRONMENT ?= dev
 export APP_NAME := sonata-cell-position
 export APP_VERSION := $(shell git describe --abbrev --dirty --always --tags)
-export PROJECT_PATH := $(APP_NAME)
 export COMMIT_SHA := $(shell git rev-parse HEAD)
 export IMAGE_NAME ?= $(APP_NAME)
 export IMAGE_TAG ?= $(APP_VERSION)-$(ENVIRONMENT)

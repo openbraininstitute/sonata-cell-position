@@ -4,7 +4,8 @@ services:
     build:
       dockerfile: Dockerfile
       args:
-      - PROJECT_PATH
+      - APP_NAME
+      - APP_VERSION
       - COMMIT_SHA
     ports:
     - "127.0.0.1:8200:8000"

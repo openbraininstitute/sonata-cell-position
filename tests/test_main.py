@@ -23,15 +23,21 @@ async def test_health_get(api_client):
 
 
 async def test_version_get(api_client, monkeypatch):
-    project_path = "project/sbo/sonata-cell-position"
+    app_name = "sonata-cell-position"
+    app_version = "2000.0.0"
     commit_sha = "12345678"
-    monkeypatch.setattr(test_module.settings, "PROJECT_PATH", project_path)
+    monkeypatch.setattr(test_module.settings, "APP_NAME", app_name)
+    monkeypatch.setattr(test_module.settings, "APP_VERSION", app_version)
     monkeypatch.setattr(test_module.settings, "COMMIT_SHA", commit_sha)
 
     response = await api_client.get("/version")
 
     assert response.status_code == 200
-    assert response.json() == {"project": project_path, "commit_sha": commit_sha}
+    assert response.json() == {
+        "app_name": app_name,
+        "app_version": app_version,
+        "commit_sha": commit_sha,
+    }
     assert response.headers["Cache-Control"] == "no-cache"
 
 

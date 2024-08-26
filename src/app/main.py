@@ -118,7 +118,8 @@ async def health() -> dict:
 async def version() -> dict:
     """Version endpoint."""
     return {
-        "project": settings.PROJECT_PATH,
+        "app_name": settings.APP_NAME,
+        "app_version": settings.APP_VERSION,
         "commit_sha": settings.COMMIT_SHA,
     }
 

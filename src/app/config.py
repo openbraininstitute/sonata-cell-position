@@ -13,10 +13,9 @@ class Settings(BaseSettings):
         case_sensitive=True,
     )
 
-    PROJECT_PATH: str = "UNDEFINED"
-    COMMIT_SHA: str = "UNDEFINED"
-
     APP_NAME: str = "cell-service"
+    APP_VERSION: str | None = None
+    COMMIT_SHA: str = "UNDEFINED"
     APP_DEBUG: bool = False
     UVICORN_PORT: int = 8010
     ROOT_PATH: str = ""
