@@ -15,7 +15,6 @@ def test_get_circuit_config_path_from_id(
     resource = MagicMock()
     resource.circuitConfigPath.get_url_as_path.return_value = str(input_path)
     mock_load_cached_resource.return_value = resource
-    nexus_config.token = "test-token"
 
     result = test_module.get_circuit_config_path(circuit_ref_id, nexus_config=nexus_config)
 

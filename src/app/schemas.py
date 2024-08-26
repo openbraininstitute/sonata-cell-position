@@ -9,7 +9,7 @@ from typing import Annotated, Any
 from fastapi import Header, HTTPException, Query
 from pydantic import AfterValidator
 from pydantic import BaseModel as PydanticBaseModel
-from pydantic import Field, ValidationError, model_validator
+from pydantic import Field, ValidationError, ValidationInfo, model_validator
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_422_UNPROCESSABLE_ENTITY
 from voxcell import RegionMap
 
@@ -129,9 +129,9 @@ class FrozenBaseModel(PydanticBaseModel):
 class NexusConfig(BaseModel):
     """Nexus configuration."""
 
-    endpoint: str = settings.NEXUS_ENDPOINT
-    bucket: str = settings.NEXUS_BUCKET
-    token: str | None = None
+    endpoint: str
+    bucket: str
+    token: Annotated[str, Field(exclude=True)]
 
     @property
     def org(self):
@@ -144,8 +144,10 @@ class NexusConfig(BaseModel):
         return self.bucket.partition("/")[2]
 
     @model_validator(mode="after")
-    def check_endpoint_and_bucket(self) -> "NexusConfig":
+    def check_endpoint_and_bucket(self, info: ValidationInfo) -> "NexusConfig":
         """Check that the model is initialized with valid endpoint and bucket."""
+        if info.context and info.context.get("ignore_nexus_fields_from_cli"):
+            return self
         endpoint = settings.NEXUS_READ_PERMISSIONS.get(self.endpoint)
         if endpoint is None:
             raise ValueError(f"Nexus endpoint is invalid: {self.endpoint!r}")
@@ -157,9 +159,9 @@ class NexusConfig(BaseModel):
     @ValidatedAuthHeaders
     def from_headers(
         cls,
-        nexus_endpoint: Annotated[str, Header()] = settings.NEXUS_ENDPOINT,
-        nexus_bucket: Annotated[str, Header()] = settings.NEXUS_BUCKET,
-        nexus_token: Annotated[str | None, Header()] = None,
+        nexus_endpoint: Annotated[str, Header()],
+        nexus_bucket: Annotated[str, Header()],
+        nexus_token: Annotated[str, Header()],
     ) -> "NexusConfig":
         """Return a new instance from the given parameters."""
         return cls(
@@ -172,7 +174,7 @@ class NexusConfig(BaseModel):
 class CircuitRef(FrozenBaseModel):
     """Circuit reference, having only one of id and path."""
 
-    id: str | None = None  # Nexus ID
+    id: str | None = None  # Nexus ID. It can be None only when called from the CLI.
     path: CircuitConfigPath | None = None  # Path to the circuit config
 
     @model_validator(mode="after")
@@ -186,20 +188,15 @@ class CircuitRef(FrozenBaseModel):
 
     @classmethod
     @ValidatedParams
-    def from_params(
-        cls,
-        circuit_id: str | None = None,
-        input_path: CircuitConfigPath | None = None,
-    ) -> "CircuitRef":
+    def from_params(cls, circuit_id: str) -> "CircuitRef":
         """Return a new instance from the given parameters."""
-        return CircuitRef(id=circuit_id, path=input_path)
+        return CircuitRef(id=circuit_id)
 
 
 class QueryParams(BaseModel):
     """QueryParams."""
 
-    circuit_id: str | None = None
-    input_path: CircuitConfigPath | None = None
+    circuit_id: str
     attributes: list[str]
     population_name: str | None = None
     node_set: str | None = None
@@ -213,8 +210,7 @@ class QueryParams(BaseModel):
     @ValidatedParams
     def from_simplified_params(
         cls,
-        circuit_id: str | None = None,
-        input_path: Path | None = None,
+        circuit_id: str,
         region: Annotated[list[str] | None, Query()] = None,
         mtype: Annotated[list[str] | None, Query()] = None,
         modality: Annotated[
@@ -235,7 +231,6 @@ class QueryParams(BaseModel):
         # the common fields are validated when the model is instantiated
         return cls(
             circuit_id=circuit_id,
-            input_path=input_path,
             attributes=attributes,
             population_name=population_name,
             node_set=node_set,
@@ -250,8 +245,7 @@ class QueryParams(BaseModel):
 class SampleParams(BaseModel):
     """SampleParams."""
 
-    circuit_id: str | None = None
-    input_path: CircuitConfigPath | None = None
+    circuit_id: str
     population_name: str | None = None
     sampling_ratio: float = 0.01
     seed: int = 0
@@ -263,7 +257,6 @@ class CircuitCacheKey(FrozenBaseModel):
     All the attributes need to be hashable.
     """
 
-    circuit_id: str | None  # it can be None when the Nexus id has not been specified
     circuit_config_path: CircuitConfigPath
     population_name: str
     attributes: tuple[str, ...]

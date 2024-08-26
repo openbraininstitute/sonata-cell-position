@@ -1,72 +1,90 @@
 import re
-import shutil
 
 import libsonata
 import pytest
-from fastapi.testclient import TestClient
 
 import app.main as test_module
 from tests.utils import TEST_DATA_DIR, _assert_populations_equal, _get_node_population, edit_json
 
-client = TestClient(test_module.app)
 
-
-def test_root_get():
-    response = client.get("/", follow_redirects=False)
+async def test_root_get(api_client):
+    response = await api_client.get("/", follow_redirects=False)
 
     assert response.status_code == 302
     assert response.next_request.url.path == "/docs"
 
 
-def test_health_get():
-    response = client.get("/health")
+async def test_health_get(api_client):
+    response = await api_client.get("/health")
 
     assert response.status_code == 200
     assert response.json() == {"status": "OK"}
     assert response.headers["Cache-Control"] == "no-cache"
 
 
-def test_version_get(monkeypatch):
+async def test_version_get(api_client, monkeypatch):
     project_path = "project/sbo/sonata-cell-position"
     commit_sha = "12345678"
     monkeypatch.setattr(test_module.settings, "PROJECT_PATH", project_path)
     monkeypatch.setattr(test_module.settings, "COMMIT_SHA", commit_sha)
 
-    response = client.get("/version")
+    response = await api_client.get("/version")
 
     assert response.status_code == 200
     assert response.json() == {"project": project_path, "commit_sha": commit_sha}
     assert response.headers["Cache-Control"] == "no-cache"
 
 
-def test_auth_get_success(monkeypatch):
+async def test_auth_get_success(api_client_with_auth, monkeypatch):
     monkeypatch.setattr(test_module.nexus, "is_user_authorized", lambda _: 200)
 
-    response = client.get("/auth")
+    response = await api_client_with_auth.get("/auth")
 
     assert response.status_code == 200
     assert response.json() == {"message": "OK"}
 
 
-@pytest.mark.parametrize(
-    "headers",
-    [
-        None,
-        {"Nexus-Token": "invalid"},
-    ],
-)
-def test_auth_get_failure(headers):
-    response = client.get("/auth", headers=headers)
+async def test_auth_get_failure_with_headers(api_client_with_auth):
+    response = await api_client_with_auth.get("/auth")
 
     assert response.status_code == 401
     assert response.json() == {"message": "Unauthorized"}
 
 
-def test_read_circuit(input_path):
-    response = client.get(
+async def test_auth_get_failure_without_headers(api_client):
+    response = await api_client.get("/auth")
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": [
+            {
+                "type": "missing",
+                "loc": ["header", "nexus-endpoint"],
+                "msg": "Field required",
+                "input": None,
+            },
+            {
+                "type": "missing",
+                "loc": ["header", "nexus-bucket"],
+                "msg": "Field required",
+                "input": None,
+            },
+            {
+                "type": "missing",
+                "loc": ["header", "nexus-token"],
+                "msg": "Field required",
+                "input": None,
+            },
+        ]
+    }
+
+
+@pytest.mark.usefixtures("_patch_get_circuit_config_path", "_patch_get_region_map")
+async def test_read_circuit(api_client_with_auth, circuit_id):
+    response = await api_client_with_auth.get(
         "/circuit",
         params={
-            "input_path": str(input_path),
+            "circuit_id": circuit_id,
             "population_name": "default",
             "how": "json",
             "modality": ["position", "mtype"],
@@ -84,11 +102,12 @@ def test_read_circuit(input_path):
     }
 
 
-def test_read_circuit_unknown_region_id(input_path):
-    response = client.get(
+@pytest.mark.usefixtures("_patch_get_circuit_config_path", "_patch_get_region_map")
+async def test_read_circuit_unknown_region_id(api_client_with_auth, circuit_id):
+    response = await api_client_with_auth.get(
         "/circuit",
         params={
-            "input_path": str(input_path),
+            "circuit_id": circuit_id,
             "population_name": "default",
             "how": "json",
             "modality": ["position", "mtype"],
@@ -104,11 +123,12 @@ def test_read_circuit_unknown_region_id(input_path):
     }
 
 
-def test_read_circuit_unknown_region_label(input_path):
-    response = client.get(
+@pytest.mark.usefixtures("_patch_get_circuit_config_path", "_patch_get_region_map")
+async def test_read_circuit_unknown_region_label(api_client_with_auth, circuit_id):
+    response = await api_client_with_auth.get(
         "/circuit",
         params={
-            "input_path": str(input_path),
+            "circuit_id": circuit_id,
             "population_name": "default",
             "how": "json",
             "modality": ["position", "mtype"],
@@ -124,11 +144,11 @@ def test_read_circuit_unknown_region_label(input_path):
     }
 
 
-def test_read_circuit_invalid_modality(input_path):
-    response = client.get(
+async def test_read_circuit_invalid_modality(api_client_with_auth, circuit_id):
+    response = await api_client_with_auth.get(
         "/circuit",
         params={
-            "input_path": str(input_path),
+            "circuit_id": circuit_id,
             "population_name": "default",
             "how": "json",
             "modality": ["position", "invalid"],
@@ -147,11 +167,11 @@ def test_read_circuit_invalid_modality(input_path):
     assert error["input"] == "invalid"
 
 
-def test_read_circuit_invalid_nexus_endpoint(input_path):
-    response = client.get(
+async def test_read_circuit_invalid_nexus_endpoint(api_client_with_auth, circuit_id):
+    response = await api_client_with_auth.get(
         "/circuit",
         params={
-            "circuit_id": "https://bbp.epfl.ch/data/fake-circuit-id",
+            "circuit_id": circuit_id,
             "population_name": "default",
             "how": "json",
         },
@@ -170,11 +190,12 @@ def test_read_circuit_invalid_nexus_endpoint(input_path):
     assert "input" not in error
 
 
-def test_query(input_path):
-    response = client.post(
+@pytest.mark.usefixtures("_patch_get_circuit_config_path", "_patch_get_region_map")
+async def test_query(api_client_with_auth, circuit_id):
+    response = await api_client_with_auth.post(
         "/circuit/query",
         json={
-            "input_path": str(input_path),
+            "circuit_id": circuit_id,
             "population_name": "default",
             "how": "json",
             "attributes": ["x", "y", "z", "mtype"],
@@ -193,11 +214,11 @@ def test_query(input_path):
     }
 
 
-def test_query_invalid_key(input_path):
-    response = client.post(
+async def test_query_invalid_key(api_client_with_auth, circuit_id):
+    response = await api_client_with_auth.post(
         "/circuit/query",
         json={
-            "input_path": str(input_path),
+            "circuit_id": circuit_id,
             "population_name": "default",
             "how": "json",
             "attributes": ["x", "y", "z", "mtype"],
@@ -218,11 +239,11 @@ def test_query_invalid_key(input_path):
     assert error["input"] == "value"
 
 
-def test_query_invalid_how(input_path):
-    response = client.post(
+async def test_query_invalid_how(api_client_with_auth, circuit_id):
+    response = await api_client_with_auth.post(
         "/circuit/query",
         json={
-            "input_path": str(input_path),
+            "circuit_id": circuit_id,
             "population_name": "default",
             "how": "invalid",
             "attributes": ["x", "y", "z", "mtype"],
@@ -242,6 +263,7 @@ def test_query_invalid_how(input_path):
     assert error["input"] == "invalid"
 
 
+@pytest.mark.usefixtures("_patch_get_circuit_config_path")
 @pytest.mark.parametrize(
     "params, expected",
     [
@@ -255,11 +277,11 @@ def test_query_invalid_how(input_path):
         ),
     ],
 )
-def test_sample(tmp_path, input_path, params, expected):
-    response = client.post(
+async def test_sample(api_client_with_auth, circuit_id, input_path, tmp_path, params, expected):
+    response = await api_client_with_auth.post(
         "/circuit/sample",
         json={
-            "input_path": str(input_path),
+            "circuit_id": circuit_id,
             "sampling_ratio": 0.5,
             "seed": 103,  # affects the randomly selected ids
             **params,
@@ -278,8 +300,9 @@ def test_sample(tmp_path, input_path, params, expected):
         _assert_populations_equal(node_population, node_population_orig, ids1, ids2)
 
 
-def test_count_all(input_path):
-    response = client.get("/circuit/count", params={"input_path": str(input_path)})
+@pytest.mark.usefixtures("_patch_get_circuit_config_path")
+async def test_count_all(api_client_with_auth, circuit_id):
+    response = await api_client_with_auth.get("/circuit/count", params={"circuit_id": circuit_id})
 
     assert response.status_code == 200
     assert response.json() == {
@@ -287,11 +310,12 @@ def test_count_all(input_path):
     }
 
 
-def test_count_population(input_path):
-    response = client.get(
+@pytest.mark.usefixtures("_patch_get_circuit_config_path")
+async def test_count_population(api_client_with_auth, circuit_id):
+    response = await api_client_with_auth.get(
         "/circuit/count",
         params={
-            "input_path": str(input_path),
+            "circuit_id": circuit_id,
             "population_name": "default",
         },
     )
@@ -300,11 +324,12 @@ def test_count_population(input_path):
     assert response.json() == {"nodes": {"populations": {"default": {"size": 3}}}}
 
 
-def test_attribute_names(input_path):
-    response = client.get(
+@pytest.mark.usefixtures("_patch_get_circuit_config_path")
+async def test_attribute_names(api_client_with_auth, circuit_id):
+    response = await api_client_with_auth.get(
         "/circuit/attribute_names",
         params={
-            "input_path": str(input_path),
+            "circuit_id": circuit_id,
             "population_name": "default",
         },
     )
@@ -331,11 +356,12 @@ def test_attribute_names(input_path):
     }
 
 
-def test_attribute_dtypes(input_path):
-    response = client.get(
+@pytest.mark.usefixtures("_patch_get_circuit_config_path")
+async def test_attribute_dtypes(api_client_with_auth, circuit_id):
+    response = await api_client_with_auth.get(
         "/circuit/attribute_dtypes",
         params={
-            "input_path": str(input_path),
+            "circuit_id": circuit_id,
             "population_name": "default",
         },
     )
@@ -362,11 +388,12 @@ def test_attribute_dtypes(input_path):
     }
 
 
-def test_attribute_values(input_path):
-    response = client.get(
+@pytest.mark.usefixtures("_patch_get_circuit_config_path")
+async def test_attribute_values(api_client_with_auth, circuit_id):
+    response = await api_client_with_auth.get(
         "/circuit/attribute_values",
         params={
-            "input_path": str(input_path),
+            "circuit_id": circuit_id,
             "population_name": "default",
             "attribute_names": ["mtype", "morphology"],
         },
@@ -383,10 +410,11 @@ def test_attribute_values(input_path):
     }
 
 
-def test_node_sets_get():
-    input_path = TEST_DATA_DIR / "circuit" / "circuit_config.json"
-
-    response = client.get("/circuit/node_sets", params={"input_path": str(input_path)})
+@pytest.mark.usefixtures("_patch_get_circuit_config_path")
+async def test_node_sets_get(api_client_with_auth, circuit_id):
+    response = await api_client_with_auth.get(
+        "/circuit/node_sets", params={"circuit_id": circuit_id}
+    )
 
     assert response.status_code == 200
     assert response.json() == {
@@ -407,16 +435,17 @@ def test_node_sets_get():
     }
 
 
-def test_node_sets_get_without_node_sets_file(tmp_path, caplog):
-    src = TEST_DATA_DIR / "circuit"
-    dst = tmp_path / src.name
-    shutil.copytree(src, dst)
-    input_path = dst / "circuit_config.json"
-    with edit_json(input_path) as config:
+@pytest.mark.usefixtures("_patch_get_circuit_config_path_copy")
+async def test_node_sets_get_without_node_sets_file(
+    api_client_with_auth, circuit_id, input_path_copy, caplog
+):
+    with edit_json(input_path_copy) as config:
         config["manifest"]["$BASE_DIR"] = str(TEST_DATA_DIR / "circuit")
         del config["node_sets_file"]
 
-    response = client.get("/circuit/node_sets", params={"input_path": str(input_path)})
+    response = await api_client_with_auth.get(
+        "/circuit/node_sets", params={"circuit_id": circuit_id}
+    )
 
     assert response.status_code == 200
     assert response.json() == {"node_sets": []}

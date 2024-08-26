@@ -66,15 +66,12 @@ def test_circuit_ref_from_id():
     result = test_module.CircuitRef(id="test-id", path=None)
     assert isinstance(result, test_module.CircuitRef)
 
-    result = test_module.CircuitRef.from_params(circuit_id="test-id", input_path=None)
+    result = test_module.CircuitRef.from_params(circuit_id="test-id")
     assert isinstance(result, test_module.CircuitRef)
 
 
 def test_circuit_ref_from_path(input_path):
     result = test_module.CircuitRef(id=None, path=input_path)
-    assert isinstance(result, test_module.CircuitRef)
-
-    result = test_module.CircuitRef.from_params(circuit_id=None, input_path=input_path)
     assert isinstance(result, test_module.CircuitRef)
 
 

@@ -8,11 +8,11 @@ from threading import Lock
 
 import cachetools
 
+import app.service
 from app.config import settings
 from app.libsonata_helper import convert_nodesets, sample_nodes, write_circuit_config
 from app.logger import L
 from app.schemas import CircuitCacheKey, CircuitCachePaths, CircuitParams, CircuitRef, NexusConfig
-from app.service import get_circuit_config_path, get_region_map
 from app.utils import get_folder_size
 
 
@@ -161,10 +161,9 @@ def get_cached_circuit_params(
     use_circuit_cache: bool,
 ) -> CircuitParams:
     """Return an instance of CircuitParams, using the cache if possible."""
-    path = get_circuit_config_path(circuit_ref, nexus_config=nexus_config)
-    region_map = get_region_map(circuit_ref, nexus_config=nexus_config)
+    path = app.service.get_circuit_config_path(circuit_ref, nexus_config=nexus_config)
+    region_map = app.service.get_region_map(circuit_ref, nexus_config=nexus_config)
     key = CircuitCacheKey(
-        circuit_id=circuit_ref.id,
         circuit_config_path=path,
         population_name=population_name,
         attributes=tuple(attributes),

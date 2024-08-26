@@ -69,7 +69,14 @@ def export(  # pylint: disable=too-many-arguments,too-many-locals
     """Export circuit information to file."""
     L.info("Starting export")
     circuit_ref = CircuitRef(id=circuit_id, path=input_path)
-    nexus_config = NexusConfig(token=os.getenv("NEXUS_TOKEN"))
+    nexus_config = NexusConfig.model_validate(
+        {
+            "endpoint": os.getenv("NEXUS_ENDPOINT", ""),
+            "bucket": os.getenv("NEXUS_BUCKET", ""),
+            "token": os.getenv("NEXUS_TOKEN", ""),
+        },
+        context={"ignore_nexus_fields_from_cli": True},
+    )
     attributes = modality_to_attributes(modality)
     query = attributes_to_dict(region=region, mtype=mtype)
     queries = [query] if query else None
@@ -107,7 +114,14 @@ def sample(
     """Sample a node file."""
     L.info("Starting sampling")
     circuit_ref = CircuitRef(id=circuit_id, path=input_path)
-    nexus_config = NexusConfig(token=os.getenv("NEXUS_TOKEN"))
+    nexus_config = NexusConfig.model_validate(
+        {
+            "endpoint": os.getenv("NEXUS_ENDPOINT", ""),
+            "bucket": os.getenv("NEXUS_BUCKET", ""),
+            "token": os.getenv("NEXUS_TOKEN", ""),
+        },
+        context={"ignore_nexus_fields_from_cli": True},
+    )
     jobs.sample_job(
         nexus_config=nexus_config,
         circuit_ref=circuit_ref,

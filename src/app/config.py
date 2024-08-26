@@ -37,11 +37,6 @@ class Settings(BaseSettings):
     # maximum sampling ratio considered for caching
     CACHED_SAMPLING_RATIO: float = 0.01
 
-    # Nexus endpoint and bucket can be specified by the user in the request headers.
-    # We may want to make them mandatory in the future, and remove the default values below.
-    NEXUS_ENDPOINT: str = "https://bbp.epfl.ch/nexus/v1"
-    NEXUS_BUCKET: str = "bbp/mmb-point-neuron-framework-model"
-
     # to support other Nexus endpoints and buckets, the required permissions need to be added here.
     # see https://bbpteam.epfl.ch/project/issues/browse/NSETM-2283?focusedId=234551#comment-234551
     NEXUS_READ_PERMISSIONS: dict[str, dict[str, set[str]]] = {

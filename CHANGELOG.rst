@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Version 2024.8.2
+-----------------
+
+- Breaking change: Remove from the web api the parameter ``input_path``, that was used to specify the path to the circuit_config. Only ``circuit_id`` is now supported.
+- Breaking change: Make mandatory the headers: ``nexus-token``, ``nexus-endpoint``, ``nexus-bucket``. Previously, a default value was used when they were missing.
+
+- In case of validation error, do not return input data and log the error.
+- Return 401 in case of missing or invalid nexus-* headers, instead of 422.
+
 Version 2024.7.9
 -----------------
 

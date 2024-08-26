@@ -109,7 +109,6 @@ def nexus_token():
 
 def test_load_cached_resource(nexus_config):
     resource_id = "test-resource-id"
-    nexus_config.token = "test-token"
     resource = MagicMock()
     resource_class = MagicMock()
     resource_class.from_id.return_value = resource
@@ -128,7 +127,6 @@ def test_load_cached_resource(nexus_config):
 
 def test_load_cached_resource_with_nexus_error(nexus_config):
     resource_id = "test-resource-id"
-    nexus_config.token = "test-token"
     resource_class = MagicMock()
     resource_class.from_id.side_effect = HTTPError(
         "401 Client Error: Unauthorized for url",
@@ -143,7 +141,6 @@ def test_load_cached_resource_with_nexus_error(nexus_config):
 
 def test_load_cached_resource_with_resource_id_none(nexus_config):
     resource_id = None
-    nexus_config.token = "test-token"
     resource_class = MagicMock()
     resource_class.from_id.side_effect = HTTPError(
         "401 Client Error: Unauthorized for url",
@@ -158,7 +155,6 @@ def test_load_cached_resource_with_resource_id_none(nexus_config):
 
 def test_load_cached_resource_with_result_none(nexus_config):
     resource_id = "test-resource-id"
-    nexus_config.token = "test-token"
     resource_class = MagicMock()
     resource_class.from_id.return_value = None
 
@@ -191,7 +187,7 @@ def test_load_cached_region_map(nexus_config, hierarchy):
         assert result_1 is result_2
 
 
-def test_load_cached_region_map_hierarchy_not_found(nexus_config, hierarchy):
+def test_load_cached_region_map_hierarchy_not_found(nexus_config):
     resource = MagicMock()
     resource.distribution = [
         MagicMock(encodingFormat="application/ld+json"),
@@ -291,6 +287,7 @@ def test_is_user_authorized_false_because_of_bucket(nexus_config, nexus_token, c
 
 def test_is_user_authorized_false_because_of_missing_token(nexus_config, caplog):
     caplog.set_level(logging.INFO)
+    nexus_config.token = ""
 
     result = test_module.is_user_authorized(nexus_config)
 

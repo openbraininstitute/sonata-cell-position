@@ -152,7 +152,7 @@ def query(
     tmp_path: Annotated[Path, Depends(make_temp_path(prefix="output_"))],
 ) -> FileResponse:
     """Return information about a circuit."""
-    circuit_ref = CircuitRef.from_params(circuit_id=params.circuit_id, input_path=params.input_path)
+    circuit_ref = CircuitRef.from_params(circuit_id=params.circuit_id)
     content_type = serialize.get_content_type(params.how)
     extension = serialize.get_extension(params.how)
     output_path = tmp_path / f"output.{extension}"
@@ -183,7 +183,7 @@ def sample(
     tmp_path: Annotated[Path, Depends(make_temp_path(prefix="output_"))],
 ) -> FileResponse:
     """Sample a node file."""
-    circuit_ref = CircuitRef.from_params(circuit_id=params.circuit_id, input_path=params.input_path)
+    circuit_ref = CircuitRef.from_params(circuit_id=params.circuit_id)
     output_path = tmp_path / f"sampled_{params.sampling_ratio}.h5"
     jobs.sample_job(
         nexus_config=nexus_config,
