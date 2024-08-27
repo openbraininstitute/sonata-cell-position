@@ -5,6 +5,7 @@ Version 2024.8.3
 -----------------
 
 - Configure nginx to write the cache even when the client disconnects.
+- Use python:3.12-slim as base docker image and update deps.
 
 Version 2024.8.2
 -----------------

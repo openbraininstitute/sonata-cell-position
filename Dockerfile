@@ -1,4 +1,4 @@
-FROM python:3.12
+FROM python:3.12-slim
 SHELL ["/bin/bash", "-e", "-o", "pipefail", "-c"]
 
 # create the app user with the same id used for bbpsbok8sonatacells. See:
