@@ -21,6 +21,8 @@ RUN \
     ln -sf /sbo/data/project /gpfs && \
     useradd --create-home --shell /bin/sh -u $APP_USER_ID app
 
+RUN python -m compileall  # compile system files
+
 USER app
 WORKDIR /code
 ENV PATH="/home/app/.local/bin:$PATH"
@@ -38,6 +40,8 @@ COPY ./nginx/ /etc/nginx/
 COPY ./supervisord.conf /etc/supervisor/supervisord.conf
 COPY --chown=app:app ./src/app/ /code/app/
 COPY --chown=app:app ./scripts/healthcheck.sh /code/scripts/healthcheck.sh
+
+RUN python -m compileall .  # compile app files
 
 ARG APP_NAME
 ARG APP_VERSION

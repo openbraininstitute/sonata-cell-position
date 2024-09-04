@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 2024.9.1
+-----------------
+
+- Compile all python files.
+
+
 Version 2024.8.3
 -----------------
 
