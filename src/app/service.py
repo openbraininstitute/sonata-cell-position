@@ -9,10 +9,12 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from entity_management.atlas import AtlasRelease, ParcellationOntology
+from entity_management.core import Entity
 from entity_management.simulation import DetailedCircuit
 from voxcell import RegionMap
 
 from app import nexus
+from app.config import settings
 from app.errors import CircuitError
 from app.libsonata_helper import (
     get_node_population,
@@ -30,7 +32,7 @@ def get_circuit_config_path(circuit_ref: CircuitRef, nexus_config: NexusConfig) 
     if circuit_ref.path:
         return circuit_ref.path
     resource = nexus.load_cached_resource(
-        DetailedCircuit, circuit_ref.id, nexus_config=nexus_config
+        resource_class=DetailedCircuit, resource_id=circuit_ref.id, nexus_config=nexus_config
     )
     return nexus.get_circuit_config_path(resource)
 
@@ -55,18 +57,43 @@ def get_region_map(circuit_ref: CircuitRef, nexus_config: NexusConfig) -> Region
     if not circuit_ref.id:
         return get_bundled_region_map()
     detailed_circuit = nexus.load_cached_resource(
-        DetailedCircuit, resource_id=circuit_ref.id, nexus_config=nexus_config
+        resource_class=DetailedCircuit,
+        resource_id=circuit_ref.id,
+        nexus_config=nexus_config,
     )
     atlas_release = nexus.load_cached_resource(
-        AtlasRelease, detailed_circuit.atlasRelease.get_id(), nexus_config=nexus_config
+        resource_class=AtlasRelease,
+        resource_id=detailed_circuit.atlasRelease.get_id(),
+        nexus_config=nexus_config,
     )
     parcellation_ontology = nexus.load_cached_resource(
-        ParcellationOntology, atlas_release.parcellationOntology.get_id(), nexus_config=nexus_config
+        resource_class=ParcellationOntology,
+        resource_id=atlas_release.parcellationOntology.get_id(),
+        nexus_config=nexus_config,
     )
     return nexus.load_cached_region_map(parcellation_ontology, nexus_config=nexus_config)
 
 
-def _region_acronyms(regions: list[str], region_map: RegionMap) -> list[str]:
+def get_alternative_region_map(circuit_ref: CircuitRef, nexus_config: NexusConfig) -> dict:
+    """Return the region map used for the given circuit."""
+    if not circuit_ref.id:
+        # this check is needed only for the cli, and it can be removed after removing
+        # the possibility to specify the circuit path instead of the circuit id
+        L.warning("Not loading the alternative region map")
+        return {}
+    brain_region_ontology = nexus.load_cached_resource(
+        resource_class=Entity,
+        resource_id=settings.BRAIN_REGION_ONTOLOGY_RESOURCE_ID,
+        nexus_config=nexus_config,
+    )
+    return nexus.load_cached_alternative_region_map(
+        brain_region_ontology, nexus_config=nexus_config
+    )
+
+
+def _region_acronyms(
+    regions: list[str], region_map: RegionMap, alternative_region_map: dict
+) -> list[str]:
     """Return acronyms of regions in `regions`."""
     result: set[str] = set()
     for region in regions:
@@ -74,6 +101,8 @@ def _region_acronyms(regions: list[str], region_map: RegionMap) -> list[str]:
             ids = region_map.find(int(region), "id", with_descendants=True)
         except ValueError:
             ids = region_map.find(region, "acronym", with_descendants=True)
+        if not ids:
+            ids = alternative_region_map.get(region)
         if not ids:
             raise CircuitError(f"No region ids found with region {region!r}")
         result.update(region_map.get(id_, "acronym") for id_ in ids)
@@ -96,7 +125,14 @@ def export(
     """
     queries = [
         (
-            query | {"region": _region_acronyms(query["region"], circuit_params.region_map)}
+            {
+                **query,
+                "region": _region_acronyms(
+                    regions=query["region"],
+                    region_map=circuit_params.region_map,
+                    alternative_region_map=circuit_params.alternative_region_map,
+                ),
+            }
             if "region" in query
             else query
         )

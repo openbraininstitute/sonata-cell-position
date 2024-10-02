@@ -11,6 +11,7 @@ import jwt
 import requests
 from entity_management.atlas import ParcellationOntology
 from entity_management.base import Identifiable
+from entity_management.core import Entity
 from entity_management.simulation import DetailedCircuit
 from requests import HTTPError
 from starlette.status import (
@@ -21,10 +22,12 @@ from starlette.status import (
 )
 from voxcell import RegionMap
 
+from app.brain_region import load_alternative_region_map
 from app.config import settings
 from app.errors import ClientError
 from app.logger import L
 from app.schemas import NexusConfig
+from app.utils import ensure_list
 
 T = TypeVar("T", bound=Identifiable)
 
@@ -35,6 +38,10 @@ ENTITY_CACHE: cachetools.Cache = cachetools.TTLCache(
 REGION_MAP_CACHE: cachetools.Cache = cachetools.TTLCache(
     maxsize=settings.REGION_MAP_CACHE_MAX_SIZE,
     ttl=settings.REGION_MAP_CACHE_TTL,
+)
+ALTERNATIVE_REGION_MAP_CACHE: cachetools.Cache = cachetools.TTLCache(
+    maxsize=settings.ALTERNATIVE_REGION_MAP_CACHE_MAX_SIZE,
+    ttl=settings.ALTERNATIVE_REGION_MAP_CACHE_TTL,
 )
 
 
@@ -84,6 +91,19 @@ def _get_cached_region_map_key(
     )
 
 
+def _get_cached_alternative_region_map_key(
+    resource: Entity,
+    nexus_config: NexusConfig,
+) -> tuple:
+    """Return the key to be used for the cache in load_cached_alternative_region_map()."""
+    return (
+        resource.get_id(),
+        nexus_config.endpoint,
+        nexus_config.bucket,
+        bool(nexus_config.token),
+    )
+
+
 @cachetools.cached(
     cache=ENTITY_CACHE,
     key=_get_cached_resource_key,
@@ -94,7 +114,7 @@ def load_cached_resource(
     resource_class: type[T],
     resource_id: str | None,
     nexus_config: NexusConfig,
-    cross_bucket=True,
+    cross_bucket: bool = True,
 ) -> T:
     """Load and return an entity from Nexus.
 
@@ -109,6 +129,7 @@ def load_cached_resource(
     """
     if not resource_id:
         raise ClientError("Resource id must be set")
+    L.info("Loading {} with id {} from Nexus", resource_class.__name__, resource_id)
     try:
         resource = resource_class.from_id(
             resource_id,
@@ -145,12 +166,40 @@ def load_cached_region_map(resource: ParcellationOntology, nexus_config: NexusCo
     Returns:
         The RegionMap instance loaded from json file.
     """
+    L.info("Loading region map from Nexus")
     for data_download in resource.distribution:
         if data_download.encodingFormat == "application/json":
             with TemporaryDirectory() as tmp_dir:
                 path = data_download.download(path=tmp_dir, use_auth=nexus_config.token)
                 return RegionMap.load_json(path)
     raise ClientError(f"Hierarchy json not found for id {resource.get_id()}")
+
+
+@cachetools.cached(
+    cache=ALTERNATIVE_REGION_MAP_CACHE,
+    key=_get_cached_alternative_region_map_key,
+    lock=Lock(),
+    info=settings.ALTERNATIVE_REGION_MAP_CACHE_INFO,
+)
+def load_cached_alternative_region_map(resource: Entity, nexus_config: NexusConfig) -> dict:
+    """Return a dict extracted from the json-ld attached to the given Brain Region Ontology.
+
+    Args:
+        resource: instance of Entity representing the Brain Region Ontology.
+        nexus_config: NexusConfig instance.
+
+    Returns:
+        The dict extracted from json-ld.
+    """
+    L.info("Loading alternative region map from Nexus")
+    for data_download in ensure_list(resource.distribution):
+        if data_download.encodingFormat == "application/ld+json":
+            with TemporaryDirectory() as tmp_dir:
+                path = data_download.download(path=tmp_dir, use_auth=nexus_config.token)
+                result = load_alternative_region_map(path)
+                L.info("Loaded {} alternative ids from {}", len(result), data_download.contentUrl)
+                return result
+    raise ClientError(f"Alternative hierarchy json not found for id {resource.get_id()}")
 
 
 def get_circuit_config_path(resource: DetailedCircuit) -> Path:

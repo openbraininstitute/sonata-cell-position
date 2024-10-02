@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sonata-cell-position"
-version = "2024.8.3"
+version = "2024.10.1"
 description = "sonata-cell-position web API"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -67,7 +67,7 @@ convention = "google"
 extension-pkg-allow-list = ["pydantic"]
 
 [tool.pylint."messages control"]
-disable = ["fixme", "invalid-name", "len-as-condition", "no-else-return"]
+disable = ["fixme", "invalid-name", "len-as-condition", "no-else-return", "too-many-positional-arguments"]
 
 [tool.pylint.format]
 # Regexp for a line that is allowed to be longer than the limit.

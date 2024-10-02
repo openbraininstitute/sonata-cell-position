@@ -36,7 +36,7 @@ Both the `/auth` and `/circuit` requests can be independently cached on the prox
 
 The API documentation is available at:
 - <https://cells.sbo.kcp.bbp.epfl.ch/docs> for the k8s deployment.
-- <https://sbo-cell-svc.shapes-registry.org/docs> for the AWS deployment.
+- <https://openbluebrain.com/api/circuit/docs> for the AWS deployment.
 - <http://127.0.0.1:8200/docs> when running locally in Docker.
 
 
@@ -112,7 +112,7 @@ See also the configuration files at <https://bbpgitlab.epfl.ch/project/sbo/k8s>.
    1. Cell service on AWS:
 
       ```bash
-      API="https://sbo-cell-svc.shapes-registry.org"
+      API="https://openbluebrain.com/api/circuit"
       ```
 
    2. Cell service on k8s:

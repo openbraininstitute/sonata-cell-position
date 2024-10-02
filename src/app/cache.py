@@ -163,6 +163,9 @@ def get_cached_circuit_params(
     """Return an instance of CircuitParams, using the cache if possible."""
     path = app.service.get_circuit_config_path(circuit_ref, nexus_config=nexus_config)
     region_map = app.service.get_region_map(circuit_ref, nexus_config=nexus_config)
+    alternative_region_map = app.service.get_alternative_region_map(
+        circuit_ref, nexus_config=nexus_config
+    )
     key = CircuitCacheKey(
         circuit_config_path=path,
         population_name=population_name,
@@ -187,4 +190,8 @@ def get_cached_circuit_params(
                 "sampling_ratio": sampling_ratio / key.sampling_ratio,
             }
         )
-    return CircuitParams(key=key, region_map=region_map)
+    return CircuitParams(
+        key=key,
+        region_map=region_map,
+        alternative_region_map=alternative_region_map,
+    )

@@ -1,9 +1,12 @@
 import logging
 
+import pytest
+
 import app.cache as test_module
 from tests.utils import assert_cache, clear_cache
 
 
+@pytest.mark.usefixtures("_patch_get_region_map", "_patch_get_alternative_region_map")
 def test_get_cached_circuit_params(tmp_path, circuit_ref_path, nexus_config):
     with clear_cache(test_module._get_sampled_circuit_paths) as cached_func:
         # write the cache
@@ -44,6 +47,7 @@ def test_get_cached_circuit_params(tmp_path, circuit_ref_path, nexus_config):
         assert mtime1 == mtime2, "The cache has been rewritten"
 
 
+@pytest.mark.usefixtures("_patch_get_region_map", "_patch_get_alternative_region_map")
 def test_get_cached_circuit_params_cache_not_used(tmp_path, circuit_ref_path, nexus_config, caplog):
     caplog.set_level(logging.INFO)
     # cache not used because sampling_ratio is too high

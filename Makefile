@@ -32,5 +32,5 @@ lint:  ## Run linters
 format:  ## Run formatters
 	tox -e format
 
-test: build  ## Run tests
+test:  ## Run tests
 	tox -e coverage

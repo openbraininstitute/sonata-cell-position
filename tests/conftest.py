@@ -1,5 +1,7 @@
+import gzip
 import importlib.resources
 import shutil
+import tempfile
 from collections.abc import AsyncIterator
 from pathlib import Path
 from unittest.mock import create_autospec
@@ -8,10 +10,18 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from voxcell import RegionMap
 
+import app.brain_region
 import app.main
 import app.service
 from app.schemas import CircuitRef, NexusConfig
-from tests.utils import CIRCUIT_ID, CIRCUIT_PATH, NEXUS_BUCKET, NEXUS_ENDPOINT, NEXUS_TOKEN
+from tests.utils import (
+    BRAIN_REGION_GZIP_FILE,
+    CIRCUIT_ID,
+    CIRCUIT_PATH,
+    NEXUS_BUCKET,
+    NEXUS_ENDPOINT,
+    NEXUS_TOKEN,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -76,6 +86,26 @@ def hierarchy(tmp_path) -> Path:
         return shutil.copy(path, tmp_path)
 
 
+@pytest.fixture(scope="session")
+def alternative_brain_region_file() -> Path:
+    """Return the path to an uncompressed alternative region file."""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        output_file = tmp_path / "brainregion.json"
+        with (
+            open(output_file, "wb") as file_out,
+            gzip.open(BRAIN_REGION_GZIP_FILE, "rb") as file_in,
+        ):
+            file_out.write(file_in.read())
+        yield output_file
+
+
+@pytest.fixture(scope="session")
+def alternative_region_map(alternative_brain_region_file) -> dict:
+    """Return a region map dict loaded from the alternative brain region file."""
+    return app.brain_region.load_alternative_region_map(alternative_brain_region_file)
+
+
 @pytest.fixture
 async def api_client() -> AsyncIterator[AsyncClient]:
     """Yield an AsyncClient without nexus tokens."""
@@ -110,6 +140,15 @@ def _patch_get_region_map(monkeypatch, region_map) -> None:
     """Patch get_region_map to return the RegionMap loaded from hierarchy.json."""
     m = create_autospec(app.service.get_region_map, return_value=region_map)
     monkeypatch.setattr("app.service.get_region_map", m)
+    yield
+    assert m.call_count > 0
+
+
+@pytest.fixture
+def _patch_get_alternative_region_map(monkeypatch, alternative_region_map) -> None:
+    """Patch get_alternative_region_map to return the dict loaded from regionmap.json."""
+    m = create_autospec(app.service.get_alternative_region_map, return_value=alternative_region_map)
+    monkeypatch.setattr("app.service.get_alternative_region_map", m)
     yield
     assert m.call_count > 0
 

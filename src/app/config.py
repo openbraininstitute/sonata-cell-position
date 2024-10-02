@@ -1,5 +1,7 @@
 """Configuration."""
 
+import re
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -85,6 +87,21 @@ class Settings(BaseSettings):
     CIRCUIT_CACHE_MAX_SIZE_MB: float = 400
     CIRCUIT_CACHE_CHECK_TIMEOUT: float = 600  # in seconds
     CIRCUIT_CACHE_CHECK_INTERVAL: float = 1  # in seconds
+
+    # alternative hierarchy view
+    ALTERNATIVE_REGION_MAP_CACHE_INFO: bool = False  # hits and misses
+    ALTERNATIVE_REGION_MAP_CACHE_MAX_SIZE: int = 10  # max number of region maps to keep in memory
+    ALTERNATIVE_REGION_MAP_CACHE_TTL: float = 3600 * 24  # TTL in seconds
+
+    # The tag should match NEXT_PUBLIC_BRAIN_REGION_ONTOLOGY_RESOURCE_TAG in deploy-aws-prod in
+    # https://bbpgitlab.epfl.ch/project/sbo/core-web-app/-/blob/develop/.gitlab-ci.yml
+    # It will be possible to remove this parameter if/when it can be obtained in other ways, e.g:
+    # - from the circuit resource in Nexus, or
+    # - from the frontend when the circuit endpoint is called
+    BRAIN_REGION_ONTOLOGY_RESOURCE_ID: str = (
+        "http://bbp.epfl.ch/neurosciencegraph/ontologies/core/brainregion?tag=v2.0.0"
+    )
+    BRAIN_REGION_ONTOLOGY_ID_PATTERN: re.Pattern = re.compile(r"https?://.*/Structure/(\d+)$")
 
 
 settings = Settings()

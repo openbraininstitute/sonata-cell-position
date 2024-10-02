@@ -85,7 +85,9 @@ async def test_auth_get_failure_without_headers(api_client):
     }
 
 
-@pytest.mark.usefixtures("_patch_get_circuit_config_path", "_patch_get_region_map")
+@pytest.mark.usefixtures(
+    "_patch_get_circuit_config_path", "_patch_get_region_map", "_patch_get_alternative_region_map"
+)
 async def test_read_circuit(api_client_with_auth, circuit_id):
     response = await api_client_with_auth.get(
         "/circuit",
@@ -108,7 +110,9 @@ async def test_read_circuit(api_client_with_auth, circuit_id):
     }
 
 
-@pytest.mark.usefixtures("_patch_get_circuit_config_path", "_patch_get_region_map")
+@pytest.mark.usefixtures(
+    "_patch_get_circuit_config_path", "_patch_get_region_map", "_patch_get_alternative_region_map"
+)
 async def test_read_circuit_unknown_region_id(api_client_with_auth, circuit_id):
     response = await api_client_with_auth.get(
         "/circuit",
@@ -129,7 +133,9 @@ async def test_read_circuit_unknown_region_id(api_client_with_auth, circuit_id):
     }
 
 
-@pytest.mark.usefixtures("_patch_get_circuit_config_path", "_patch_get_region_map")
+@pytest.mark.usefixtures(
+    "_patch_get_circuit_config_path", "_patch_get_region_map", "_patch_get_alternative_region_map"
+)
 async def test_read_circuit_unknown_region_label(api_client_with_auth, circuit_id):
     response = await api_client_with_auth.get(
         "/circuit",
@@ -196,7 +202,9 @@ async def test_read_circuit_invalid_nexus_endpoint(api_client_with_auth, circuit
     assert "input" not in error
 
 
-@pytest.mark.usefixtures("_patch_get_circuit_config_path", "_patch_get_region_map")
+@pytest.mark.usefixtures(
+    "_patch_get_circuit_config_path", "_patch_get_region_map", "_patch_get_alternative_region_map"
+)
 async def test_query(api_client_with_auth, circuit_id):
     response = await api_client_with_auth.post(
         "/circuit/query",

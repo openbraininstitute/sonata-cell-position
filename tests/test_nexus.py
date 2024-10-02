@@ -111,6 +111,7 @@ def test_load_cached_resource(nexus_config):
     resource_id = "test-resource-id"
     resource = MagicMock()
     resource_class = MagicMock()
+    resource_class.__name__ = "ResourceMock"
     resource_class.from_id.return_value = resource
 
     with clear_cache(test_module.load_cached_resource) as tested_func:
@@ -128,6 +129,7 @@ def test_load_cached_resource(nexus_config):
 def test_load_cached_resource_with_nexus_error(nexus_config):
     resource_id = "test-resource-id"
     resource_class = MagicMock()
+    resource_class.__name__ = "ResourceMock"
     resource_class.from_id.side_effect = HTTPError(
         "401 Client Error: Unauthorized for url",
         response=MagicMock(status_code=401),
@@ -142,6 +144,7 @@ def test_load_cached_resource_with_nexus_error(nexus_config):
 def test_load_cached_resource_with_resource_id_none(nexus_config):
     resource_id = None
     resource_class = MagicMock()
+    resource_class.__name__ = "ResourceMock"
     resource_class.from_id.side_effect = HTTPError(
         "401 Client Error: Unauthorized for url",
         response=MagicMock(status_code=401),
@@ -156,6 +159,7 @@ def test_load_cached_resource_with_resource_id_none(nexus_config):
 def test_load_cached_resource_with_result_none(nexus_config):
     resource_id = "test-resource-id"
     resource_class = MagicMock()
+    resource_class.__name__ = "ResourceMock"
     resource_class.from_id.return_value = None
 
     with clear_cache(test_module.load_cached_resource) as tested_func:
@@ -195,6 +199,46 @@ def test_load_cached_region_map_hierarchy_not_found(nexus_config):
 
     with clear_cache(test_module.load_cached_region_map) as tested_func:
         with pytest.raises(ClientError, match="Hierarchy json not found for id"):
+            tested_func(resource, nexus_config=nexus_config)
+        assert_cache(tested_func, hits=0, misses=1, currsize=0)
+        assert resource.distribution[0].download.call_count == 0
+
+
+def test_load_cached_alternative_region_map(nexus_config, alternative_brain_region_file):
+    resource = MagicMock()
+    resource.distribution = [
+        MagicMock(encodingFormat="text/turtle"),
+        MagicMock(
+            encodingFormat="application/ld+json",
+            download=MagicMock(return_value=alternative_brain_region_file),
+        ),
+        MagicMock(encodingFormat="text/csv"),
+    ]
+
+    with clear_cache(test_module.load_cached_alternative_region_map) as tested_func:
+        result_1 = tested_func(resource, nexus_config=nexus_config)
+        assert_cache(tested_func, hits=0, misses=1, currsize=1)
+        assert isinstance(result_1, dict)
+        assert resource.distribution[0].download.call_count == 0
+        assert resource.distribution[1].download.call_count == 1
+
+        result_2 = tested_func(resource, nexus_config=nexus_config)
+        assert_cache(tested_func, hits=1, misses=1, currsize=1)
+        assert isinstance(result_2, dict)
+        assert resource.distribution[0].download.call_count == 0
+        assert resource.distribution[1].download.call_count == 1
+
+        assert result_1 is result_2
+
+
+def test_load_cached_alternative_region_map_hierarchy_not_found(nexus_config):
+    resource = MagicMock()
+    resource.distribution = [
+        MagicMock(encodingFormat="application/json"),
+    ]
+
+    with clear_cache(test_module.load_cached_alternative_region_map) as tested_func:
+        with pytest.raises(ClientError, match="Alternative hierarchy json not found for id"):
             tested_func(resource, nexus_config=nexus_config)
         assert_cache(tested_func, hits=0, misses=1, currsize=0)
         assert resource.distribution[0].download.call_count == 0

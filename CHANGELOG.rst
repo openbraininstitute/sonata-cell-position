@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 2024.10.1
+-----------------
+
+- Support the alternative hierarchy view. [BBPP134-2278]
+
+
 Version 2024.9.1
 -----------------
 

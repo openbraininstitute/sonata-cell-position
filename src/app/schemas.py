@@ -323,3 +323,4 @@ class CircuitParams(FrozenBaseModel):
 
     key: CircuitCacheKey
     region_map: RegionMap
+    alternative_region_map: dict
