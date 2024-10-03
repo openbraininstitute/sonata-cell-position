@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 2024.10.2
+-----------------
+
+- Fix nginx configuration:
+
+  - rewrite ``/api/*`` urls to match the location directives when deployed as a subapp
+  - add header ``Cache-Control: private`` to the responses to prevent caching in any intermediate node
+
 Version 2024.10.1
 -----------------
 

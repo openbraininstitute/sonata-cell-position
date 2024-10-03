@@ -6,7 +6,7 @@ SHELL ["/bin/bash", "-e", "-o", "pipefail", "-c"]
 ARG APP_USER_ID=905632
 
 ARG REQUIRED_PACKAGES="supervisor nginx libnginx-mod-http-js"
-ARG OPTIONAL_PACKAGES="vim less curl jq htop strace net-tools iproute2 psmisc"
+ARG OPTIONAL_PACKAGES="vim less curl jq htop strace net-tools iproute2 psmisc procps"
 
 RUN \
     apt-get update && \
