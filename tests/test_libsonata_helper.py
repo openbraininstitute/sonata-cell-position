@@ -131,6 +131,10 @@ def test_get_node_sets_raises_on_non_existent_path(input_path, tmp_path):
             [{"mtype": "L7_X"}, {"morphology": "morph-F"}],
             [0, 2],
         ),
+        (
+            [{"region": ["SSp2/3", "SSp2"]}],
+            [2, 3],
+        ),
     ],
 )
 def test_query_from_file(input_path, queries, expected_ids):

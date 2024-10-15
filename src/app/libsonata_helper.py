@@ -109,8 +109,10 @@ def _filter_add_key(
     if values:
         if len(values) == 1:
             mask = attribute == values[0]
+        elif isinstance(attribute, pd.Categorical):
+            mask = attribute.isin(np.asarray(values))
         else:
-            mask = np.isin(attribute, values)
+            mask = np.isin(attribute, np.asarray(values))
         ids = ids[mask]
         attribute = attribute[mask]
         df = df.loc[ids]

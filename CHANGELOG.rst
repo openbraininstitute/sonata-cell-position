@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 2024.10.3
+-----------------
+
+- Improve performance of queries when filtering by multiple regions.
+
+
 Version 2024.10.2
 -----------------
 

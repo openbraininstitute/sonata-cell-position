@@ -96,7 +96,7 @@ See also the configuration files at <https://bbpgitlab.epfl.ch/project/sbo/k8s>.
       ```bash
       NEXUS_ENDPOINT="https://bbp.epfl.ch/nexus/v1"
       NEXUS_BUCKET="bbp/mmb-point-neuron-framework-model"
-      CIRCUIT_ID="https://bbp.epfl.ch/data/bbp/mmb-point-neuron-framework-model/2db5d75e-58ac-49b7-812f-4483cde03bdb"
+      CIRCUIT_ID="https://bbp.epfl.ch/data/bbp/mmb-point-neuron-framework-model/2b29d249-6520-4a98-9586-27ec7803aed2"
       ```
 
    3. Nexus on k8s staging
