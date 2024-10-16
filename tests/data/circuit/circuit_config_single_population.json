@@ -1,0 +1,34 @@
+{
+  "manifest": {
+    "$BASE_DIR": ".",
+    "$COMPONENT_DIR": "$BASE_DIR",
+    "$NETWORK_DIR": "$BASE_DIR"
+  },
+  "components": {
+    "biophysical_neuron_models_dir": "$COMPONENT_DIR/biophysical_neuron_models",
+    "morphologies_dir": "$COMPONENT_DIR/morphologies"
+  },
+  "node_sets_file": "$BASE_DIR/node_sets.json",
+  "networks": {
+    "nodes": [
+      {
+        "nodes_file": "$NETWORK_DIR/nodes.h5",
+        "populations": {
+          "default": {
+            "type": "biophysical"
+          }
+        }
+      }
+    ],
+    "edges": [
+      {
+        "edges_file": "$NETWORK_DIR/edges.h5",
+        "populations": {
+          "default": {
+            "type": "chemical"
+          }
+        }
+      }
+    ]
+  }
+}

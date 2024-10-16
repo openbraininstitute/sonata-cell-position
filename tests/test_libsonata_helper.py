@@ -65,6 +65,19 @@ def _get_nodes_df(population_name=None):
     return all_dfs[population_name] if population_name else all_dfs
 
 
+def test_get_node_population_name(input_path_single_population):
+    result = test_module.get_node_population_name(input_path_single_population)
+
+    assert result == "default"
+
+
+def test_get_node_population_name_raises(input_path):
+    with pytest.raises(
+        CircuitError, match="Exactly one node population must be present in the circuit"
+    ):
+        test_module.get_node_population_name(input_path)
+
+
 def test_get_node_population(input_path):
     result = test_module.get_node_population(input_path, population_name="default")
 

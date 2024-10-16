@@ -1,6 +1,7 @@
 """Libsonata helper functions."""
 
 from collections.abc import Iterable, Iterator, Sequence
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +15,15 @@ from app.constants import DTYPES, DYNAMICS_PREFIX
 from app.errors import CircuitError
 from app.logger import L
 from app.utils import dump_json, ensure_dtypes, ensure_list, load_json, run_subprocess
+
+
+@lru_cache
+def get_node_population_name(path: Path) -> str:
+    """Return the single node population name of the circuit."""
+    config = libsonata.CircuitConfig.from_file(path)
+    if len(config.node_populations) != 1:
+        raise CircuitError("Exactly one node population must be present in the circuit")
+    return next(iter(config.node_populations))
 
 
 def get_node_population(

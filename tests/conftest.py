@@ -18,6 +18,7 @@ from tests.utils import (
     BRAIN_REGION_GZIP_FILE,
     CIRCUIT_ID,
     CIRCUIT_PATH,
+    CIRCUIT_PATH_SINGLE_POPULATION,
     NEXUS_BUCKET,
     NEXUS_ENDPOINT,
     NEXUS_TOKEN,
@@ -38,6 +39,11 @@ def circuit_id() -> str:
 @pytest.fixture
 def input_path() -> Path:
     return CIRCUIT_PATH
+
+
+@pytest.fixture
+def input_path_single_population() -> Path:
+    return CIRCUIT_PATH_SINGLE_POPULATION
 
 
 @pytest.fixture

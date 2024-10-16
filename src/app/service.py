@@ -17,7 +17,7 @@ from app import nexus
 from app.config import settings
 from app.errors import CircuitError
 from app.libsonata_helper import (
-    get_node_population,
+    get_node_population_name,
     get_node_populations,
     get_node_sets,
     query_from_file,
@@ -40,7 +40,7 @@ def get_circuit_config_path(circuit_ref: CircuitRef, nexus_config: NexusConfig) 
 def get_single_node_population_name(circuit_ref: CircuitRef, nexus_config: NexusConfig) -> str:
     """Return the single node population of the circuit, or raise an error if there are many."""
     path = get_circuit_config_path(circuit_ref, nexus_config=nexus_config)
-    return get_node_population(path).name
+    return get_node_population_name(path)
 
 
 @functools.cache

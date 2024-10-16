@@ -2,6 +2,7 @@
 
 import hashlib
 from collections.abc import Sequence
+from functools import lru_cache
 from inspect import signature
 from pathlib import Path
 from typing import Annotated, Any
@@ -93,13 +94,25 @@ class PathValidator:
         """Ensure that the extension starts with a dot."""
         return ext if ext.startswith(".") else f".{ext}"
 
+    @staticmethod
+    @lru_cache
+    def _exists(path: Path) -> bool:
+        """Return True if the path exists, False otherwise.
+
+        Cache the result to prevent multiple accesses to slow filesystems
+        (requiring even 0.1-0.2 seconds in some cases).
+
+        It should be used only if it can be assumed that the file cannot be removed.
+        """
+        return path.exists()
+
     def __call__(self, input_path: Path) -> Path:
         """Validate the path."""
         if self._allowed_extensions and input_path.suffix not in self._allowed_extensions:
             msg = f"Path invalid because of the extension: {input_path}"
             L.warning(msg)
             raise ValueError(msg)
-        if not input_path.exists():
+        if not self._exists(input_path):
             msg = f"Path invalid because non existent: {input_path}"
             L.warning(msg)
             raise ValueError(msg)

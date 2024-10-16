@@ -30,7 +30,7 @@ def test_get_circuit_config_path_from_path(nexus_config, circuit_ref_path):
 
 def test_get_single_node_population_name_raises(circuit_ref_path, nexus_config):
     with pytest.raises(
-        CircuitError, match="population_name must be specified when there are multiple populations"
+        CircuitError, match="Exactly one node population must be present in the circuit"
     ):
         test_module.get_single_node_population_name(circuit_ref_path, nexus_config=nexus_config)
 
