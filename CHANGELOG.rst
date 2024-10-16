@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 2024.10.4
+-----------------
+
+- Cache access to the circuit config file.
+
+
 Version 2024.10.3
 -----------------
 

@@ -14,10 +14,10 @@ dependencies = [
     "entity-management>=1.2.36",
     "fastapi",
     "h5py",
-    "libsonata==0.1.24",
+    "libsonata==0.1.24",  # pinned for performance reasons
     "loguru",
     "loky",
-    "numpy",
+    "numpy<2",  # to be unpinned with libsonata >= 0.1.28
     "pandas",
     "psutil",  # allow early memory leak detections in loky
     "pyarrow",
