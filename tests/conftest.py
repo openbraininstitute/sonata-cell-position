@@ -11,7 +11,10 @@ from httpx import ASGITransport, AsyncClient
 from voxcell import RegionMap
 
 import app.brain_region
+import app.cache
+import app.libsonata_helper
 import app.main
+import app.nexus
 import app.service
 from app.schemas import CircuitRef, NexusConfig
 from tests.utils import (
@@ -22,6 +25,7 @@ from tests.utils import (
     NEXUS_BUCKET,
     NEXUS_ENDPOINT,
     NEXUS_TOKEN,
+    clear_cache,
 )
 
 
@@ -175,3 +179,15 @@ def _patch_get_circuit_config_path_copy(monkeypatch, input_path_copy) -> None:
     monkeypatch.setattr("app.service.get_circuit_config_path", m)
     yield
     assert m.call_count > 0
+
+
+@pytest.fixture(autouse=True)
+def _clear_all_caches() -> None:
+    with (
+        clear_cache(app.cache._get_sampled_circuit_paths),
+        clear_cache(app.libsonata_helper.get_node_population_name),
+        clear_cache(app.nexus.load_cached_resource),
+        clear_cache(app.nexus.load_cached_region_map),
+        clear_cache(app.nexus.load_cached_alternative_region_map),
+    ):
+        yield

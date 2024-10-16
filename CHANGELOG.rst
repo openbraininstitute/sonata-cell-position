@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 2024.10.5
+-----------------
+
+- Reorganize routers internally.
+
+
 Version 2024.10.4
 -----------------
 
