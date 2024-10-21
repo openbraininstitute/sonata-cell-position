@@ -1,15 +1,15 @@
 services:
-  sonata-cell-position:
+  app:
     image: "${IMAGE_NAME}:${IMAGE_TAG}"
     build:
       dockerfile: Dockerfile
       args:
+      - ENVIRONMENT
       - APP_NAME
       - APP_VERSION
       - COMMIT_SHA
     ports:
     - "127.0.0.1:8200:8000"
-    read_only: true
     volumes:
     - tmp:/tmp
     - type: bind
@@ -24,6 +24,13 @@ services:
     - LOG_BACKTRACE=true
     - LOG_DIAGNOSE=true
     - LOG_STANDARD_LOGGER__root=INFO
+    develop:
+      watch:
+      - action: sync+restart
+        path: ./app
+        target: /code/app
+      - action: rebuild
+        path: uv.lock
     healthcheck:
       test: [CMD, "/code/scripts/healthcheck.sh"]
       interval: 30s
@@ -31,6 +38,7 @@ services:
       retries: 3
       start_period: 5s
       start_interval: 1s
+
 volumes:
   tmp:
     driver: local
