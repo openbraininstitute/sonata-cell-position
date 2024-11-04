@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 2024.11.1
+-----------------
+
+- Tune nginx cache validity.
+
+
 Version 2024.10.5
 -----------------
 
