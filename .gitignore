@@ -11,3 +11,4 @@ venv
 tmp
 .eggs
 .idea
+*~
