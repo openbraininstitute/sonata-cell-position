@@ -46,6 +46,11 @@ class Settings(BaseSettings):
                 "resources/read",
             },
         },
+        "https://staging.openbluebrain.com/api/nexus/v1": {  # aws staging
+            "bbp/mmb-point-neuron-framework-model": {
+                "resources/read",
+            },
+        },
         "https://bbp.epfl.ch/nexus/v1": {  # k8s prod
             "bbp/mmb-point-neuron-framework-model": {
                 "events/read",
