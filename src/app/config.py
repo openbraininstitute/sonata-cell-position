@@ -41,15 +41,17 @@ class Settings(BaseSettings):
     # to support other Nexus endpoints and buckets, the required permissions need to be added here.
     # see https://bbpteam.epfl.ch/project/issues/browse/NSETM-2283?focusedId=234551#comment-234551
     NEXUS_READ_PERMISSIONS: dict[str, dict[str, set[str]]] = {
-        "https://openbluebrain.com/api/nexus/v1": {  # aws prod
-            "bbp/mmb-point-neuron-framework-model": {
-                "resources/read",
-            },
+        "https://openbluebrain.com/api/nexus/v1": {  # aws prod openbluebrain
+            "bbp/mmb-point-neuron-framework-model": {"resources/read"},
         },
-        "https://staging.openbluebrain.com/api/nexus/v1": {  # aws staging
-            "bbp/mmb-point-neuron-framework-model": {
-                "resources/read",
-            },
+        "https://www.openbraininstitute.com/api/nexus/v1": {  # aws prod openbraininstitute
+            "bbp/mmb-point-neuron-framework-model": {"resources/read"},
+        },
+        "https://staging.openbluebrain.com/api/nexus/v1": {  # aws staging openbluebrain
+            "bbp/mmb-point-neuron-framework-model": {"resources/read"},
+        },
+        "https://staging.openbraininstitute.org/api/nexus/v1": {  # aws staging openbraininstitute
+            "bbp/mmb-point-neuron-framework-model": {"resources/read"},
         },
         "https://bbp.epfl.ch/nexus/v1": {  # k8s prod
             "bbp/mmb-point-neuron-framework-model": {
