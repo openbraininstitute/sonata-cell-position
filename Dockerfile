@@ -16,6 +16,7 @@ ARG APP_USER_ID=905632
 
 ARG REQUIRED_PACKAGES="supervisor nginx libnginx-mod-http-js"
 ARG OPTIONAL_PACKAGES="vim less curl jq htop strace net-tools iproute2 psmisc procps"
+ARG BUILD_PACKAGES="libhdf5-dev"  # to build libsonata if wheels are missing
 
 RUN <<EOT
 apt-get update -qy
@@ -25,7 +26,8 @@ apt-get install -qyy \
     build-essential \
     ca-certificates \
     ${REQUIRED_PACKAGES} \
-    ${OPTIONAL_PACKAGES}
+    ${OPTIONAL_PACKAGES} \
+    ${BUILD_PACKAGES}
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 EOT
