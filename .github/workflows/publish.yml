@@ -6,11 +6,11 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
-  publish-to-docker-hub:
+  publish-to-aws-ecr:
     runs-on: ubuntu-latest
     env:
       ENVIRONMENT: prod
-      IMAGE_NAME: ${{ vars.PUBLICECR_URI }} # bluebrain/obp-sonata-cell-position
+      IMAGE_NAME: ${{ vars.PUBLICECR_URI }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,5 +27,5 @@ jobs:
         with:
           registry-type: public
 
-      - name: Build and publish the Docker image to DockerHub
+      - name: Build and publish the Docker image to AWS ECR
         run: make publish
