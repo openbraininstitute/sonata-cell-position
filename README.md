@@ -127,6 +127,13 @@ The new Docker image is automatically pushed to the Docker registry as part of t
     -o output.json
     ```
 
+## External references used for bundled resources
+
+- [DetailedCircuit](https://openbluebrain.com/web/fusion/bbp/mmb-point-neuron-framework-model/resources/https%3A%2F%2Fbbp.epfl.ch%2Fdata%2Fbbp%2Fmmb-point-neuron-framework-model%2F2b29d249-6520-4a98-9586-27ec7803aed2?rev=1)
+- [AtlasRelease](https://openbluebrain.com/web/fusion/bbp/atlas/resources/https%3A%2F%2Fbbp.epfl.ch%2Fneurosciencegraph%2Fdata%2F4906ab85-694f-469d-962f-c0174e901885?rev=15)
+- [ParcellationOntology](https://openbluebrain.com/web/fusion/bbp/atlas/resources/https%3A%2F%2Fbbp.epfl.ch%2Fneurosciencegraph%2Fdata%2F0518dd0b-cbc7-43ef-a75f-45631059c8c5?rev=39)
+- [BrainRegionOntology](https://openbluebrain.com/web/fusion/neurosciencegraph/datamodels/resources/http%3A%2F%2Fbbp.epfl.ch%2Fneurosciencegraph%2Fontologies%2Fcore%2Fbrainregion?tag=v2.1.0)
+
 
 ## Acknowledgements
 

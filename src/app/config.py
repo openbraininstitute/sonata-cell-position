@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     BRAIN_REGION_ONTOLOGY_BUNDLED_FILE: str = "brainregion_v2.1.0.json"
     BRAIN_REGION_ONTOLOGY_ID_PATTERN: re.Pattern = re.compile(r"https?://.*/Structure/(\d+)$")
     # The corresponding file should be bundled in app/data.
-    HIERARCHY_BUNDLED_FILE: str = "hierarchy.json"
+    HIERARCHY_BUNDLED_FILE: str = "mba_hierarchy_39.json"
 
 
 settings = Settings()
