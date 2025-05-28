@@ -100,29 +100,6 @@ async def test_read_circuit_invalid_modality(api_client_with_auth, circuit_id):
     assert error["input"] == "invalid"
 
 
-async def test_read_circuit_invalid_nexus_endpoint(api_client_with_auth, circuit_id):
-    response = await api_client_with_auth.get(
-        "/circuit",
-        params={
-            "circuit_id": circuit_id,
-            "population_name": "default",
-            "how": "json",
-        },
-        headers={
-            "Nexus-Endpoint": "https://fake-endpoint",
-        },
-    )
-
-    assert response.status_code == 401
-    response_json = response.json()
-    assert len(response_json["detail"]) == 1
-    error = response_json["detail"][0]
-    assert error["type"] == "value_error"
-    assert error["loc"] == ["headers"]
-    assert error["msg"].startswith("Value error, Nexus endpoint is invalid")
-    assert "input" not in error
-
-
 @pytest.mark.usefixtures(
     "_patch_get_circuit_config_path", "_patch_get_region_map", "_patch_get_alternative_region_map"
 )

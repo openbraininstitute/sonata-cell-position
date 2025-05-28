@@ -15,11 +15,7 @@ CIRCUIT_ID = (
     "https://bbp.epfl.ch/data/bbp/mmb-point-neuron-framework-model/"
     "00000000-0000-0000-0000-000000000000"
 )
-NEXUS_ENDPOINT = "https://bbp.epfl.ch/nexus/v1"
-NEXUS_BUCKET = "bbp/mmb-point-neuron-framework-model"
 NEXUS_TOKEN = "test-token"
-
-BRAIN_REGION_GZIP_FILE = TEST_DATA_DIR / "brainregion_v2.0.0.json.gz"
 
 
 def load_json(json_file, encoding="utf-8"):

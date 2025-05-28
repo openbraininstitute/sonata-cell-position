@@ -12,7 +12,7 @@ import app.service
 from app.config import settings
 from app.libsonata_helper import convert_nodesets, sample_nodes, write_circuit_config
 from app.logger import L
-from app.schemas import CircuitCacheKey, CircuitCachePaths, CircuitParams, CircuitRef, NexusConfig
+from app.schemas import CircuitCacheKey, CircuitCachePaths, CircuitParams, CircuitRef, UserContext
 from app.utils import get_folder_size
 
 
@@ -152,7 +152,7 @@ def _get_sampled_circuit_paths(key: CircuitCacheKey) -> CircuitCachePaths:
 
 
 def get_cached_circuit_params(
-    nexus_config: NexusConfig,
+    nexus_config: UserContext,
     circuit_ref: CircuitRef,
     population_name: str,
     attributes: list[str],

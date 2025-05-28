@@ -12,6 +12,13 @@ ifneq ($(ENVIRONMENT), prod)
 	export IMAGE_TAG_ALIAS := $(IMAGE_TAG_ALIAS)-$(ENVIRONMENT)
 endif
 
+define load_env
+	# all the variables in the included file must be prefixed with export
+	$(eval ENV_FILE := .env.$(1))
+	@echo "Loading env from $(ENV_FILE)"
+	$(eval include $(ENV_FILE))
+endef
+
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-23s\033[0m %s\n", $$1, $$2}'
 
@@ -36,16 +43,8 @@ lint:  ## Run linters
 	uv run -m ruff check
 	uv run -m mypy src/app tests
 
-test: export PYTHONPATH=src
-test: export APP_DEBUG=true
-test: export LOG_LEVEL=DEBUG
-test: export LOKY_EXECUTOR_ENABLED=0
-test: export ENTITY_CACHE_INFO=1
-test: export REGION_MAP_CACHE_INFO=1
-test: export CIRCUIT_CACHE_INFO=1
-test: export CACHED_SAMPLING_RATIO=0.5
-test: export ALTERNATIVE_REGION_MAP_CACHE_INFO=1
 test:  ## Run tests
+	@$(call load_env,test)
 	uv run -m pytest
 	uv run -m coverage xml
 	uv run -m coverage html

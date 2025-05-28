@@ -18,18 +18,11 @@ services:
       source: /gpfs
       target: /gpfs
       read_only: true
-    environment:
-    - APP_DEBUG=true
-    - PYTHONASYNCIODEBUG=1
-    - LOG_LEVEL=DEBUG
-    - LOG_SERIALIZE=false
-    - LOG_BACKTRACE=true
-    - LOG_DIAGNOSE=true
-    - LOG_STANDARD_LOGGER__root=INFO
+    env_file: .env.run-docker
     develop:
       watch:
       - action: sync+restart
-        path: ./app
+        path: ./src/app
         target: /code/app
       - action: rebuild
         path: uv.lock

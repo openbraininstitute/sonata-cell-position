@@ -30,11 +30,9 @@ def test_region_id_to_int_raises(region_id):
         test_module._region_id_to_int(region_id)
 
 
-def test_load_alternative_region_map(alternative_brain_region_file):
-    result = test_module.load_alternative_region_map(alternative_brain_region_file)
-    assert result[
-        "http://bbp.epfl.ch/neurosciencegraph/ontologies/core/brainregion/Isocortex_L4"
-    ] == [
+def test_load_alternative_region_map(alternative_region_map):
+    region_id = "http://bbp.epfl.ch/neurosciencegraph/ontologies/core/brainregion/Isocortex_L4"
+    expected_ids = [
         148,
         759,
         913,
@@ -50,4 +48,5 @@ def test_load_alternative_region_map(alternative_brain_region_file):
         480149270,
         480149326,
     ]
-    assert len(result) == 29
+    assert sorted(alternative_region_map[region_id]) == sorted(expected_ids)
+    assert len(alternative_region_map) == 29

@@ -5,11 +5,11 @@ from pathlib import Path
 from typing import Any
 
 from app import cache, serialize, service
-from app.schemas import CircuitRef, NexusConfig
+from app.schemas import CircuitRef, UserContext
 
 
 def read_circuit_job(
-    nexus_config: NexusConfig,
+    nexus_config: UserContext,
     circuit_ref: CircuitRef,
     population_name: str | None,
     sampling_ratio: float,
@@ -44,7 +44,7 @@ def read_circuit_job(
 
 
 def sample_job(
-    nexus_config: NexusConfig,
+    nexus_config: UserContext,
     circuit_ref: CircuitRef,
     output_path: Path,
     population_name: str | None,

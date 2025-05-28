@@ -9,7 +9,7 @@ from starlette.responses import FileResponse
 import app.jobs
 import app.serialize
 import app.service
-from app.dependencies import CircuitRefDep, NexusConfigDep, make_temp_path
+from app.dependencies import CircuitRefDep, UserContextDep, make_temp_path
 from app.schemas import CircuitRef, QueryParams, SampleParams
 
 router = APIRouter()
@@ -17,7 +17,7 @@ router = APIRouter()
 
 @router.get("")
 def read_circuit(
-    nexus_config: NexusConfigDep,
+    nexus_config: UserContextDep,
     params: Annotated[QueryParams, Depends(QueryParams.from_simplified_params)],
     tmp_path: Annotated[Path, Depends(make_temp_path(prefix="output_"))],
 ) -> FileResponse:
@@ -27,7 +27,7 @@ def read_circuit(
 
 @router.post("/query")
 def query(
-    nexus_config: NexusConfigDep,
+    nexus_config: UserContextDep,
     params: QueryParams,
     tmp_path: Annotated[Path, Depends(make_temp_path(prefix="output_"))],
 ) -> FileResponse:
@@ -58,7 +58,7 @@ def query(
 
 @router.post("/sample")
 def sample(
-    nexus_config: NexusConfigDep,
+    nexus_config: UserContextDep,
     params: SampleParams,
     tmp_path: Annotated[Path, Depends(make_temp_path(prefix="output_"))],
 ) -> FileResponse:
@@ -82,7 +82,7 @@ def sample(
 
 @router.get("/count")
 def count(
-    nexus_config: NexusConfigDep,
+    nexus_config: UserContextDep,
     circuit_ref: CircuitRefDep,
     population_name: str | None = None,
 ) -> dict:
@@ -93,7 +93,7 @@ def count(
 
 @router.get("/attribute_names")
 def get_attribute_names(
-    nexus_config: NexusConfigDep,
+    nexus_config: UserContextDep,
     circuit_ref: CircuitRefDep,
     population_name: str | None = None,
 ) -> dict:
@@ -104,7 +104,7 @@ def get_attribute_names(
 
 @router.get("/attribute_dtypes")
 def get_attribute_dtypes(
-    nexus_config: NexusConfigDep,
+    nexus_config: UserContextDep,
     circuit_ref: CircuitRefDep,
     population_name: str | None = None,
 ) -> dict:
@@ -115,7 +115,7 @@ def get_attribute_dtypes(
 
 @router.get("/attribute_values")
 def get_attribute_values(
-    nexus_config: NexusConfigDep,
+    nexus_config: UserContextDep,
     circuit_ref: CircuitRefDep,
     population_name: str | None = None,
     attribute_names: Annotated[list[str] | None, Query()] = None,
@@ -131,7 +131,7 @@ def get_attribute_values(
 
 @router.get("/node_sets")
 def node_sets(
-    nexus_config: NexusConfigDep,
+    nexus_config: UserContextDep,
     circuit_ref: CircuitRefDep,
 ) -> dict:
     """Return the sorted list of node_sets in a circuit."""

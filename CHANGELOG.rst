@@ -1,6 +1,18 @@
 Changelog
 =========
 
+Version 2025.5.0
+----------------
+
+- Remove integration with Nexus:
+
+  - The auth token should be passed in the ``Authorization: Bearer`` header.
+  - The header ``nexus-token`` is still accepted for backward compatibility, but it will be removed in a future release.
+  - The headers ``nexus-endpoint`` and ``nexus-bucket`` aren't needed anymore and are ignored if passed.
+  - The paths to the circuits in S3 are temporarily hardcoded in a configuration dictionary.
+  - The hierarchy and the alternative brain region are temporarily bundled.
+
+
 Version 2024.11.1
 -----------------
 
