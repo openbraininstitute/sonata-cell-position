@@ -5,7 +5,7 @@ from http.client import responses
 from fastapi import APIRouter
 from starlette.responses import JSONResponse
 
-from app import nexus
+import app.auth
 from app.dependencies import UserContextDep
 
 router = APIRouter()
@@ -13,10 +13,10 @@ router = APIRouter()
 
 @router.get("", include_in_schema=False)
 def auth(
-    nexus_config: UserContextDep,
+    user_context: UserContextDep,
 ) -> JSONResponse:
     """Auth endpoint."""
-    status_code = nexus.is_user_authorized(nexus_config)
+    status_code = app.auth.is_user_authorized(user_context)
     return JSONResponse(
         content={"message": responses[status_code]},
         status_code=status_code,

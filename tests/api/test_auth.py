@@ -2,7 +2,7 @@ import app.api.auth as test_module
 
 
 async def test_auth_get_success(api_client_with_auth, monkeypatch):
-    monkeypatch.setattr(test_module.nexus, "is_user_authorized", lambda _: 200)
+    monkeypatch.setattr(test_module.app.auth, "is_user_authorized", lambda _: 200)
 
     response = await api_client_with_auth.get("/auth")
 

@@ -4,14 +4,14 @@ from pydantic import ValidationError
 
 import app.schemas as test_module
 
-from tests.utils import NEXUS_TOKEN
+from tests.utils import AUTH_TOKEN
 
 
-def test_nexus_config():
-    token = HTTPAuthorizationCredentials(scheme="Bearer", credentials=NEXUS_TOKEN)
+def test_user_context():
+    token = HTTPAuthorizationCredentials(scheme="Bearer", credentials=AUTH_TOKEN)
     result = test_module.UserContext(token=token)
     assert isinstance(result, test_module.UserContext)
-    assert result.token.credentials == NEXUS_TOKEN
+    assert result.token.credentials == AUTH_TOKEN
 
 
 def test_circuit_ref_from_id():

@@ -15,7 +15,7 @@ CIRCUIT_ID = (
     "https://bbp.epfl.ch/data/bbp/mmb-point-neuron-framework-model/"
     "00000000-0000-0000-0000-000000000000"
 )
-NEXUS_TOKEN = "test-token"
+AUTH_TOKEN = "test-token"
 
 
 def load_json(json_file, encoding="utf-8"):

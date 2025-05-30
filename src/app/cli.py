@@ -39,7 +39,7 @@ def cli():
 
 
 @cli.command()
-@click.option("--circuit-id", help="Nexus circuit id")
+@click.option("--circuit-id", help="Circuit id")
 @click.option("--input-path", type=click.Path(path_type=Path, exists=True))
 @click.option("--output-path", type=click.Path(path_type=Path), required=True)
 @click.option("--population-name")
@@ -68,12 +68,12 @@ def export(  # pylint: disable=too-many-arguments,too-many-locals
     """Export circuit information to file."""
     L.info("Starting export")
     circuit_ref = CircuitRef(id=circuit_id, path=input_path)
-    nexus_config = UserContext(token=None)
+    user_context = UserContext(token=None)
     attributes = modality_to_attributes(modality)
     query = attributes_to_dict(region=region, mtype=mtype)
     queries = [query] if query else None
     jobs.read_circuit_job(
-        nexus_config=nexus_config,
+        user_context=user_context,
         circuit_ref=circuit_ref,
         population_name=population_name,
         sampling_ratio=sampling_ratio,
@@ -89,7 +89,7 @@ def export(  # pylint: disable=too-many-arguments,too-many-locals
 
 
 @cli.command()
-@click.option("--circuit-id", help="Nexus circuit id")
+@click.option("--circuit-id", help="Circuit id")
 @click.option("--input-path", type=click.Path(path_type=Path, exists=True))
 @click.option("--output-path", type=click.Path(path_type=Path), required=True)
 @click.option("--population-name", help="Node population name", required=True)
@@ -106,9 +106,9 @@ def sample(
     """Sample a node file."""
     L.info("Starting sampling")
     circuit_ref = CircuitRef(id=circuit_id, path=input_path)
-    nexus_config = UserContext(token=None)
+    user_context = UserContext(token=None)
     jobs.sample_job(
-        nexus_config=nexus_config,
+        user_context=user_context,
         circuit_ref=circuit_ref,
         output_path=Path(output_path),
         population_name=population_name,

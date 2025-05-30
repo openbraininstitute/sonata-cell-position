@@ -9,7 +9,7 @@ from app.schemas import CircuitRef, UserContext
 
 
 def read_circuit_job(
-    nexus_config: UserContext,
+    user_context: UserContext,
     circuit_ref: CircuitRef,
     population_name: str | None,
     sampling_ratio: float,
@@ -24,10 +24,10 @@ def read_circuit_job(
     """Read data from a circuit."""
     # pylint: disable=too-many-arguments
     population_name = population_name or service.get_single_node_population_name(
-        circuit_ref, nexus_config=nexus_config
+        circuit_ref, user_context=user_context
     )
     circuit_params = cache.get_cached_circuit_params(
-        nexus_config=nexus_config,
+        user_context=user_context,
         circuit_ref=circuit_ref,
         population_name=population_name,
         attributes=attributes,
@@ -44,7 +44,7 @@ def read_circuit_job(
 
 
 def sample_job(
-    nexus_config: UserContext,
+    user_context: UserContext,
     circuit_ref: CircuitRef,
     output_path: Path,
     population_name: str | None,
@@ -53,10 +53,10 @@ def sample_job(
 ) -> None:
     """Sample a circuit."""
     population_name = population_name or service.get_single_node_population_name(
-        circuit_ref, nexus_config=nexus_config
+        circuit_ref, user_context=user_context
     )
     service.sample(
-        nexus_config=nexus_config,
+        user_context=user_context,
         circuit_ref=circuit_ref,
         output_path=output_path,
         population_name=population_name,
