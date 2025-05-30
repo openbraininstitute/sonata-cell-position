@@ -10,7 +10,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from app.logger import L
-from app.schemas import CircuitRef, NexusConfig
+from app.schemas import CircuitRef, UserContext
 
 
 def make_temp_path(suffix=None, prefix=None) -> Callable:
@@ -45,7 +45,7 @@ def make_temp_path(suffix=None, prefix=None) -> Callable:
 
 
 # dependency aliases
-NexusConfigDep = Annotated[NexusConfig, Depends(NexusConfig.from_headers)]
+UserContextDep = Annotated[UserContext, Depends(UserContext)]
 CircuitRefDep = Annotated[CircuitRef, Depends(CircuitRef.from_params)]
 
 

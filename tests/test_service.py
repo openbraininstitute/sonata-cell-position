@@ -1,26 +1,21 @@
-from unittest.mock import MagicMock, patch
-
 import pytest
 import voxcell
 
 import app.service as test_module
+from app.constants import CIRCUITS
 from app.errors import CircuitError
 
 from tests.utils import assert_cache, clear_cache
 
 
-@patch(f"{test_module.__name__}.nexus.load_cached_resource")
 def test_get_circuit_config_path_from_id(
-    mock_load_cached_resource, nexus_config, circuit_ref_id, input_path
+    nexus_config, circuit_ref_id, circuit_id, input_path, monkeypatch
 ):
-    resource = MagicMock()
-    resource.circuitConfigPath.get_url_as_path.return_value = str(input_path)
-    mock_load_cached_resource.return_value = resource
+    monkeypatch.setitem(CIRCUITS, circuit_id, input_path)
 
     result = test_module.get_circuit_config_path(circuit_ref_id, nexus_config=nexus_config)
 
     assert result == input_path
-    assert mock_load_cached_resource.call_count == 1
 
 
 def test_get_circuit_config_path_from_path(nexus_config, circuit_ref_path):
@@ -52,41 +47,19 @@ def test_get_region_map_from_circuit_path(nexus_config, circuit_ref_path):
     assert result.get(997, "acronym") == "root"
 
 
-@patch(f"{test_module.__name__}.nexus.load_cached_region_map")
-@patch(f"{test_module.__name__}.nexus.load_cached_resource")
-def test_get_region_map_from_circuit_id(
-    mock_load_cached_resource, mock_load_cached_region_map, nexus_config, circuit_ref_id, region_map
-):
-    mock_load_cached_region_map.return_value = region_map
+def test_get_region_map_from_circuit_id(nexus_config, circuit_ref_id):
     result = test_module.get_region_map(circuit_ref_id, nexus_config=nexus_config)
 
     assert isinstance(result, voxcell.RegionMap)
     assert result.get(997, "acronym") == "root"
-    assert mock_load_cached_region_map.call_count == 1
-    assert mock_load_cached_resource.call_count == 3
 
 
-def test_get_alternative_region_map_from_circuit_path(nexus_config, circuit_ref_path):
-    result = test_module.get_alternative_region_map(circuit_ref_path, nexus_config=nexus_config)
-    assert result == {}
-
-
-@patch(f"{test_module.__name__}.nexus.load_cached_alternative_region_map")
-@patch(f"{test_module.__name__}.nexus.load_cached_resource")
-def test_get_alternative_region_map_from_circuit_id(
-    mock_load_cached_resource,
-    mock_load_cached_alternative_region_map,
-    nexus_config,
-    circuit_ref_id,
-    alternative_region_map,
-):
-    mock_load_cached_alternative_region_map.return_value = alternative_region_map
+def test_get_alternative_region_map(nexus_config, circuit_ref_id):
     result = test_module.get_alternative_region_map(circuit_ref_id, nexus_config=nexus_config)
 
     assert isinstance(result, dict)
-    assert result[
-        "http://bbp.epfl.ch/neurosciencegraph/ontologies/core/brainregion/Isocortex_L4"
-    ] == [
+    region_id = "http://bbp.epfl.ch/neurosciencegraph/ontologies/core/brainregion/Isocortex_L4"
+    expected_ids = [
         148,
         759,
         913,
@@ -102,8 +75,7 @@ def test_get_alternative_region_map_from_circuit_id(
         480149270,
         480149326,
     ]
-    assert mock_load_cached_alternative_region_map.call_count == 1
-    assert mock_load_cached_resource.call_count == 1
+    assert sorted(result[region_id]) == sorted(expected_ids)
 
 
 @pytest.mark.parametrize(

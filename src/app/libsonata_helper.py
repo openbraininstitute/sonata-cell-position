@@ -10,6 +10,7 @@ import libsonata
 import numpy as np
 import pandas as pd
 from numpy.random import default_rng
+from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from app.constants import DTYPES, DYNAMICS_PREFIX
 from app.errors import CircuitError
@@ -17,10 +18,47 @@ from app.logger import L
 from app.utils import dump_json, ensure_dtypes, ensure_list, load_json, run_subprocess
 
 
+def _get_circuit_config_from_file(path: Path | str) -> libsonata.CircuitConfig:
+    """Load and return libsonata.CircuitConfig from the given path.
+
+    Raises:
+        CircuitError. Examples of wrapped exceptions:
+
+        - RuntimeError: [json.exception.parse_error.101] parse error... (if the file is invalid)
+        - RuntimeError: (without description if the config file is invalid, in some cases)
+        - libsonata.SonataError: Error parsing config (if the config file is json, but invalid)
+        - libsonata.SonataError: Path is not a file (if the config file doesn't exist)
+    """
+    try:
+        return libsonata.CircuitConfig.from_file(str(path))
+    except (RuntimeError, libsonata.SonataError) as ex:
+        msg = f"Impossible to load the circuit config [{ex}]"
+        raise CircuitError(msg, status_code=HTTP_500_INTERNAL_SERVER_ERROR) from ex
+
+
+def _get_nodesets_from_file(path: Path | str) -> libsonata.NodeSets:
+    """Load and return libsonata.NodeSets from the given path.
+
+    Raises:
+        CircuitError. Examples of wrapped exceptions:
+
+        - RuntimeError: Path `` is not a file (if the key "node_sets_file" is missing)
+        - RuntimeError: Path `/path/to/node_sets.json` is not a file (if the file doesn't exist)
+        - RuntimeError: [json.exception.parse_error.101] parse error... (if the file is invalid)
+        - RuntimeError: (without description if the config file is invalid, in some cases)
+        - libsonata.SonataError: Path does not exist (if the node_sets file doesn't exist)
+    """
+    try:
+        return libsonata.NodeSets.from_file(str(path))
+    except (RuntimeError, libsonata.SonataError) as ex:
+        msg = f"Impossible to retrieve the node sets [{ex}]"
+        raise CircuitError(msg) from ex
+
+
 @lru_cache
 def get_node_population_name(path: Path) -> str:
     """Return the single node population name of the circuit."""
-    config = libsonata.CircuitConfig.from_file(path)
+    config = _get_circuit_config_from_file(path)
     if len(config.node_populations) != 1:
         raise CircuitError("Exactly one node population must be present in the circuit")
     return next(iter(config.node_populations))
@@ -65,8 +103,8 @@ def get_node_populations(
         when working with multiple populations and specific seeds.
 
     """
+    config = _get_circuit_config_from_file(path)
     try:
-        config = libsonata.CircuitConfig.from_file(path)
         for population_name in sorted(population_names or config.node_populations):
             yield config.node_population(population_name)
     except libsonata.SonataError as ex:
@@ -281,24 +319,10 @@ def get_node_sets(input_path: Path) -> libsonata.NodeSets:
         input_path: path to the circuit config file.
 
     Returns:
-        A dict containing the node_sets from the circuit_config.
-
-    Raises:
-        CircuitError. Examples of wrapped exceptions:
-
-        - RuntimeError: Path `` is not a file (if the key "node_sets_file" is missing)
-        - RuntimeError: Path `/path/to/node_sets.json` is not a file (if the file doesn't exist)
-        - RuntimeError: [json.exception.parse_error.101] parse error... (if the file is invalid)
-        - RuntimeError: (without description if the config file is invalid, in some cases)
-        - libsonata.SonataError: Error parsing config (if the config file is json, but invalid)
-        - libsonata.SonataError: Path does not exist (if the node_sets file doesn't exist)
+        The node_sets from the circuit_config.
     """
-    try:
-        cc = libsonata.CircuitConfig.from_file(input_path)
-        ns = libsonata.NodeSets.from_file(cc.node_sets_path)
-    except (RuntimeError, libsonata.SonataError) as ex:
-        raise CircuitError(f"Impossible to retrieve the node sets [{ex}]") from ex
-    return ns
+    circuit_config = _get_circuit_config_from_file(input_path)
+    return _get_nodesets_from_file(circuit_config.node_sets_path)
 
 
 def _dump_id_mapping(output_file: Path, id_mapping: dict[str, np.ndarray]) -> None:
@@ -405,7 +429,7 @@ def convert_nodesets(
         output_path: path to the node sets file to be written.
         id_mapping_path: path to the file containing the id mapping.
     """
-    config = libsonata.CircuitConfig.from_file(str(input_path))
+    config = _get_circuit_config_from_file(input_path)
     if not config.node_sets_path:
         L.info("The original node sets file doesn't exist, skipping conversion")
     mapping_per_population = {

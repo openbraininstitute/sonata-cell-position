@@ -7,23 +7,24 @@ from inspect import signature
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import Header, HTTPException, Query
+from fastapi import Depends, HTTPException, Query
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import (
     AfterValidator,
     BaseModel as PydanticBaseModel,
     Field,
     ValidationError,
-    ValidationInfo,
     model_validator,
 )
-from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_422_UNPROCESSABLE_ENTITY
+from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
 from voxcell import RegionMap
 
-from app.config import settings
 from app.constants import MODALITIES_REGEX
 from app.logger import L
 from app.serialize import DEFAULT_SERIALIZER, SERIALIZERS_REGEX
 from app.utils import attributes_to_dict, modality_to_attributes
+
+AuthHeader: HTTPBearer = HTTPBearer(auto_error=False)
 
 
 class ValidatedParams:
@@ -66,21 +67,6 @@ class ValidatedParams:
     def _error(errors: Sequence[Any]) -> Exception:
         """Return the error to be raised in case of validation error."""
         return HTTPException(HTTP_422_UNPROCESSABLE_ENTITY, detail=errors)
-
-
-class ValidatedAuthHeaders(ValidatedParams):
-    """Subclass of ValidatedParams raising 401_UNAUTHORIZED instead of 422_UNPROCESSABLE_ENTITY.
-
-    This is needed in particular for the /auth endpoint called by nginx, because it would consider
-    an error any response code different from 2xx, 401, 403, and it would return 500 to the client.
-    """
-
-    _loc_prefix = "headers"
-
-    @staticmethod
-    def _error(errors: Sequence[Any]) -> Exception:
-        """Return the error to be raised in case of validation error."""
-        return HTTPException(HTTP_401_UNAUTHORIZED, detail=errors)
 
 
 class PathValidator:
@@ -144,49 +130,10 @@ class FrozenBaseModel(PydanticBaseModel):
     }
 
 
-class NexusConfig(BaseModel):
-    """Nexus configuration."""
+class UserContext(BaseModel):
+    """User context."""
 
-    endpoint: str
-    bucket: str
-    token: Annotated[str, Field(exclude=True)]
-
-    @property
-    def org(self):
-        """Return Nexus organization."""
-        return self.bucket.partition("/")[0]
-
-    @property
-    def project(self):
-        """Return Nexus project."""
-        return self.bucket.partition("/")[2]
-
-    @model_validator(mode="after")
-    def check_endpoint_and_bucket(self, info: ValidationInfo) -> "NexusConfig":
-        """Check that the model is initialized with valid endpoint and bucket."""
-        if info.context and info.context.get("ignore_nexus_fields_from_cli"):
-            return self
-        endpoint = settings.NEXUS_READ_PERMISSIONS.get(self.endpoint)
-        if endpoint is None:
-            raise ValueError(f"Nexus endpoint is invalid: {self.endpoint!r}")
-        if endpoint.get(self.bucket) is None:
-            raise ValueError(f"Nexus bucket is invalid: {self.bucket!r}")
-        return self
-
-    @classmethod
-    @ValidatedAuthHeaders
-    def from_headers(
-        cls,
-        nexus_endpoint: Annotated[str, Header()],
-        nexus_bucket: Annotated[str, Header()],
-        nexus_token: Annotated[str, Header()],
-    ) -> "NexusConfig":
-        """Return a new instance from the given parameters."""
-        return cls(
-            endpoint=nexus_endpoint,
-            bucket=nexus_bucket,
-            token=nexus_token,
-        )
+    token: Annotated[HTTPAuthorizationCredentials | None, Depends(AuthHeader)]
 
 
 class CircuitRef(FrozenBaseModel):

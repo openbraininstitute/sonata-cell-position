@@ -4,17 +4,16 @@ version = "0.0.0"
 description = "sonata-cell-position web API"
 authors = [
     {name = "Blue Brain Project, EPFL"},
-    {name = "Gianluca Ficarelli", email = "gianluca.ficarelli@epfl.ch"},
+    {name = "Open Brain Institute, OBI"},
 ]
 dependencies = [
     "cachetools",
-    "entity-management>=1.2.36",
     "fastapi",
     "h5py",
-    "libsonata==0.1.24",  # pinned for performance reasons
+    "libsonata",
     "loguru",
     "loky",
-    "numpy<2",  # to be unpinned with libsonata >= 0.1.28
+    "numpy",
     "pandas",
     "psutil",  # allow early memory leak detections in loky
     "pyarrow",

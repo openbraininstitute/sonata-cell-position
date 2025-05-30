@@ -1,12 +1,11 @@
-import gzip
 import importlib.resources
 import shutil
-import tempfile
 from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
 from unittest.mock import create_autospec
 
 import pytest
+from fastapi.security import HTTPAuthorizationCredentials
 from httpx import ASGITransport, AsyncClient
 from voxcell import RegionMap
 
@@ -16,15 +15,13 @@ import app.libsonata_helper
 import app.main
 import app.nexus
 import app.service
-from app.schemas import CircuitRef, NexusConfig
+from app.config import settings
+from app.schemas import CircuitRef, UserContext
 
 from tests.utils import (
-    BRAIN_REGION_GZIP_FILE,
     CIRCUIT_ID,
     CIRCUIT_PATH,
     CIRCUIT_PATH_SINGLE_POPULATION,
-    NEXUS_BUCKET,
-    NEXUS_ENDPOINT,
     NEXUS_TOKEN,
     clear_cache,
 )
@@ -61,9 +58,9 @@ def input_path_copy(input_path, tmp_path) -> Path:
 
 
 @pytest.fixture
-def circuit_ref_id() -> CircuitRef:
+def circuit_ref_id(circuit_id) -> CircuitRef:
     """Return CircuitRef initialized from circuit_id."""
-    return CircuitRef(id=CIRCUIT_ID)
+    return CircuitRef(id=circuit_id)
 
 
 @pytest.fixture
@@ -73,48 +70,25 @@ def circuit_ref_path(input_path) -> CircuitRef:
 
 
 @pytest.fixture
-def nexus_config() -> NexusConfig:
-    return NexusConfig(
-        endpoint=NEXUS_ENDPOINT,
-        bucket=NEXUS_BUCKET,
-        token=NEXUS_TOKEN,
-    )
+def nexus_config() -> UserContext:
+    token = HTTPAuthorizationCredentials(scheme="Bearer", credentials=NEXUS_TOKEN)
+    return UserContext(token=token)
 
 
 @pytest.fixture
 def region_map() -> RegionMap:
     """Return an instance of RegionMap loaded from hierarchy.json."""
-    ref = importlib.resources.files("app") / "data" / "hierarchy.json"
+    ref = importlib.resources.files("app") / "data" / settings.HIERARCHY_BUNDLED_FILE
     with importlib.resources.as_file(ref) as path:
         return RegionMap.load_json(path.absolute())
 
 
-@pytest.fixture
-def hierarchy(tmp_path) -> Path:
-    """Return the path to a local copy of hierarchy.json."""
-    ref = importlib.resources.files("app") / "data" / "hierarchy.json"
-    with importlib.resources.as_file(ref) as path:
-        return shutil.copy(path, tmp_path)
-
-
 @pytest.fixture(scope="session")
-def alternative_brain_region_file() -> Iterator[Path]:
-    """Return the path to an uncompressed alternative region file."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        tmp_path = Path(tmp_dir)
-        output_file = tmp_path / "brainregion.json"
-        with (
-            open(output_file, "wb") as file_out,
-            gzip.open(BRAIN_REGION_GZIP_FILE, "rb") as file_in,
-        ):
-            file_out.write(file_in.read())
-        yield output_file
-
-
-@pytest.fixture(scope="session")
-def alternative_region_map(alternative_brain_region_file) -> dict:
+def alternative_region_map() -> dict:
     """Return a region map dict loaded from the alternative brain region file."""
-    return app.brain_region.load_alternative_region_map(alternative_brain_region_file)
+    ref = importlib.resources.files("app") / "data" / settings.BRAIN_REGION_ONTOLOGY_BUNDLED_FILE
+    with importlib.resources.as_file(ref) as path:
+        return app.brain_region.load_alternative_region_map(path)
 
 
 @pytest.fixture
@@ -138,9 +112,7 @@ async def api_client_with_auth(api_client) -> AsyncIterator[AsyncClient]:
         base_url="http://test",
         headers={
             "content-type": "application/json",
-            "nexus-endpoint": NEXUS_ENDPOINT,
-            "nexus-bucket": NEXUS_BUCKET,
-            "nexus-token": NEXUS_TOKEN,
+            "Authorization": NEXUS_TOKEN,
         },
     ) as client:
         yield client
@@ -187,8 +159,5 @@ def _clear_all_caches() -> Iterator[None]:
     with (
         clear_cache(app.cache._get_sampled_circuit_paths),
         clear_cache(app.libsonata_helper.get_node_population_name),
-        clear_cache(app.nexus.load_cached_resource),
-        clear_cache(app.nexus.load_cached_region_map),
-        clear_cache(app.nexus.load_cached_alternative_region_map),
     ):
         yield

@@ -8,12 +8,10 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from entity_management.atlas import AtlasRelease, ParcellationOntology
-from entity_management.core import Entity
-from entity_management.simulation import DetailedCircuit
 from voxcell import RegionMap
 
 from app import nexus
+from app.brain_region import load_alternative_region_map
 from app.config import settings
 from app.errors import CircuitError
 from app.libsonata_helper import (
@@ -24,20 +22,17 @@ from app.libsonata_helper import (
     sample_nodes,
 )
 from app.logger import L
-from app.schemas import CircuitParams, CircuitRef, NexusConfig
+from app.schemas import CircuitParams, CircuitRef, UserContext
 
 
-def get_circuit_config_path(circuit_ref: CircuitRef, nexus_config: NexusConfig) -> Path:
+def get_circuit_config_path(circuit_ref: CircuitRef, nexus_config: UserContext) -> Path:
     """Return the circuit config path of the given circuit."""
     if circuit_ref.path:
         return circuit_ref.path
-    resource = nexus.load_cached_resource(
-        resource_class=DetailedCircuit, resource_id=circuit_ref.id, nexus_config=nexus_config
-    )
-    return nexus.get_circuit_config_path(resource)
+    return nexus.get_circuit_config_path(circuit_ref.id)
 
 
-def get_single_node_population_name(circuit_ref: CircuitRef, nexus_config: NexusConfig) -> str:
+def get_single_node_population_name(circuit_ref: CircuitRef, nexus_config: UserContext) -> str:
     """Return the single node population of the circuit, or raise an error if there are many."""
     path = get_circuit_config_path(circuit_ref, nexus_config=nexus_config)
     return get_node_population_name(path)
@@ -47,48 +42,30 @@ def get_single_node_population_name(circuit_ref: CircuitRef, nexus_config: Nexus
 def get_bundled_region_map() -> RegionMap:
     """Return the bundled region map."""
     L.info("Loading bundled region map")
-    ref = importlib.resources.files("app") / "data" / "hierarchy.json"
+    ref = importlib.resources.files("app") / "data" / settings.HIERARCHY_BUNDLED_FILE
     with importlib.resources.as_file(ref) as path:
         return RegionMap.load_json(path.absolute())
 
 
-def get_region_map(circuit_ref: CircuitRef, nexus_config: NexusConfig) -> RegionMap:
-    """Return the region map used for the given circuit."""
-    if not circuit_ref.id:
-        return get_bundled_region_map()
-    detailed_circuit = nexus.load_cached_resource(
-        resource_class=DetailedCircuit,
-        resource_id=circuit_ref.id,
-        nexus_config=nexus_config,
-    )
-    atlas_release = nexus.load_cached_resource(
-        resource_class=AtlasRelease,
-        resource_id=detailed_circuit.atlasRelease.get_id(),
-        nexus_config=nexus_config,
-    )
-    parcellation_ontology = nexus.load_cached_resource(
-        resource_class=ParcellationOntology,
-        resource_id=atlas_release.parcellationOntology.get_id(),
-        nexus_config=nexus_config,
-    )
-    return nexus.load_cached_region_map(parcellation_ontology, nexus_config=nexus_config)
+@functools.cache
+def get_bundled_alternative_region_map() -> dict:
+    """Return the bundled region map."""
+    L.info("Loading bundled alternative region map")
+    ref = importlib.resources.files("app") / "data" / settings.BRAIN_REGION_ONTOLOGY_BUNDLED_FILE
+    with importlib.resources.as_file(ref) as path:
+        return load_alternative_region_map(path)
 
 
-def get_alternative_region_map(circuit_ref: CircuitRef, nexus_config: NexusConfig) -> dict:
+def get_region_map(circuit_ref: CircuitRef, nexus_config: UserContext) -> RegionMap:
     """Return the region map used for the given circuit."""
-    if not circuit_ref.id:
-        # this check is needed only for the cli, and it can be removed after removing
-        # the possibility to specify the circuit path instead of the circuit id
-        L.warning("Not loading the alternative region map")
-        return {}
-    brain_region_ontology = nexus.load_cached_resource(
-        resource_class=Entity,
-        resource_id=settings.BRAIN_REGION_ONTOLOGY_RESOURCE_ID,
-        nexus_config=nexus_config,
-    )
-    return nexus.load_cached_alternative_region_map(
-        brain_region_ontology, nexus_config=nexus_config
-    )
+    # TODO: call entitycore to get the region_map associated with the specific circuit
+    return get_bundled_region_map()
+
+
+def get_alternative_region_map(circuit_ref: CircuitRef, nexus_config: UserContext) -> dict:
+    """Return the region map used for the given circuit."""
+    # TODO: call entitycore to get the alternative_region_map associated with the specific circuit
+    return get_bundled_alternative_region_map()
 
 
 def _region_acronyms(
@@ -327,7 +304,7 @@ def get_attribute_values(
 
 
 def sample(
-    nexus_config: NexusConfig,
+    nexus_config: UserContext,
     circuit_ref: CircuitRef,
     output_path: Path,
     population_name: str,

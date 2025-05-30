@@ -1,6 +1,5 @@
 """CLI entry point."""
 
-import os
 import re
 from pathlib import Path
 
@@ -9,7 +8,7 @@ import click
 from app import jobs
 from app.constants import MODALITIES_REGEX
 from app.logger import L, configure_logging
-from app.schemas import CircuitRef, NexusConfig
+from app.schemas import CircuitRef, UserContext
 from app.serialize import DEFAULT_SERIALIZER, SERIALIZERS_REGEX
 from app.utils import attributes_to_dict, modality_to_attributes
 
@@ -69,14 +68,7 @@ def export(  # pylint: disable=too-many-arguments,too-many-locals
     """Export circuit information to file."""
     L.info("Starting export")
     circuit_ref = CircuitRef(id=circuit_id, path=input_path)
-    nexus_config = NexusConfig.model_validate(
-        {
-            "endpoint": os.getenv("NEXUS_ENDPOINT", ""),
-            "bucket": os.getenv("NEXUS_BUCKET", ""),
-            "token": os.getenv("NEXUS_TOKEN", ""),
-        },
-        context={"ignore_nexus_fields_from_cli": True},
-    )
+    nexus_config = UserContext(token=None)
     attributes = modality_to_attributes(modality)
     query = attributes_to_dict(region=region, mtype=mtype)
     queries = [query] if query else None
@@ -114,14 +106,7 @@ def sample(
     """Sample a node file."""
     L.info("Starting sampling")
     circuit_ref = CircuitRef(id=circuit_id, path=input_path)
-    nexus_config = NexusConfig.model_validate(
-        {
-            "endpoint": os.getenv("NEXUS_ENDPOINT", ""),
-            "bucket": os.getenv("NEXUS_BUCKET", ""),
-            "token": os.getenv("NEXUS_TOKEN", ""),
-        },
-        context={"ignore_nexus_fields_from_cli": True},
-    )
+    nexus_config = UserContext(token=None)
     jobs.sample_job(
         nexus_config=nexus_config,
         circuit_ref=circuit_ref,

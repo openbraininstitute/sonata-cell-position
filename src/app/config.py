@@ -38,41 +38,8 @@ class Settings(BaseSettings):
     # maximum sampling ratio considered for caching
     CACHED_SAMPLING_RATIO: float = 0.01
 
-    # to support other Nexus endpoints and buckets, the required permissions need to be added here.
-    # see https://bbpteam.epfl.ch/project/issues/browse/NSETM-2283?focusedId=234551#comment-234551
-    NEXUS_READ_PERMISSIONS: dict[str, dict[str, set[str]]] = {
-        "https://openbluebrain.com/api/nexus/v1": {  # aws prod openbluebrain
-            "bbp/mmb-point-neuron-framework-model": {"resources/read"},
-        },
-        "https://www.openbraininstitute.com/api/nexus/v1": {  # aws prod openbraininstitute
-            "bbp/mmb-point-neuron-framework-model": {"resources/read"},
-        },
-        "https://staging.openbluebrain.com/api/nexus/v1": {  # aws staging openbluebrain
-            "bbp/mmb-point-neuron-framework-model": {"resources/read"},
-        },
-        "https://staging.openbraininstitute.org/api/nexus/v1": {  # aws staging openbraininstitute
-            "bbp/mmb-point-neuron-framework-model": {"resources/read"},
-        },
-        "https://bbp.epfl.ch/nexus/v1": {  # k8s prod
-            "bbp/mmb-point-neuron-framework-model": {
-                "events/read",
-                "projects/read",
-                "resources/read",
-                "views/query",
-                "gpfs-proj134/read",
-            },
-        },
-        "https://staging.nise.bbp.epfl.ch/nexus/v1": {  # k8s staging
-            "bbp/mmb-point-neuron-framework-model": {
-                "events/read",
-                # "projects/read",  # not available in staging
-                "resources/read",
-                "views/query",
-                # "gpfs-proj134/read",  # not available in staging
-            },
-        },
-    }
-    NEXUS_AUTH_TIMEOUT: float = 10  # in seconds
+    KEYCLOAK_URL: str = "https://example.openbluebrain.com/auth/realms/SBO"
+    KEYCLOAK_AUTH_TIMEOUT: float = 10  # in seconds
 
     LOKY_EXECUTOR_ENABLED: bool = True
     LOKY_EXECUTOR_MAX_WORKERS: int = 4  # maximum number of workers
@@ -81,34 +48,22 @@ class Settings(BaseSettings):
     LOKY_EXECUTOR_TIMEOUT: float = 2**31 // 1000
     LOKY_START_METHOD: str = "loky"
 
-    ENTITY_CACHE_INFO: bool = False  # hits and misses
-    ENTITY_CACHE_MAX_SIZE: int = 100  # maximum number of entities to keep in memory
-    ENTITY_CACHE_TTL: float = 3600 * 24  # TTL in seconds
-
-    REGION_MAP_CACHE_INFO: bool = False  # hits and misses
-    REGION_MAP_CACHE_MAX_SIZE: int = 10  # maximum number of region maps to keep in memory
-    REGION_MAP_CACHE_TTL: float = 3600 * 24  # TTL in seconds
-
     # circuit cache saved to disk (ideally RAM disk)
     CIRCUIT_CACHE_INFO: bool = False  # hits and misses
     CIRCUIT_CACHE_MAX_SIZE_MB: float = 400
     CIRCUIT_CACHE_CHECK_TIMEOUT: float = 600  # in seconds
     CIRCUIT_CACHE_CHECK_INTERVAL: float = 1  # in seconds
 
-    # alternative hierarchy view
-    ALTERNATIVE_REGION_MAP_CACHE_INFO: bool = False  # hits and misses
-    ALTERNATIVE_REGION_MAP_CACHE_MAX_SIZE: int = 10  # max number of region maps to keep in memory
-    ALTERNATIVE_REGION_MAP_CACHE_TTL: float = 3600 * 24  # TTL in seconds
-
-    # The tag should match NEXT_PUBLIC_BRAIN_REGION_ONTOLOGY_RESOURCE_TAG in deploy-aws-prod in
-    # https://bbpgitlab.epfl.ch/project/sbo/core-web-app/-/blob/develop/.gitlab-ci.yml
+    # The tag should match NEXT_PUBLIC_BRAIN_REGION_ONTOLOGY_RESOURCE_TAG
+    # in https://github.com/openbraininstitute/core-web-app/blob/main/.env
+    # and the corresponding file should be bundled in app/data.
     # It will be possible to remove this parameter if/when it can be obtained in other ways, e.g:
-    # - from the circuit resource in Nexus, or
+    # - from the circuit resource in entitycore, or
     # - from the frontend when the circuit endpoint is called
-    BRAIN_REGION_ONTOLOGY_RESOURCE_ID: str = (
-        "http://bbp.epfl.ch/neurosciencegraph/ontologies/core/brainregion?tag=v2.0.0"
-    )
+    BRAIN_REGION_ONTOLOGY_BUNDLED_FILE: str = "brainregion_v2.1.0.json"
     BRAIN_REGION_ONTOLOGY_ID_PATTERN: re.Pattern = re.compile(r"https?://.*/Structure/(\d+)$")
+    # The corresponding file should be bundled in app/data.
+    HIERARCHY_BUNDLED_FILE: str = "mba_hierarchy_39.json"
 
 
 settings = Settings()
