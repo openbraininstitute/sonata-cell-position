@@ -1,18 +1,15 @@
 import logging
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import jwt
 import pytest
 import requests
 
-import app.nexus as test_module
-from app.constants import CIRCUITS
-from app.errors import ClientError
+import app.auth as test_module
 
 
 @pytest.fixture
-def nexus_token():
+def jwt_token():
     return jwt.encode(
         {
             "exp": 1706709167,
@@ -39,56 +36,43 @@ def nexus_token():
     )
 
 
-def test_get_circuit_config_path(monkeypatch, circuit_id, input_path):
-    monkeypatch.setitem(CIRCUITS, circuit_id, str(input_path))
-
-    result = test_module.get_circuit_config_path(circuit_id)
-    assert isinstance(result, Path)
-    assert result == input_path
-
-
-def test_get_circuit_config_path_missing():
-    with pytest.raises(ClientError, match="Circuit id not found"):
-        test_module.get_circuit_config_path("unknown")
-
-
-def test_is_user_authorized_true(nexus_config, nexus_token, monkeypatch, caplog):
+def test_is_user_authorized_true(user_context, jwt_token, monkeypatch, caplog):
     caplog.set_level(logging.INFO)
     mock_response = MagicMock()
     mock_response.json.return_value = {}
     mock_get = MagicMock(return_value=mock_response)
     monkeypatch.setattr(test_module.requests, "get", mock_get)
-    nexus_config.token.credentials = nexus_token
+    user_context.token.credentials = jwt_token
 
-    result = test_module.is_user_authorized(nexus_config)
+    result = test_module.is_user_authorized(user_context)
 
     assert result == 200
     assert "User testuser [Test User] authorized" in caplog.text
     assert mock_get.call_count == 1
 
 
-def test_is_user_authorized_false_because_of_missing_token(nexus_config, caplog):
+def test_is_user_authorized_false_because_of_missing_token(user_context, caplog):
     caplog.set_level(logging.INFO)
-    nexus_config.token = None
+    user_context.token = None
 
-    result = test_module.is_user_authorized(nexus_config)
+    result = test_module.is_user_authorized(user_context)
 
     assert result == 401
     assert "Missing auth token" in caplog.text
 
 
-def test_is_user_authorized_false_because_of_invalid_token(nexus_config, caplog):
+def test_is_user_authorized_false_because_of_invalid_token(user_context, caplog):
     caplog.set_level(logging.INFO)
-    nexus_config.token.credentials = "invalid"
+    user_context.token.credentials = "invalid"
 
-    result = test_module.is_user_authorized(nexus_config)
+    result = test_module.is_user_authorized(user_context)
 
     assert result == 401
     assert "Invalid auth token" in caplog.text
 
 
 def test_is_user_authorized_false_because_of_http_error(
-    nexus_config, nexus_token, monkeypatch, caplog
+    user_context, jwt_token, monkeypatch, caplog
 ):
     caplog.set_level(logging.INFO)
     mock_response = MagicMock()
@@ -97,9 +81,9 @@ def test_is_user_authorized_false_because_of_http_error(
     )
     mock_get = MagicMock(return_value=mock_response)
     monkeypatch.setattr(test_module.requests, "get", mock_get)
-    nexus_config.token.credentials = nexus_token
+    user_context.token.credentials = jwt_token
 
-    result = test_module.is_user_authorized(nexus_config)
+    result = test_module.is_user_authorized(user_context)
 
     assert result == 403
     assert (
@@ -110,14 +94,14 @@ def test_is_user_authorized_false_because_of_http_error(
 
 
 def test_is_user_authorized_false_because_of_request_exception(
-    nexus_config, nexus_token, monkeypatch, caplog
+    user_context, jwt_token, monkeypatch, caplog
 ):
     caplog.set_level(logging.INFO)
     mock_get = MagicMock(side_effect=requests.exceptions.SSLError("SSL Error"))
     monkeypatch.setattr(test_module.requests, "get", mock_get)
-    nexus_config.token.credentials = nexus_token
+    user_context.token.credentials = jwt_token
 
-    result = test_module.is_user_authorized(nexus_config)
+    result = test_module.is_user_authorized(user_context)
 
     assert result == 500
     assert (

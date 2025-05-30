@@ -1,34 +1,43 @@
+from pathlib import Path
+
 import pytest
 import voxcell
 
 import app.service as test_module
 from app.constants import CIRCUITS
-from app.errors import CircuitError
+from app.errors import CircuitError, ClientError
 
 from tests.utils import assert_cache, clear_cache
 
 
 def test_get_circuit_config_path_from_id(
-    nexus_config, circuit_ref_id, circuit_id, input_path, monkeypatch
+    user_context, circuit_ref_id, circuit_id, input_path, monkeypatch
 ):
-    monkeypatch.setitem(CIRCUITS, circuit_id, input_path)
+    monkeypatch.setitem(CIRCUITS, circuit_id, str(input_path))
 
-    result = test_module.get_circuit_config_path(circuit_ref_id, nexus_config=nexus_config)
+    result = test_module.get_circuit_config_path(circuit_ref_id, user_context=user_context)
 
+    assert isinstance(result, Path)
     assert result == input_path
 
 
-def test_get_circuit_config_path_from_path(nexus_config, circuit_ref_path):
-    result = test_module.get_circuit_config_path(circuit_ref_path, nexus_config=nexus_config)
+def test_get_circuit_config_path_from_id_missing(user_context, circuit_ref_id):
+    circuit_ref_id = circuit_ref_id.model_copy(update={"id": "unknown-circuit-id"})
+    with pytest.raises(ClientError, match="Circuit id not found"):
+        test_module.get_circuit_config_path(circuit_ref_id, user_context=user_context)
+
+
+def test_get_circuit_config_path_from_path(user_context, circuit_ref_path):
+    result = test_module.get_circuit_config_path(circuit_ref_path, user_context=user_context)
 
     assert result == circuit_ref_path.path
 
 
-def test_get_single_node_population_name_raises(circuit_ref_path, nexus_config):
+def test_get_single_node_population_name_raises(circuit_ref_path, user_context):
     with pytest.raises(
         CircuitError, match="Exactly one node population must be present in the circuit"
     ):
-        test_module.get_single_node_population_name(circuit_ref_path, nexus_config=nexus_config)
+        test_module.get_single_node_population_name(circuit_ref_path, user_context=user_context)
 
 
 def test_get_bundled_region_map():
@@ -40,22 +49,22 @@ def test_get_bundled_region_map():
         assert result.get(997, "acronym") == "root"
 
 
-def test_get_region_map_from_circuit_path(nexus_config, circuit_ref_path):
-    result = test_module.get_region_map(circuit_ref_path, nexus_config=nexus_config)
+def test_get_region_map_from_circuit_path(user_context, circuit_ref_path):
+    result = test_module.get_region_map(circuit_ref_path, user_context=user_context)
 
     assert isinstance(result, voxcell.RegionMap)
     assert result.get(997, "acronym") == "root"
 
 
-def test_get_region_map_from_circuit_id(nexus_config, circuit_ref_id):
-    result = test_module.get_region_map(circuit_ref_id, nexus_config=nexus_config)
+def test_get_region_map_from_circuit_id(user_context, circuit_ref_id):
+    result = test_module.get_region_map(circuit_ref_id, user_context=user_context)
 
     assert isinstance(result, voxcell.RegionMap)
     assert result.get(997, "acronym") == "root"
 
 
-def test_get_alternative_region_map(nexus_config, circuit_ref_id):
-    result = test_module.get_alternative_region_map(circuit_ref_id, nexus_config=nexus_config)
+def test_get_alternative_region_map(user_context, circuit_ref_id):
+    result = test_module.get_alternative_region_map(circuit_ref_id, user_context=user_context)
 
     assert isinstance(result, dict)
     region_id = "http://bbp.epfl.ch/neurosciencegraph/ontologies/core/brainregion/Isocortex_L4"

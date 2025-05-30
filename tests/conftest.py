@@ -13,16 +13,15 @@ import app.brain_region
 import app.cache
 import app.libsonata_helper
 import app.main
-import app.nexus
 import app.service
 from app.config import settings
 from app.schemas import CircuitRef, UserContext
 
 from tests.utils import (
+    AUTH_TOKEN,
     CIRCUIT_ID,
     CIRCUIT_PATH,
     CIRCUIT_PATH_SINGLE_POPULATION,
-    NEXUS_TOKEN,
     clear_cache,
 )
 
@@ -70,8 +69,8 @@ def circuit_ref_path(input_path) -> CircuitRef:
 
 
 @pytest.fixture
-def nexus_config() -> UserContext:
-    token = HTTPAuthorizationCredentials(scheme="Bearer", credentials=NEXUS_TOKEN)
+def user_context() -> UserContext:
+    token = HTTPAuthorizationCredentials(scheme="Bearer", credentials=AUTH_TOKEN)
     return UserContext(token=token)
 
 
@@ -93,7 +92,7 @@ def alternative_region_map() -> dict:
 
 @pytest.fixture
 async def api_client() -> AsyncIterator[AsyncClient]:
-    """Yield an AsyncClient without nexus tokens."""
+    """Yield an AsyncClient without auth tokens."""
     async with AsyncClient(
         transport=ASGITransport(app=app.main.app),
         base_url="http://test",
@@ -106,13 +105,13 @@ async def api_client() -> AsyncIterator[AsyncClient]:
 
 @pytest.fixture
 async def api_client_with_auth(api_client) -> AsyncIterator[AsyncClient]:
-    """Yield an AsyncClient with nexus tokens required for authentication."""
+    """Yield an AsyncClient with auth tokens required for authentication."""
     async with AsyncClient(
         transport=ASGITransport(app=app.main.app),
         base_url="http://test",
         headers={
             "content-type": "application/json",
-            "Authorization": NEXUS_TOKEN,
+            "Authorization": AUTH_TOKEN,
         },
     ) as client:
         yield client

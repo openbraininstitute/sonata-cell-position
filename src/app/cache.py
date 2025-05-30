@@ -152,7 +152,7 @@ def _get_sampled_circuit_paths(key: CircuitCacheKey) -> CircuitCachePaths:
 
 
 def get_cached_circuit_params(
-    nexus_config: UserContext,
+    user_context: UserContext,
     circuit_ref: CircuitRef,
     population_name: str,
     attributes: list[str],
@@ -161,10 +161,10 @@ def get_cached_circuit_params(
     use_circuit_cache: bool,
 ) -> CircuitParams:
     """Return an instance of CircuitParams, using the cache if possible."""
-    path = app.service.get_circuit_config_path(circuit_ref, nexus_config=nexus_config)
-    region_map = app.service.get_region_map(circuit_ref, nexus_config=nexus_config)
+    path = app.service.get_circuit_config_path(circuit_ref, user_context=user_context)
+    region_map = app.service.get_region_map(circuit_ref, user_context=user_context)
     alternative_region_map = app.service.get_alternative_region_map(
-        circuit_ref, nexus_config=nexus_config
+        circuit_ref, user_context=user_context
     )
     key = CircuitCacheKey(
         circuit_config_path=path,

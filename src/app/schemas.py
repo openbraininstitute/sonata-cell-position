@@ -139,7 +139,7 @@ class UserContext(BaseModel):
 class CircuitRef(FrozenBaseModel):
     """Circuit reference, having only one of id and path."""
 
-    id: str | None = None  # Nexus ID. It can be None only when called from the CLI.
+    id: str | None = None  # Circuit ID. It can be None only when called from the CLI.
     path: CircuitConfigPath | None = None  # Path to the circuit config
 
     @model_validator(mode="after")

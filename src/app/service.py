@@ -10,10 +10,10 @@ import numpy as np
 import pandas as pd
 from voxcell import RegionMap
 
-from app import nexus
 from app.brain_region import load_alternative_region_map
 from app.config import settings
-from app.errors import CircuitError
+from app.constants import CIRCUITS
+from app.errors import CircuitError, ClientError
 from app.libsonata_helper import (
     get_node_population_name,
     get_node_populations,
@@ -25,16 +25,33 @@ from app.logger import L
 from app.schemas import CircuitParams, CircuitRef, UserContext
 
 
-def get_circuit_config_path(circuit_ref: CircuitRef, nexus_config: UserContext) -> Path:
+def _get_circuit_config_path_from_id(circuit_id) -> Path:
+    """Return the circuit config path for the given circuit id.
+
+    Args:
+        circuit_id: circuit id.
+
+    Returns:
+        The path to the circuit.
+    """
+    try:
+        path = CIRCUITS[circuit_id]
+    except KeyError:
+        msg = f"Circuit id not found: {circuit_id!r}"
+        raise ClientError(msg) from None
+    return Path(path)
+
+
+def get_circuit_config_path(circuit_ref: CircuitRef, user_context: UserContext) -> Path:
     """Return the circuit config path of the given circuit."""
     if circuit_ref.path:
         return circuit_ref.path
-    return nexus.get_circuit_config_path(circuit_ref.id)
+    return _get_circuit_config_path_from_id(circuit_ref.id)
 
 
-def get_single_node_population_name(circuit_ref: CircuitRef, nexus_config: UserContext) -> str:
+def get_single_node_population_name(circuit_ref: CircuitRef, user_context: UserContext) -> str:
     """Return the single node population of the circuit, or raise an error if there are many."""
-    path = get_circuit_config_path(circuit_ref, nexus_config=nexus_config)
+    path = get_circuit_config_path(circuit_ref, user_context=user_context)
     return get_node_population_name(path)
 
 
@@ -56,13 +73,13 @@ def get_bundled_alternative_region_map() -> dict:
         return load_alternative_region_map(path)
 
 
-def get_region_map(circuit_ref: CircuitRef, nexus_config: UserContext) -> RegionMap:
+def get_region_map(circuit_ref: CircuitRef, user_context: UserContext) -> RegionMap:
     """Return the region map used for the given circuit."""
     # TODO: call entitycore to get the region_map associated with the specific circuit
     return get_bundled_region_map()
 
 
-def get_alternative_region_map(circuit_ref: CircuitRef, nexus_config: UserContext) -> dict:
+def get_alternative_region_map(circuit_ref: CircuitRef, user_context: UserContext) -> dict:
     """Return the region map used for the given circuit."""
     # TODO: call entitycore to get the alternative_region_map associated with the specific circuit
     return get_bundled_alternative_region_map()
@@ -304,7 +321,7 @@ def get_attribute_values(
 
 
 def sample(
-    nexus_config: UserContext,
+    user_context: UserContext,
     circuit_ref: CircuitRef,
     output_path: Path,
     population_name: str,
@@ -313,7 +330,7 @@ def sample(
     attributes: Iterable[str] | None = None,
 ) -> None:
     """Sample a node file."""
-    path = get_circuit_config_path(circuit_ref, nexus_config=nexus_config)
+    path = get_circuit_config_path(circuit_ref, user_context=user_context)
     sample_nodes(
         input_path=path,
         output_path=output_path,

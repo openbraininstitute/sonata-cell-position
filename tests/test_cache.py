@@ -8,11 +8,11 @@ from tests.utils import assert_cache, clear_cache
 
 
 @pytest.mark.usefixtures("_patch_get_region_map", "_patch_get_alternative_region_map")
-def test_get_cached_circuit_params(tmp_path, circuit_ref_path, nexus_config):
+def test_get_cached_circuit_params(tmp_path, circuit_ref_path, user_context):
     with clear_cache(test_module._get_sampled_circuit_paths) as cached_func:
         # write the cache
         result1 = test_module.get_cached_circuit_params(
-            nexus_config=nexus_config,
+            user_context=user_context,
             circuit_ref=circuit_ref_path,
             population_name="default",
             attributes=["x", "y", "z", "mtype"],
@@ -29,7 +29,7 @@ def test_get_cached_circuit_params(tmp_path, circuit_ref_path, nexus_config):
 
         # use the LRU cache
         result2 = test_module.get_cached_circuit_params(
-            nexus_config=nexus_config,
+            user_context=user_context,
             circuit_ref=circuit_ref_path,
             population_name="default",
             attributes=["x", "y", "z", "mtype"],
@@ -49,12 +49,12 @@ def test_get_cached_circuit_params(tmp_path, circuit_ref_path, nexus_config):
 
 
 @pytest.mark.usefixtures("_patch_get_region_map", "_patch_get_alternative_region_map")
-def test_get_cached_circuit_params_cache_not_used(tmp_path, circuit_ref_path, nexus_config, caplog):
+def test_get_cached_circuit_params_cache_not_used(tmp_path, circuit_ref_path, user_context, caplog):
     caplog.set_level(logging.INFO)
     # cache not used because sampling_ratio is too high
     with clear_cache(test_module._get_sampled_circuit_paths) as cached_func:
         result = test_module.get_cached_circuit_params(
-            nexus_config=nexus_config,
+            user_context=user_context,
             circuit_ref=circuit_ref_path,
             population_name="default",
             attributes=["x", "y", "z", "mtype"],
