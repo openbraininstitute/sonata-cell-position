@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = "==3.12.*"
 
 [[package]]
@@ -217,17 +217,17 @@ wheels = [
 
 [[package]]
 name = "libsonata"
-version = "0.1.29"
+version = "0.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ba/15/b00192fa73661b89c25ffcb5ef29d7d4f316ffa3373b2e47300b56fc4827/libsonata-0.1.29.tar.gz", hash = "sha256:321878f28c7d64a65683443f832dfa2f21ff8ed69e700d2dde62ccb5f87d4525", size = 1106913, upload-time = "2024-10-17T14:23:27.347Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c2/7e/09f0d7017207326819d733203067b9367a0b5eba5852e929e9d9e7cd857f/libsonata-0.2.0.tar.gz", hash = "sha256:975dea7a8a90abe19e80326879c6e3bb1e83205febce8e277b77b5adcc48afaa", size = 2506952, upload-time = "2026-07-29T09:28:39.951Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0e/81/5c82f79b0e0aaaa14f8e14a6691b4dded1b403ba55a621bd03ff0b9f74dc/libsonata-0.1.29-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:a15cc8371016c2e01a100bdceb1596ae1975fefd4249b5def937c5fc4b15b93a", size = 2046832, upload-time = "2024-10-17T14:23:05.971Z" },
-    { url = "https://files.pythonhosted.org/packages/f3/30/15f0f3412dce37003aa53919f15caac8438c50d933813ab8c61b67f2ea1f/libsonata-0.1.29-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:2b762b29777efc6308217ba8bf4c1bb1dc73ca075829523a03a25fdee6b3ca05", size = 1711405, upload-time = "2024-10-17T14:23:08.109Z" },
-    { url = "https://files.pythonhosted.org/packages/71/30/5498b6838cfac205f836bcb4dd906a9495f7ea46bd844ca8bd56ea46bf63/libsonata-0.1.29-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6f06e74b6dc810d97a5e4e12d67e13adbde7a326a83a8bd60f82d282f12f6a65", size = 2368736, upload-time = "2024-10-17T14:23:09.505Z" },
-    { url = "https://files.pythonhosted.org/packages/57/2b/f25203b940acfddeaa5a7d54585db98938305d2350a5616435fde1f9c03c/libsonata-0.1.29-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9087ab174761847eb138c9ba16a0e52a8c74e0eafe3109017300ec82872a1ec1", size = 2342911, upload-time = "2024-10-17T14:23:10.904Z" },
+    { url = "https://files.pythonhosted.org/packages/d6/5b/c5fe2d9821681c4de8ba5d0359805bd1bb3a818a8d3d9212254ae11562f1/libsonata-0.2.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:49736eba47ccd788c866fd2213484ff1bb6491bb5915a1cd3008aa97fa685d68", size = 2135815, upload-time = "2026-07-29T09:28:20.921Z" },
+    { url = "https://files.pythonhosted.org/packages/7e/c5/3e5a22f4ee819aedd9fd7bc85237b41e672e3c54428b2e408dd2851dfc36/libsonata-0.2.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:68ad55e9711122a09c53e113df035e42ea89fe2e24bbf4141a8205edaf080ad9", size = 1851034, upload-time = "2026-07-29T09:28:22.438Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/d7/9730628e45c38f058d7f435249a05c047bf39f6ddd2fe3dbe3ee1deaf740/libsonata-0.2.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:2533210946d61560e5703661bd818a4677278a7bf8770b0b320125744f272d0a", size = 2305307, upload-time = "2026-07-29T09:28:23.74Z" },
+    { url = "https://files.pythonhosted.org/packages/77/69/876c9bd84ed5218bcc4fae19f945dbedbd9029bc10a284bf405cc5bfe1b1/libsonata-0.2.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:3def03e7f5c03a381e283c5877aa9cdc30bc8e2c0232707232043ab62f467d9b", size = 2552674, upload-time = "2026-07-29T09:28:25.114Z" },
 ]
 
 [[package]]
