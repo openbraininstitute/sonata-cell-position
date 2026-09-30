@@ -32,7 +32,7 @@ def jwt_token():
             "family_name": "User",
             "email": "test.user@example.org",
         },
-        key="",
+        key="test-secret-key-of-at-least-32-bytes",
     )
 
 

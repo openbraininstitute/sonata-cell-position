@@ -120,7 +120,7 @@ CIRCUIT_CACHE = CircuitCache(
 )
 
 
-@cachetools.cached(
+@cachetools.cached(  # type: ignore[call-overload]  # stubs only accept a Literal for `info`
     cache=CIRCUIT_CACHE,
     lock=Lock(),
     info=settings.CIRCUIT_CACHE_INFO,

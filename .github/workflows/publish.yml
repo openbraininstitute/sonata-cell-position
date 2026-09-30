@@ -3,57 +3,38 @@ name: Build and publish the Docker image
 permissions:
   id-token: write
   contents: read
-  actions: write
 
 on:
   push:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false  # never interrupt a publish in progress
+
 jobs:
-  build:
+  publish-to-aws-ecr:
     name: Build and publish (linux/arm64)
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-26.04-arm
+    timeout-minutes: 30
     env:
       ENVIRONMENT: prod
-      APP_NAME: sonata-cell-position
+      IMAGE_NAME: ${{ vars.PUBLICECR_URI }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           role-to-assume: ${{ vars.AWS_ECR_PUBLISH_ROLE_ARN }}
           aws-region: ${{ vars.PUBLICECR_REGION }}
 
       - name: Authenticate with AWS Public ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
         with:
           registry-type: public
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Build and push
-        id: build
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          platforms: linux/arm64
-          tags: ${{ vars.PUBLICECR_URI }}:${{ github.ref_name }}
-          build-args: |
-            ENVIRONMENT=prod
-            APP_NAME=sonata-cell-position
-            APP_VERSION=${{ github.ref_name }}
-            COMMIT_SHA=${{ github.sha }}
-          cache-from: type=gha,scope=linux/arm64
-          cache-to: type=gha,mode=max,scope=linux/arm64
-          provenance: false
-          sbom: false
-          push: true
-
-      - name: Inspect image
-        run: |
-          docker buildx imagetools inspect ${{ vars.PUBLICECR_URI }}:${{ github.ref_name }}
+      - name: Build and publish the Docker image to AWS ECR
+        run: make publish
