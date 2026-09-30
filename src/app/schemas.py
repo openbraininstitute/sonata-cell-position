@@ -16,7 +16,7 @@ from pydantic import (
     ValidationError,
     model_validator,
 )
-from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
+from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT
 from voxcell import RegionMap
 
 from app.constants import MODALITIES_REGEX
@@ -66,7 +66,7 @@ class ValidatedParams:
     @staticmethod
     def _error(errors: Sequence[Any]) -> Exception:
         """Return the error to be raised in case of validation error."""
-        return HTTPException(HTTP_422_UNPROCESSABLE_ENTITY, detail=errors)
+        return HTTPException(HTTP_422_UNPROCESSABLE_CONTENT, detail=errors)
 
 
 class PathValidator:

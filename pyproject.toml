@@ -34,8 +34,8 @@ cli = [
     "click",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "coverage[toml]",
     "httpx",
     "mypy",

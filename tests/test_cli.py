@@ -9,7 +9,7 @@ import app.cli as test_module
 from tests.utils import _assert_populations_equal, _get_node_population, load_json
 
 
-def test_export(tmp_path, input_path):
+def test_export(tmp_path, input_path, monkeypatch):
     output_path = tmp_path / "output.json"
     assert not output_path.exists()
 
@@ -23,9 +23,9 @@ def test_export(tmp_path, input_path):
         ("--seed", 102),
         ("--how", "json"),
     ]
+    monkeypatch.chdir(tmp_path)
     runner = CliRunner()
-    with runner.isolated_filesystem(temp_dir=tmp_path):
-        result = runner.invoke(test_module.cli, ["export", *chain.from_iterable(options)])
+    result = runner.invoke(test_module.cli, ["export", *chain.from_iterable(options)])
 
     assert result.output == ""
     assert result.exit_code == 0
@@ -51,7 +51,7 @@ def test_export(tmp_path, input_path):
         ),
     ],
 )
-def test_sample(tmp_path, input_path, params, expected):
+def test_sample(tmp_path, input_path, params, expected, monkeypatch):
     output_path = tmp_path / "nodes.h5"
     assert not output_path.exists()
 
@@ -62,9 +62,9 @@ def test_sample(tmp_path, input_path, params, expected):
         ("--seed", 103),
         *params,
     ]
+    monkeypatch.chdir(tmp_path)
     runner = CliRunner()
-    with runner.isolated_filesystem(temp_dir=tmp_path):
-        result = runner.invoke(test_module.cli, ["sample", *chain.from_iterable(options)])
+    result = runner.invoke(test_module.cli, ["sample", *chain.from_iterable(options)])
 
     assert result.output == ""
     assert result.exit_code == 0
